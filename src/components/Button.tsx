@@ -3,7 +3,7 @@ import Link from "next/link";
 type Variant = "primary" | "outline" | "outline-light" | "navy";
 
 const base =
-  "group/btn inline-flex min-h-12 items-center justify-center gap-2 rounded-btn px-6 text-base font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50";
+  "group/btn inline-flex min-h-12 whitespace-nowrap items-center justify-center gap-2 rounded-btn px-6 text-base font-medium transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50";
 
 const variants: Record<Variant, string> = {
   primary: "bg-turquoise text-navy hover:bg-[#0FA3A9] active:bg-[#0E9398]",

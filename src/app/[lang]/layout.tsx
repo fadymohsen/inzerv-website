@@ -50,7 +50,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
       className={`${inter.variable} ${plexArabic.variable}`}
     >
       <body suppressHydrationWarning className="flex min-h-dvh flex-col bg-white text-navy">
-        <Header locale={lang} t={t.nav} />
+        <Header locale={lang} t={t.nav} footer={t.footer} />
         <main id="main" className="flex-1">
           {children}
         </main>

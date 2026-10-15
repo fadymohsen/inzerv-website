@@ -54,28 +54,28 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         </div>
 
         <div className="relative mx-auto grid max-w-7xl gap-6 px-5 pt-14 lg:min-h-[47rem] lg:grid-cols-[1.08fr_1fr] lg:px-8 lg:pt-24">
-          <div className="flex flex-col pb-14 lg:pb-16">
+          <div className="flex flex-col pb-10 lg:pb-16">
             <h1 className="text-[clamp(2.6rem,5vw,4.6rem)] font-semibold leading-[1] tracking-[-0.04em] rtl:leading-[1.2]">
               <HeroWords text={t.home.hero.title} />{" "}
               <HeroWords text={t.home.hero.titleAccent} accent startDelay={titleWords * 80} />
             </h1>
             <p
-              className="fade-up mt-8 max-w-[46ch] text-lg leading-relaxed text-white/80 sm:text-xl"
+              className="fade-up mt-6 max-w-[46ch] text-base leading-relaxed text-white/80 sm:mt-8 sm:text-xl"
               style={vars({ "--d": "650ms" })}
             >
               {t.home.hero.sub}
             </p>
             <div className="fade-up mt-10 flex flex-wrap gap-3" style={vars({ "--d": "800ms" })}>
-              <ButtonLink href={`/${lang}/checkout`} className="min-h-14 px-8 text-lg">
+              <ButtonLink href={`/${lang}/checkout`} className="min-h-14 flex-1 px-6 text-base sm:flex-none sm:px-8 sm:text-lg">
                 {t.home.hero.primary}
                 <ArrowIcon size={22} />
               </ButtonLink>
-              <ButtonLink href="#how-it-works" variant="outline-light" className="min-h-14 px-8 text-lg">
+              <ButtonLink href="#how-it-works" variant="outline-light" className="min-h-14 flex-1 px-6 text-base sm:flex-none sm:px-8 sm:text-lg">
                 {t.home.hero.secondary}
               </ButtonLink>
             </div>
             <ul
-              className="fade-up mt-12 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-white/15 pt-7 text-sm text-white/75 sm:grid-cols-4 lg:mt-auto lg:max-w-xl lg:grid-cols-2 xl:grid-cols-4"
+              className="fade-up mt-12 hidden grid-cols-2 gap-x-6 gap-y-4 border-t border-white/15 pt-7 text-sm text-white/75 sm:grid sm:grid-cols-4 lg:mt-auto lg:max-w-xl lg:grid-cols-2 xl:grid-cols-4"
               style={vars({ "--d": "950ms" })}
             >
               {facts.map((f) => (
@@ -90,9 +90,9 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
           </div>
 
           {/* iPhone cluster */}
-          <PointerStage className="relative -mx-5 h-[30rem] sm:mx-0 sm:h-[36rem] lg:h-auto">
+          <PointerStage className="relative -mx-5 h-[25rem] overflow-hidden sm:mx-0 sm:h-[36rem] sm:overflow-visible lg:h-auto">
             <div
-              className="rise absolute left-1/2 top-0 z-20 w-[15.5rem] -translate-x-1/2 sm:w-[17.5rem] lg:w-[19rem]"
+              className="rise absolute left-1/2 top-0 z-20 w-[13.25rem] -translate-x-1/2 sm:w-[17.5rem] lg:w-[19rem]"
               style={vars({ "--rise-from": "90px", "--rise-delay": "250ms" })}
             >
               <div className="hero-par" style={vars({ "--par": "5rem" })}>
@@ -110,7 +110,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             </div>
 
             <div
-              className="rise absolute start-[-1rem] top-[8rem] z-10 hidden w-[12.5rem] sm:block lg:start-[-2.5rem] lg:top-[9rem] lg:w-[14rem]"
+              className="rise absolute start-[-1.75rem] top-[5.5rem] z-10 w-[8.75rem] sm:start-[-1rem] sm:top-[8rem] sm:w-[12.5rem] lg:start-[-2.5rem] lg:top-[9rem] lg:w-[14rem]"
               style={vars({ "--rise-from": "70px", "--rise-delay": "450ms" })}
             >
               <div className="hero-par" style={vars({ "--par": "9rem" })}>
@@ -122,7 +122,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </div>
             </div>
             <div
-              className="rise absolute end-[-1rem] top-[11rem] z-10 hidden w-[12.5rem] sm:block lg:end-[-2.5rem] lg:top-[12rem] lg:w-[14rem]"
+              className="rise absolute end-[-1.75rem] top-[7.5rem] z-10 w-[8.75rem] sm:end-[-1rem] sm:top-[11rem] sm:w-[12.5rem] lg:end-[-2.5rem] lg:top-[12rem] lg:w-[14rem]"
               style={vars({ "--rise-from": "70px", "--rise-delay": "550ms" })}
             >
               <div className="hero-par" style={vars({ "--par": "7rem" })}>
@@ -167,12 +167,23 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </div>
             )}
           </PointerStage>
+
+          <ul className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-white/15 pb-8 pt-6 text-sm text-white/75 sm:hidden">
+            {facts.map((f) => (
+              <li key={f} className="flex items-start gap-2.5 leading-snug">
+                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-turquoise text-navy">
+                  <CheckIcon size={10} />
+                </span>
+                {f}
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
       {/* Statement */}
       <section className="layer bg-white">
-        <div className="mx-auto max-w-7xl px-5 py-28 lg:px-8 lg:py-44">
+        <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-44">
           <p className="max-w-[22ch] text-[clamp(2.25rem,5.4vw,4.75rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-navy rtl:leading-[1.35]">
             <ScrollWords text={t.home.statement.text} />
           </p>
@@ -202,7 +213,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                     <p className="mt-6 max-w-[42ch] text-lg leading-relaxed text-ink-muted">{b.text}</p>
                   </div>
                   <div
-                    className={`reveal-scale relative flex h-[28rem] items-end justify-center overflow-hidden rounded-[2rem] sm:h-[36rem] ${s.panel} ${reverse ? "lg:order-1" : ""}`}
+                    className={`reveal-scale relative flex h-[24rem] items-end justify-center overflow-hidden rounded-[2rem] sm:h-[36rem] ${s.panel} ${reverse ? "lg:order-1" : ""}`}
                   >
                     <div
                       className="par pointer-events-none absolute left-1/2 top-1/2 w-[34rem] -translate-x-1/2 -translate-y-1/2 opacity-70"
@@ -224,8 +235,8 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       </section>
 
       {/* Services */}
-      <section id="services" className="layer mt-20 bg-bg-light lg:mt-32">
-        <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-36">
+      <section id="services" className="layer mt-12 bg-bg-light lg:mt-32">
+        <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-36">
           <div className="reveal flex flex-wrap items-end justify-between gap-6">
             <div>
               <h2 className="text-[clamp(2.25rem,4.2vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.035em] rtl:leading-[1.3]">
@@ -332,7 +343,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
       {/* Steps */}
       <section id="how-it-works" className="layer bg-bg-light">
-        <div className="mx-auto max-w-7xl px-5 py-24 lg:px-8 lg:py-40">
+        <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-40">
           <h2 className="max-w-[15ch] text-[clamp(2.25rem,4.6vw,4rem)] font-semibold leading-[1.02] tracking-[-0.035em] rtl:leading-[1.3]">
             {t.home.steps.title}
           </h2>
@@ -377,7 +388,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
       {/* CTA */}
       <section className="layer relative overflow-hidden bg-turquoise">
-        <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-5 py-24 lg:min-h-[32rem] lg:justify-center lg:px-8 lg:py-36">
+        <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-5 py-16 lg:min-h-[32rem] lg:justify-center lg:px-8 lg:py-36">
           <h2 className="max-w-[12ch] text-[clamp(2.5rem,5.6vw,5rem)] font-semibold leading-[0.98] tracking-[-0.04em] text-navy rtl:leading-[1.2]">
             <ScrollWords text={t.home.cta.title} />
           </h2>

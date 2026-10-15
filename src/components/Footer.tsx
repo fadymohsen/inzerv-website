@@ -22,8 +22,8 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
 
   return (
     <footer className="layer bg-navy-deep text-white">
-      <div className="mx-auto grid max-w-7xl gap-12 px-5 py-16 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:px-8">
-        <div className="flex flex-col items-start gap-5">
+      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-x-6 gap-y-10 px-5 py-14 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-12 lg:px-8 lg:py-16">
+        <div className="col-span-2 flex flex-col items-start gap-5 lg:col-span-1">
           <Logo locale={locale} height={52} />
           <p className="max-w-xs text-sm leading-relaxed text-white/70">{t.tagline}</p>
         </div>
@@ -54,7 +54,7 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
           </ul>
         </nav>
 
-        <div>
+        <div className="col-span-2 lg:col-span-1">
           <p className={colTitle}>{t.contactTitle}</p>
           <a href={`mailto:${SUPPORT_EMAIL}`} className={link} dir="ltr">
             {SUPPORT_EMAIL}
