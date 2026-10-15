@@ -1,72 +1,432 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── Brand Colors ─────────────────────────────────── */
-  --color-navy:           #062544;
-  --color-navy-deep:      #031A30;
-  --color-turquoise:      #10B7BE;
-  --color-bg-light:       #F5F7F9;
+  /* Brand (docs/VISUAL_IDENTITY_GUIDE.md) */
+  --color-navy:       #062544;
+  --color-navy-deep:  #031A30;
+  --color-turquoise:  #10B7BE;
+  --color-bg-light:   #F5F7F9;
   --color-text-secondary: #667785;
 
-  /* ── Functional Colors ────────────────────────────── */
-  --color-success:  #15803D;
-  --color-warning:  #B45309;
-  --color-error:    #B91C1C;
-  --color-info:     #1D4ED8;
+  /* Derived, accessibility-driven */
+  --color-ink-muted: #4A5D6E;
+  --color-line:      #DDE4EA;
+  --color-line-navy: #1B3D5E;
 
-  /* ── Typography ───────────────────────────────────── */
-  --font-sans:    var(--font-inter);
-  --font-arabic:  var(--font-ibm-plex-arabic);
+  /* Functional */
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error:   #B91C1C;
+  --color-info:    #1D4ED8;
 
-  /* Type scale — matches brand spec exactly */
-  --text-h1:                  1.75rem;   /* 28px */
-  --text-h1--line-height:     2.25rem;   /* 36px */
-  --text-h2:                  1.375rem;  /* 22px */
-  --text-h2--line-height:     1.875rem;  /* 30px */
-  --text-h3:                  1.125rem;  /* 18px */
-  --text-h3--line-height:     1.625rem;  /* 26px */
-  --text-body:                1rem;      /* 16px */
-  --text-body--line-height:   1.5rem;    /* 24px */
-  --text-btn:                 1rem;      /* 16px */
-  --text-btn--line-height:    1.5rem;    /* 24px */
-  --text-label:               0.875rem;  /* 14px */
-  --text-label--line-height:  1.25rem;   /* 20px */
-  --text-caption:             0.75rem;   /* 12px */
-  --text-caption--line-height: 1.125rem; /* 18px */
+  --font-sans: var(--font-inter), var(--font-ibm-plex-arabic), ui-sans-serif, system-ui, sans-serif;
 
-  /* ── Border Radius ────────────────────────────────── */
-  --radius-btn:   0.75rem;  /* 12px — buttons & inputs */
-  --radius-card:  1rem;     /* 16px — cards & modals */
+  --radius-btn:  0.75rem;
+  --radius-card: 1rem;
 
-  /* ── Transitions ──────────────────────────────────── */
-  --duration-fast:   150ms;
-  --duration-normal: 300ms;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-/* ── Base Styles ──────────────────────────────────────── */
-:root {
-  --background: #ffffff;
-  --foreground: #062544;
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: #fff;
+  color: var(--color-navy);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv11", "ss03";
 }
 
-/* Arabic text: switch to IBM Plex Sans Arabic */
-[lang="ar"],
-[dir="rtl"] {
+html[lang="ar"] body,
+html[lang="ar"] button,
+html[lang="ar"] input,
+html[lang="ar"] select,
+html[lang="ar"] textarea {
   font-family: var(--font-ibm-plex-arabic), ui-sans-serif, system-ui, sans-serif;
 }
 
-/* Respect reduced-motion preference */
+/* Arabic joins break under tracking */
+html[dir="rtl"] * {
+  letter-spacing: 0 !important;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-turquoise);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+::selection {
+  background: var(--color-turquoise);
+  color: var(--color-navy);
+}
+
+/* Numerals that must not shift */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* White logo is a black-background JPG; lighten drops the black on navy */
+.logo-on-navy {
+  mix-blend-mode: lighten;
+}
+
+/* FAQ chevron */
+details > summary {
+  list-style: none;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] > summary .faq-chevron {
+  transform: rotate(180deg);
+}
+.faq-chevron {
+  transition: transform 300ms var(--ease-out-quart);
+}
+
+/* Scroll-driven reveal. No JS, falls back to visible. */
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal-in linear both;
+    animation-timeline: view();
+    animation-range: entry 5% entry 45%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    animation: none !important;
+  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* One-time entrance for the hero devices */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise-from, 40px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rise {
+  animation: rise 700ms var(--ease-out-quart) both;
+  animation-delay: var(--rise-delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none !important;
+  }
+}
+
+.scroll-x {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+
+/* ───────── Motion system ───────── */
+
+:root {
+  interpolate-size: allow-keywords;
+}
+
+/* Hero headline: words slide up out of a mask */
+@keyframes word-up {
+  from {
+    transform: translateY(112%);
+  }
+  to {
+    transform: none;
+  }
+}
+.hero-word {
+  animation: word-up 900ms var(--ease-out-quart) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.fade-up {
+  animation: fade-up 800ms var(--ease-out-quart) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Pointer depth (set by PointerStage via --mx / --my in -1..1) */
+.depth-a {
+  translate: calc(var(--mx, 0) * -10px) calc(var(--my, 0) * -8px);
+}
+.depth-b {
+  translate: calc(var(--mx, 0) * 16px) calc(var(--my, 0) * 10px);
+}
+.depth-c {
+  translate: calc(var(--mx, 0) * -22px) calc(var(--my, 0) * 14px);
+}
+.tilt {
+  transform: perspective(1200px) rotateY(calc(var(--mx, 0) * 7deg)) rotateX(calc(var(--my, 0) * -5deg));
+  transition: transform 120ms linear;
+  will-change: transform;
+}
+
+/* FAQ: animated open/close (Chromium), instant elsewhere */
+details::details-content {
+  block-size: 0;
+  overflow: clip;
+  transition:
+    block-size 380ms var(--ease-out-quart),
+    content-visibility 380ms allow-discrete;
+}
+details[open]::details-content {
+  block-size: auto;
+}
+
+/* Interactive rows */
+.row-hover {
+  position: relative;
+  isolation: isolate;
+}
+.row-hover::before {
+  content: "";
+  position: absolute;
+  inset: 0 -1.5rem;
+  z-index: -1;
+  border-radius: 1.25rem;
+  background: #fff;
+  opacity: 0;
+  transform: scale(0.985);
+  transition:
+    opacity 250ms var(--ease-out-quart),
+    transform 250ms var(--ease-out-quart);
+}
+@media (hover: hover) {
+  .row-hover:hover::before {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Scroll-driven, with a visible fallback when unsupported */
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: translateY(2.5rem) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes slide-in-start {
+  from {
+    opacity: 0;
+    transform: translateX(var(--sx, -2.5rem));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes par {
+  from {
+    transform: translateY(var(--par-from, 3rem));
+  }
+  to {
+    transform: translateY(var(--par-to, -3rem));
+  }
+}
+@keyframes word-in {
+  from {
+    opacity: 0.16;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes hero-par {
+  to {
+    transform: translateY(var(--par, 4rem));
+  }
+}
+@keyframes hero-rings {
+  to {
+    transform: scale(1.45) rotate(24deg);
+    opacity: 0.12;
+  }
+}
+@keyframes progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+[dir="rtl"] {
+  --sx: 2.5rem;
+}
+
+@supports (animation-timeline: view()) {
+  .reveal-scale {
+    animation: scale-in linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 60%;
+  }
+  .reveal-start {
+    animation: slide-in-start linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+  .par {
+    animation: par linear both;
+    animation-timeline: view();
+    animation-range: cover 0% cover 100%;
+  }
+  .scroll-word {
+    animation: word-in linear both;
+    animation-timeline: view();
+    animation-range: entry 25% cover 30%;
+  }
+  .grow-x {
+    transform-origin: left;
+    animation: grow-x linear both;
+    animation-timeline: view();
+    animation-range: entry 30% cover 45%;
+  }
+  [dir="rtl"] .grow-x {
+    transform-origin: right;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .hero-par {
+    animation: hero-par linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 90vh;
+  }
+  .hero-rings {
+    animation: hero-rings linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 100vh;
+  }
+  .progress {
+    transform-origin: left;
+    animation: progress linear both;
+    animation-timeline: scroll(root);
+  }
+  [dir="rtl"] .progress {
+    transform-origin: right;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-word,
+  .fade-up,
+  .reveal-scale,
+  .reveal-start,
+  .par,
+  .scroll-word,
+  .grow-x,
+  .hero-par,
+  .hero-rings,
+  .progress {
+    animation: none !important;
+  }
+  .tilt {
+    transform: none;
+  }
+  .depth-a,
+  .depth-b,
+  .depth-c {
+    translate: none;
+  }
+}
+
+/* Layered sections: each rounded top overlaps the one above */
+.layer {
+  position: relative;
+  z-index: 10;
+  margin-top: -2.5rem;
+  border-radius: 2.5rem 2.5rem 0 0;
+}
+@media (min-width: 1024px) {
+  .layer {
+    margin-top: -3.5rem;
+    border-radius: 3.5rem 3.5rem 0 0;
+  }
+}
+
+/* Pinned gallery slides */
+.slide .ph,
+.slide-info {
+  transition:
+    transform 850ms var(--ease-out-quart),
+    opacity 600ms var(--ease-out-quart);
+}
+.slide .ph:nth-child(2) {
+  transition-delay: 90ms;
+}
+.slide[data-state="before"] .ph {
+  transform: translateY(-7rem);
+  opacity: 0;
+}
+.slide[data-state="after"] .ph {
+  transform: translateY(7rem);
+  opacity: 0;
+}
+.slide-info[data-state="before"] {
+  transform: translateY(-1.5rem);
+  opacity: 0;
+}
+.slide-info[data-state="after"] {
+  transform: translateY(1.5rem);
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slide .ph,
+  .slide-info {
+    transition: none;
   }
 }
