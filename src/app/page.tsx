@@ -418,7 +418,7 @@ export default function Home() {
 
             {/* Copyright */}
             <p className="text-white/30 text-sm">
-              © {new Date().getFullYear()} Inzerv. All rights reserved.
+              © 2026 Inzerv. All rights reserved.
             </p>
           </div>
         </div>
