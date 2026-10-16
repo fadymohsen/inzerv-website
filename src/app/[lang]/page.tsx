@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/Button";
 import { Faq } from "@/components/Faq";
-import { ArrowIcon, CheckIcon } from "@/components/Icons";
+import { ArrowIcon } from "@/components/Icons";
 import { IPhone, type Shot } from "@/components/IPhone";
 import { HeroWords, ScrollWords } from "@/components/Motion";
 import { PinnedGallery } from "@/components/PinnedGallery";
@@ -36,13 +36,6 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const cheapestDelivery = Math.min(...destinations.map((d) => d.deliveryFee));
   const first = services[0];
 
-  const facts = [
-    fmt(t.home.hero.factDocs, { n: num(services.length, lang) }),
-    fmt(t.home.hero.factCountries, { n: num(destinations.length, lang) }),
-    t.home.hero.factTracking,
-    t.home.hero.factLang,
-  ];
-
   const titleWords = t.home.hero.title.split(" ").length;
 
   return (
@@ -54,7 +47,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         </div>
 
         <div className="relative mx-auto grid max-w-7xl gap-6 px-5 pt-14 lg:min-h-[47rem] lg:grid-cols-[1.08fr_1fr] lg:px-8 lg:pt-24">
-          <div className="flex flex-col pb-10 lg:pb-16">
+          <div className="flex flex-col pb-10 lg:justify-center lg:pb-16">
             <h1 className="text-[clamp(2.6rem,5vw,4.6rem)] font-semibold leading-[1] tracking-[-0.04em] rtl:leading-[1.2]">
               <HeroWords text={t.home.hero.title} />{" "}
               <HeroWords text={t.home.hero.titleAccent} accent startDelay={titleWords * 80} />
@@ -74,19 +67,6 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                 {t.home.hero.secondary}
               </ButtonLink>
             </div>
-            <ul
-              className="fade-up mt-12 hidden grid-cols-2 gap-x-6 gap-y-4 border-t border-white/15 pt-7 text-sm text-white/75 sm:grid sm:grid-cols-4 lg:mt-auto lg:max-w-xl lg:grid-cols-2 xl:grid-cols-4"
-              style={vars({ "--d": "950ms" })}
-            >
-              {facts.map((f) => (
-                <li key={f} className="flex items-start gap-2.5 leading-snug">
-                  <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-turquoise text-navy">
-                    <CheckIcon size={10} />
-                  </span>
-                  {f}
-                </li>
-              ))}
-            </ul>
           </div>
 
           {/* iPhone cluster */}
@@ -167,17 +147,6 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </div>
             )}
           </PointerStage>
-
-          <ul className="grid grid-cols-2 gap-x-6 gap-y-3 border-t border-white/15 pb-8 pt-6 text-sm text-white/75 sm:hidden">
-            {facts.map((f) => (
-              <li key={f} className="flex items-start gap-2.5 leading-snug">
-                <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full bg-turquoise text-navy">
-                  <CheckIcon size={10} />
-                </span>
-                {f}
-              </li>
-            ))}
-          </ul>
         </div>
       </section>
 
@@ -213,7 +182,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                     <p className="mt-6 max-w-[42ch] text-lg leading-relaxed text-ink-muted">{b.text}</p>
                   </div>
                   <div
-                    className={`reveal-scale relative flex h-[24rem] items-end justify-center overflow-hidden rounded-[2rem] sm:h-[36rem] ${s.panel} ${reverse ? "lg:order-1" : ""}`}
+                    className={`reveal-scale relative flex items-center justify-center overflow-hidden rounded-[2rem] py-14 sm:py-16 ${s.panel} ${reverse ? "lg:order-1" : ""}`}
                   >
                     <div
                       className="par pointer-events-none absolute left-1/2 top-1/2 w-[34rem] -translate-x-1/2 -translate-y-1/2 opacity-70"
@@ -221,10 +190,8 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                     >
                       <Rings className="w-full" />
                     </div>
-                    <div className="par relative w-[15.5rem] sm:w-[17.5rem]" style={vars({ "--par-from": "5rem", "--par-to": "-1.5rem" })}>
-                      <div className="translate-y-[8%]">
-                        <IPhone shot={s.shot} locale={lang} t={t.app} sizes="17.5rem" className="drop-shadow-[0_2rem_2.5rem_rgba(3,26,48,0.4)]" />
-                      </div>
+                    <div className="par relative w-[15.5rem] sm:w-[17.5rem]" style={vars({ "--par-from": "1.75rem", "--par-to": "-1.75rem" })}>
+                      <IPhone shot={s.shot} locale={lang} t={t.app} sizes="17.5rem" className="drop-shadow-[0_2rem_2.5rem_rgba(3,26,48,0.4)]" />
                     </div>
                   </div>
                 </article>
