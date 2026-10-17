@@ -7,7 +7,7 @@ import { buttonClass } from "@/components/Button";
 import { Field, describedBy, inputClass } from "@/components/forms";
 import { BackIcon, CheckIcon, UploadIcon } from "@/components/Icons";
 import type { Dict } from "@/dictionaries/en";
-import { ApiError, DEMO, api, clearSession, getSession, saveSession } from "@/lib/api-client";
+import { ApiError, api, clearSession, getSession, saveSession } from "@/lib/api-client";
 import { fmt, money } from "@/lib/dictionaries";
 import { countryName, digits, processingTime, serviceName } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
@@ -404,12 +404,6 @@ export function CheckoutFlow({
   return (
     <div className={`grid gap-10 lg:gap-16 ${step >= 1 ? "lg:grid-cols-[1fr_21rem]" : "max-w-2xl"}`}>
       <div ref={formRef} className="min-w-0 scroll-mt-28">
-        {DEMO && (
-          <p role="note" className="mb-8 rounded-btn border border-warning/50 bg-white px-4 py-3 text-sm font-medium text-warning">
-            {t.demoNote}
-          </p>
-        )}
-
         {/* Stepper */}
         <ol className="mb-10 flex items-center gap-2" aria-label={t.title}>
           {numberedSteps.map((k) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { API_URL } from "./config";
+import { API_URL, CHECKOUT_DEMO } from "./config";
 import type { AuthUser } from "./types";
 
 const TOKEN_KEY = "inzerv.token";
@@ -144,9 +144,7 @@ const realApi = {
  * Demo mode: the checkout runs entirely in the browser, any sign-in or sign-up is accepted.
  * Nothing is sent to the backend and no account, order or file is created.
  */
-const demoFlag = process.env.NEXT_PUBLIC_CHECKOUT_DEMO;
-// On in `next dev` unless set to "false"; in production builds only when set to "true".
-export const DEMO = demoFlag === "true" || (demoFlag !== "false" && process.env.NODE_ENV !== "production");
+export const DEMO = CHECKOUT_DEMO;
 
 const pause = <T,>(value: T, ms = 500) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
 
