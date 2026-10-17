@@ -10,7 +10,18 @@ import { hasLocale } from "@/lib/i18n";
 export async function generateMetadata({ params }: PageProps<"/[lang]/about">): Promise<Metadata> {
   const { lang } = await params;
   if (!hasLocale(lang)) return {};
-  return { title: getDictionary(lang).nav.about };
+  const t = getDictionary(lang);
+  return {
+    title: t.about.title,
+    description: t.meta.pages.about,
+    alternates: {
+      canonical: `https://inzerv.co/${lang}/about`,
+      languages: {
+        en: "https://inzerv.co/en/about",
+        ar: "https://inzerv.co/ar/about",
+      },
+    },
+  };
 }
 
 const roadmapIcons = [DocumentIcon, HomeIcon, CarIcon, HeartIcon, TagIcon];
@@ -107,6 +118,20 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
           </ButtonLink>
         </div>
       </section>
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: lang === "ar" ? "الرئيسية" : "Home", item: `https://inzerv.co/${lang}` },
+              { "@type": "ListItem", position: 2, name: t.title, item: `https://inzerv.co/${lang}/about` },
+            ],
+          }),
+        }}
+      />
     </>
   );
 }

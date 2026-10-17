@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { getDictionary } from "@/lib/dictionaries";
+import { SUPPORT_EMAIL } from "@/lib/config";
 import { dirOf, hasLocale, locales } from "@/lib/i18n";
 import "../globals.css";
 
@@ -31,10 +32,20 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
   if (!hasLocale(lang)) return {};
   const t = getDictionary(lang);
   return {
+    metadataBase: new URL("https://inzerv.co"),
     title: { default: t.meta.title, template: "%s | Inzerv" },
     description: t.meta.description,
     alternates: {
-      languages: { en: "/en", ar: "/ar" },
+      canonical: `https://inzerv.co/${lang}`,
+      languages: {
+        en: "https://inzerv.co/en",
+        ar: "https://inzerv.co/ar",
+      },
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t.meta.title,
+      description: t.meta.description,
     },
   };
 }
@@ -51,6 +62,23 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
       className={`${inter.variable} ${plexArabic.variable}`}
     >
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Inzerv",
+              url: "https://inzerv.co",
+              logo: "https://inzerv.co/logo_full_color.jpg",
+              contactPoint: {
+                "@type": "ContactPoint",
+                contactType: "customer service",
+                email: SUPPORT_EMAIL,
+              },
+            }),
+          }}
+        />
         <Script
           id="gtm-script"
           strategy="afterInteractive"

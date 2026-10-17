@@ -7,7 +7,18 @@ import { hasLocale } from "@/lib/i18n";
 export async function generateMetadata({ params }: PageProps<"/[lang]/refund-policy">): Promise<Metadata> {
   const { lang } = await params;
   if (!hasLocale(lang)) return {};
-  return { title: getDictionary(lang).legal.refund.title };
+  const t = getDictionary(lang);
+  return {
+    title: t.legal.refund.title,
+    description: t.meta.pages.refund,
+    alternates: {
+      canonical: `https://inzerv.co/${lang}/refund-policy`,
+      languages: {
+        en: "https://inzerv.co/en/refund-policy",
+        ar: "https://inzerv.co/ar/refund-policy",
+      },
+    },
+  };
 }
 
 export default async function RefundPage({ params }: PageProps<"/[lang]/refund-policy">) {

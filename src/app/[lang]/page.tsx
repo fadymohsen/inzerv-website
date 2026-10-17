@@ -353,6 +353,22 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         </div>
       </section>
 
+      {/* FAQPage structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: t.home.faq.items.map((item) => ({
+              "@type": "Question",
+              name: item.q,
+              acceptedAnswer: { "@type": "Answer", text: item.a },
+            })),
+          }),
+        }}
+      />
+
       {/* CTA */}
       <section className="layer relative overflow-hidden bg-turquoise">
         <div className="mx-auto flex max-w-7xl flex-col items-start gap-8 px-5 py-16 lg:min-h-[32rem] lg:justify-center lg:px-8 lg:py-36">
