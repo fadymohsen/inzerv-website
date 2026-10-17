@@ -141,10 +141,12 @@ const realApi = {
 };
 
 /**
- * Demo mode (NEXT_PUBLIC_CHECKOUT_DEMO=true): the checkout runs entirely in the browser.
+ * Demo mode: the checkout runs entirely in the browser, any sign-in or sign-up is accepted.
  * Nothing is sent to the backend and no account, order or file is created.
  */
-export const DEMO = process.env.NEXT_PUBLIC_CHECKOUT_DEMO === "true";
+const demoFlag = process.env.NEXT_PUBLIC_CHECKOUT_DEMO;
+// On in `next dev` unless set to "false"; in production builds only when set to "true".
+export const DEMO = demoFlag === "true" || (demoFlag !== "false" && process.env.NODE_ENV !== "production");
 
 const pause = <T,>(value: T, ms = 500) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
 
