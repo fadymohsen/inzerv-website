@@ -84,7 +84,7 @@ function safeParse(text: string): unknown {
 
 type AuthResponse = { user: AuthUser; accessToken: string };
 
-export const api = {
+const realApi = {
   login: (email: string, password: string) =>
     request<AuthResponse>("/auth/login", {
       method: "POST",
@@ -139,3 +139,35 @@ export const api = {
       body: JSON.stringify({ requestId, paymentMethod }),
     }),
 };
+
+/**
+ * Demo mode (NEXT_PUBLIC_CHECKOUT_DEMO=true): the checkout runs entirely in the browser.
+ * Nothing is sent to the backend and no account, order or file is created.
+ */
+export const DEMO = process.env.NEXT_PUBLIC_CHECKOUT_DEMO === "true";
+
+const pause = <T,>(value: T, ms = 500) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
+
+const demoApi: typeof realApi = {
+  login: (email) =>
+    pause({ user: { id: "demo", email, firstName: "Demo", lastName: "User" }, accessToken: "demo" }),
+
+  register: (body) =>
+    pause({
+      user: { id: "demo", email: body.email, firstName: body.firstName, lastName: body.lastName },
+      accessToken: "demo",
+    }),
+
+  createRequest: () => {
+    const d = new Date();
+    const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return pause({ id: "demo", referenceNumber: `DEMO-${stamp}-${rand}`, totalAmount: 0 }, 700);
+  },
+
+  uploadDocument: () => pause({}, 300),
+
+  pay: () => pause({ transactionRef: "DEMO" }, 700),
+};
+
+export const api = DEMO ? demoApi : realApi;

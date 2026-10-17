@@ -253,6 +253,7 @@ export const en = {
     },
     back: "Back",
     next: "Continue",
+    demoNote: "Demo mode: nothing is sent to Inzerv and no account or order is created.",
     catalogDown: "The service list could not be loaded. Check your connection and try again.",
     retry: "Try again",
     account: {
