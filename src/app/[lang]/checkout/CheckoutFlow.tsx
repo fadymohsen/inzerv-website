@@ -19,7 +19,13 @@ type Errors = Record<string, string>;
 type Stage = "idle" | "creating" | "uploading" | "paying" | "done";
 
 const emailRe = /^\S+@\S+\.\S+$/;
-const passwordRe = /^(?=.*[A-Z])(?=.*\d).{8,128}$/;
+
+/** Random password for guest checkout. Never shown or stored; the customer can set one via Forgot password. */
+function guestPassword(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(24));
+  const alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return "Aa7" + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
+}
 
 export function CheckoutFlow({
   locale,
@@ -44,7 +50,7 @@ export function CheckoutFlow({
   const [focusTick, setFocusTick] = useState(0);
 
   // account
-  const [authMode, setAuthMode] = useState<"signin" | "register">("signin");
+  const [authMode, setAuthMode] = useState<"signin" | "register">("register");
   const [auth, setAuth] = useState({
     email: "",
     password: "",
@@ -154,7 +160,6 @@ export function CheckoutFlow({
       if (!auth.firstName.trim()) next.firstName = t.errors.required;
       if (!auth.lastName.trim()) next.lastName = t.errors.required;
       if (!auth.phone.trim()) next.phone = t.errors.required;
-      if (!passwordRe.test(auth.password)) next.password = t.errors.password;
     } else if (!auth.password) {
       next.password = t.errors.required;
     }
@@ -171,7 +176,7 @@ export function CheckoutFlow({
               firstName: auth.firstName.trim(),
               lastName: auth.lastName.trim(),
               email,
-              password: auth.password,
+              password: guestPassword(),
               phone: auth.phone.trim(),
               countryOfResidence: auth.country.trim() || undefined,
             });
@@ -179,7 +184,11 @@ export function CheckoutFlow({
       setSession({ token: res.accessToken, user: res.user });
       setStep(1);
     } catch (err) {
-      setAuthError(err instanceof ApiError && err.status === 0 ? t.errors.network : errMessage(err));
+      if (err instanceof ApiError && err.status === 409) {
+        setAuthError(/phone/i.test(err.message) ? t.errors.phoneExists : t.errors.emailExists);
+      } else {
+        setAuthError(errMessage(err));
+      }
     } finally {
       setAuthBusy(false);
     }
@@ -435,10 +444,10 @@ export function CheckoutFlow({
         {current === "account" && (
           <form onSubmit={submitAuth} noValidate className="flex flex-col gap-6">
             <h2 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold outline-none">
-              {authMode === "signin" ? t.account.signIn : t.account.register}
+              {authMode === "signin" ? t.account.signIn : t.account.guestTitle}
             </h2>
             <div role="tablist" className="inline-flex w-fit rounded-btn border border-line p-1">
-              {(["signin", "register"] as const).map((m) => (
+              {(["register", "signin"] as const).map((m) => (
                 <button
                   key={m}
                   type="button"
@@ -453,7 +462,7 @@ export function CheckoutFlow({
                     authMode === m ? "bg-navy text-white" : "text-navy hover:bg-bg-light"
                   }`}
                 >
-                  {m === "signin" ? t.account.signIn : t.account.register}
+                  {m === "signin" ? t.account.signIn : t.account.guest}
                 </button>
               ))}
             </div>
@@ -528,25 +537,28 @@ export function CheckoutFlow({
               </div>
             )}
 
+            {authMode === "signin" ? (
             <Field
               id="a-password"
               label={t.account.password}
               error={errors.password}
-              hint={authMode === "register" ? t.account.passwordHint : undefined}
               required
             >
               <input
                 id="a-password"
                 type="password"
                 dir="ltr"
-                autoComplete={authMode === "signin" ? "current-password" : "new-password"}
+                autoComplete="current-password"
                 value={auth.password}
                 onChange={(e) => setAuth({ ...auth, password: e.target.value })}
                 aria-invalid={!!errors.password}
-                aria-describedby={describedBy("a-password", !!errors.password, authMode === "register")}
+                aria-describedby={describedBy("a-password", !!errors.password, false)}
                 className={`${inputClass} text-start`}
               />
             </Field>
+            ) : (
+              <p className="max-w-[56ch] text-sm leading-relaxed text-ink-muted">{t.account.guestNote}</p>
+            )}
 
             {authError && (
               <p role="alert" className="rounded-btn border border-error/40 px-4 py-3 text-sm text-error">
@@ -555,7 +567,7 @@ export function CheckoutFlow({
             )}
 
             <button type="submit" disabled={authBusy} className={buttonClass("primary", "w-full sm:w-fit")}>
-              {authBusy ? t.account.continueAs + "…" : authMode === "signin" ? t.account.signIn : t.account.register}
+              {authBusy ? t.account.continueAs + "…" : authMode === "signin" ? t.account.signIn : t.account.continueGuest}
             </button>
           </form>
         )}

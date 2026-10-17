@@ -242,10 +242,10 @@ export const en = {
 
   checkout: {
     title: "Place a request",
-    sub: "Sign in or create an account, fill in the details, and see the full price before you pay.",
+    sub: "No account needed. Fill in the details and see the full price before you pay.",
     stepWord: "Step {n} of {total}",
     steps: {
-      account: "Account",
+      account: "Your details",
       details: "Details",
       documents: "Documents",
       delivery: "Delivery",
@@ -268,6 +268,10 @@ export const en = {
       signedInAs: "Signed in as {name}",
       signOut: "Use a different account",
       continueAs: "Continue",
+      guest: "Continue as guest",
+      guestTitle: "Your contact details",
+      guestNote: "No password needed. We use these details for your order. To follow it in the Inzerv app later, choose Forgot password with this email.",
+      continueGuest: "Continue",
     },
     details: {
       service: "Document",
@@ -326,7 +330,7 @@ export const en = {
     success: {
       title: "Your request is in",
       ref: "Reference number",
-      text: "We have received your request and payment. Sign in to the Inzerv app with the same email to follow its status, or contact us with the reference above.",
+      text: "We have received your request and payment. To follow it in the Inzerv app, choose Forgot password with the same email to set a password, or contact us with the reference above.",
       again: "Place another request",
     },
     errors: {
@@ -335,6 +339,8 @@ export const en = {
       required: "This field is required.",
       email: "Enter a valid email address.",
       password: "Use at least 8 characters with one uppercase letter and one number.",
+      emailExists: "This email already has an Inzerv account. Use the Sign in tab.",
+      phoneExists: "This phone number is already linked to an Inzerv account. Use the Sign in tab.",
       session: "Your session expired. Sign in again.",
       agree: "Please confirm to continue.",
       select: "Please choose an option.",
