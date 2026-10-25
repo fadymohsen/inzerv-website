@@ -50,7 +50,7 @@ export function CheckoutFlow({
   const [focusTick, setFocusTick] = useState(0);
 
   // account
-  const [authMode, setAuthMode] = useState<"signin" | "register">("register");
+  const [authMode, setAuthMode] = useState<"signin" | "register">("signin");
   const [auth, setAuth] = useState({
     email: "",
     password: "",
@@ -399,35 +399,9 @@ export function CheckoutFlow({
 
   const current = STEPS[step];
   const working = stage !== "idle";
-  const numberedSteps = STEPS.slice(session ? 1 : 0);
-
   return (
     <div className={`grid gap-10 lg:gap-16 ${step >= 1 ? "lg:grid-cols-[1fr_21rem]" : "max-w-2xl"}`}>
       <div ref={formRef} className="min-w-0 scroll-mt-28">
-        {/* Stepper */}
-        <ol className="mb-10 flex items-center gap-2" aria-label={t.title}>
-          {numberedSteps.map((k) => {
-            const idx = STEPS.indexOf(k);
-            const done = idx < step;
-            const active = idx === step;
-            return (
-              <li key={k} className="flex flex-1 flex-col gap-2" aria-current={active ? "step" : undefined}>
-                <span className={`h-1 rounded-full ${done || active ? "bg-turquoise" : "bg-line"}`} />
-                <span className={`hidden text-sm sm:block ${active ? "font-semibold" : "text-ink-muted"}`}>
-                  {t.steps[k]}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-        <p className="mb-6 text-sm text-ink-muted sm:hidden">
-          {fmt(t.stepWord, {
-            n: digits(String(numberedSteps.indexOf(current) + 1), locale),
-            total: digits(String(numberedSteps.length), locale),
-          })}
-          {": "}
-          {t.steps[current]}
-        </p>
 
         {session && (
           <p className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
@@ -444,55 +418,8 @@ export function CheckoutFlow({
         {current === "account" && (
           <form onSubmit={submitAuth} noValidate className="flex flex-col gap-6">
             <h2 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold outline-none">
-              {authMode === "signin" ? t.account.signIn : t.account.guestTitle}
+              {t.account.signIn}
             </h2>
-            <div role="tablist" className="inline-flex w-fit rounded-btn border border-line p-1">
-              {(["register", "signin"] as const).map((m) => (
-                <button
-                  key={m}
-                  type="button"
-                  role="tab"
-                  aria-selected={authMode === m}
-                  onClick={() => {
-                    setAuthMode(m);
-                    setErrors({});
-                    setAuthError("");
-                  }}
-                  className={`min-h-10 rounded-lg px-5 text-sm font-medium transition-colors duration-150 ${
-                    authMode === m ? "bg-navy text-white" : "text-navy hover:bg-bg-light"
-                  }`}
-                >
-                  {m === "signin" ? t.account.signIn : t.account.guest}
-                </button>
-              ))}
-            </div>
-
-            {authMode === "register" && (
-              <div className="grid gap-6 sm:grid-cols-2">
-                <Field id="a-first" label={t.account.firstName} error={errors.firstName} required>
-                  <input
-                    id="a-first"
-                    autoComplete="given-name"
-                    value={auth.firstName}
-                    onChange={(e) => setAuth({ ...auth, firstName: e.target.value })}
-                    aria-invalid={!!errors.firstName}
-                    aria-describedby={describedBy("a-first", !!errors.firstName, false)}
-                    className={inputClass}
-                  />
-                </Field>
-                <Field id="a-last" label={t.account.lastName} error={errors.lastName} required>
-                  <input
-                    id="a-last"
-                    autoComplete="family-name"
-                    value={auth.lastName}
-                    onChange={(e) => setAuth({ ...auth, lastName: e.target.value })}
-                    aria-invalid={!!errors.lastName}
-                    aria-describedby={describedBy("a-last", !!errors.lastName, false)}
-                    className={inputClass}
-                  />
-                </Field>
-              </div>
-            )}
 
             <Field id="a-email" label={t.account.email} error={errors.email} required>
               <input
@@ -509,35 +436,6 @@ export function CheckoutFlow({
               />
             </Field>
 
-            {authMode === "register" && (
-              <div className="grid gap-6 sm:grid-cols-2">
-                <Field id="a-phone" label={t.account.phone} error={errors.phone} required>
-                  <input
-                    id="a-phone"
-                    type="tel"
-                    inputMode="tel"
-                    dir="ltr"
-                    autoComplete="tel"
-                    value={auth.phone}
-                    onChange={(e) => setAuth({ ...auth, phone: e.target.value })}
-                    aria-invalid={!!errors.phone}
-                    aria-describedby={describedBy("a-phone", !!errors.phone, false)}
-                    className={`${inputClass} text-start`}
-                  />
-                </Field>
-                <Field id="a-country" label={t.account.country}>
-                  <input
-                    id="a-country"
-                    autoComplete="country-name"
-                    value={auth.country}
-                    onChange={(e) => setAuth({ ...auth, country: e.target.value })}
-                    className={inputClass}
-                  />
-                </Field>
-              </div>
-            )}
-
-            {authMode === "signin" ? (
             <Field
               id="a-password"
               label={t.account.password}
@@ -555,10 +453,7 @@ export function CheckoutFlow({
                 aria-describedby={describedBy("a-password", !!errors.password, false)}
                 className={`${inputClass} text-start`}
               />
-            </Field>
-            ) : (
-              <p className="max-w-[56ch] text-sm leading-relaxed text-ink-muted">{t.account.guestNote}</p>
-            )}
+            </Field>}
 
             {authError && (
               <p role="alert" className="rounded-btn border border-error/40 px-4 py-3 text-sm text-error">
@@ -567,7 +462,7 @@ export function CheckoutFlow({
             )}
 
             <button type="submit" disabled={authBusy} className={buttonClass("primary", "w-full sm:w-fit")}>
-              {authBusy ? t.account.continueAs + "…" : authMode === "signin" ? t.account.signIn : t.account.continueGuest}
+              {authBusy ? t.account.signIn + "…" : t.account.signIn}
             </button>
           </form>
         )}
