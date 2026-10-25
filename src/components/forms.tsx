@@ -1,5 +1,5 @@
 export const inputClass =
-  "block min-h-12 w-full rounded-btn border border-line bg-white px-4 text-base text-navy placeholder:text-text-secondary focus:border-turquoise focus:outline-none focus:ring-2 focus:ring-turquoise disabled:bg-bg-light disabled:text-text-secondary aria-[invalid=true]:border-error aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-error";
+  "block min-h-12 w-full rounded-btn border border-line bg-white px-4 pe-10 text-base text-navy placeholder:text-text-secondary focus:border-turquoise focus:outline-none focus:ring-2 focus:ring-turquoise disabled:bg-bg-light disabled:text-text-secondary aria-[invalid=true]:border-error aria-[invalid=true]:ring-1 aria-[invalid=true]:ring-error";
 
 export function Field({
   id,
