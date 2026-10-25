@@ -120,7 +120,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
           </Link>
           <Link
             href={`/${locale}/checkout`}
-            aria-label={t.account ?? "Account"}
+            aria-label="Account"
             className="inline-flex size-10 items-center justify-center rounded-lg text-white/75 transition-colors duration-150 hover:text-white"
           >
             <UserIcon size={22} />
