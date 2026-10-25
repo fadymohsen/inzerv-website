@@ -453,7 +453,7 @@ export function CheckoutFlow({
                 aria-describedby={describedBy("a-password", !!errors.password, false)}
                 className={`${inputClass} text-start`}
               />
-            </Field>}
+            </Field>
 
             {authError && (
               <p role="alert" className="rounded-btn border border-error/40 px-4 py-3 text-sm text-error">

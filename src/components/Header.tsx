@@ -7,7 +7,7 @@ import type { Dict } from "@/dictionaries/en";
 import { SUPPORT_EMAIL } from "@/lib/config";
 import { otherLocale, type Locale } from "@/lib/i18n";
 import { buttonClass } from "./Button";
-import { ArrowIcon, CloseIcon, MailIcon, MenuIcon } from "./Icons";
+import { ArrowIcon, CloseIcon, MailIcon, MenuIcon, UserIcon } from "./Icons";
 import { Logo } from "./Logo";
 import { Rings } from "./Rings";
 
@@ -114,9 +114,16 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
             href={switchHref}
             hrefLang={otherLocale(locale)}
             aria-label={t.languageLabel}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-white/75 transition-colors duration-150 hover:text-white"
+            className="rounded-lg px-3 py-2 text-xl transition-opacity duration-150 hover:opacity-80"
           >
-            {t.language}
+            {locale === "en" ? "🇪🇬" : "🇬🇧"}
+          </Link>
+          <Link
+            href={`/${locale}/checkout`}
+            aria-label={t.account ?? "Account"}
+            className="inline-flex size-10 items-center justify-center rounded-lg text-white/75 transition-colors duration-150 hover:text-white"
+          >
+            <UserIcon size={22} />
           </Link>
           <Link href={`/${locale}/checkout`} className={buttonClass("primary", "min-h-11 px-5 text-sm")}>
             {t.cta}
@@ -206,7 +213,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
                       l === locale ? "bg-white text-navy" : "text-white/80"
                     }`}
                   >
-                    {l === "en" ? "English" : "العربية"}
+                    {l === "en" ? "🇬🇧 English" : "🇪🇬 العربية"}
                   </Link>
                 ))}
               </div>
