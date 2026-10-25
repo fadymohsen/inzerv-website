@@ -6,6 +6,20 @@ export const en = {
     title: "Inzerv | Egyptian government documents, delivered",
     description:
       "Order Egyptian birth, family record and marriage documents online. Inzerv's team in Egypt handles the paperwork and delivers it to you, in Egypt or abroad.",
+    pages: {
+      services:
+        "Browse Egyptian government documents — birth certificates, family records and marriage documents. Order online; Inzerv's team in Egypt collects and delivers them to your door.",
+      about:
+        "Inzerv handles Egyptian government paperwork on your behalf, wherever you are. Learn about our mission, values and service roadmap.",
+      contact:
+        "Get in touch with the Inzerv team for questions about document requests, existing orders, or payment and refunds.",
+      terms:
+        "Read Inzerv's Terms and Conditions for government document and limousine services.",
+      privacy:
+        "How Inzerv collects, uses and protects your personal data across document, transportation and account services.",
+      refund:
+        "Inzerv's cancellation and refund policy for government document requests and limousine service bookings.",
+    },
   },
 
   nav: {
@@ -29,8 +43,8 @@ export const en = {
     contactTitle: "Contact",
     rights: "Inzerv Group for Digital Marketing & Brokerage. All rights reserved.",
     year: "2026",
-    terms: "Terms of Service",
-    refund: "Refund Policy",
+    terms: "Terms and Conditions",
+    refund: "Cancellation and Refund Policy",
     privacy: "Privacy Policy",
     checkout: "Place a request",
   },
@@ -169,6 +183,7 @@ export const en = {
 
   services: {
     title: "Services",
+    metaTitle: "Egyptian Government Documents & Services",
     sub: "Government Documents is live. More categories are on the way, each under the same account.",
     liveNote: "",
     staleNote:
@@ -350,184 +365,206 @@ export const en = {
   },
 
   legal: {
-    draftTitle: "Draft for review",
+    draftTitle: "Draft for publication review",
     draftText:
-      "This page is a draft and has not yet been approved by Inzerv's legal advisers. It may change before launch.",
+      "This page is a revised draft under publication review and may change before going live.",
     updated: "Last updated",
     toc: "On this page",
     top: "Back to top",
     questions: "Questions about this page? Write to",
     terms: {
-      title: "Terms of Service",
+      title: "Terms and Conditions",
       intro:
-        "These terms govern your use of the Inzerv website and mobile app. Please read them before placing a request.",
+        "These terms govern use of the Inzerv website and app and the ordering of services through them. Inzerv refers to the platform operated by INSERVE Group for Digital Marketing and Brokerage. Please read these terms, the Cancellation and Refund Policy and the Privacy Policy before confirming your request. A copy of the terms and details applicable to your request is made available for your reference.",
       sections: [
         {
-          h: "1. Who we are",
+          h: "1 Our services and Inzerv's responsibility",
           p: [
-            "Inzerv is operated by Inzerv Group for Digital Marketing & Brokerage (\"Inzerv\", \"we\"). By creating an account or placing a request you agree to these terms.",
+            "Inzerv is a private managed services platform. It is not a government body or a document issuing authority. Inzerv manages the customer relationship, requests, payments, follow-up and complaints, and assigns work to service offices, transport companies and delivery providers. Using partners does not release Inzerv from its obligations to you.",
+            "Documents are issued by the competent authorities under their rules. Eligibility for issuance, authentication or use is subject to those authorities' requirements. Inzerv does not promise to bypass legal requirements. Using the platform does not constitute a general power of attorney to act on your behalf.",
+            "Only services and routes actually enabled on the platform may be ordered. Mentioning a country or service in introductory content does not mean that every area or service option is available. The request form identifies coverage and availability at the time of booking.",
           ],
         },
         {
-          h: "2. What the service is",
+          h: "2 Accounts and accurate information",
           p: [
-            "Inzerv acts as an intermediary. We collect your information and documents, submit applications to the relevant Egyptian authorities on your behalf, and deliver the result to the address you give us.",
-            "The authorities, not Inzerv, issue the documents. Processing times we show are estimates and can change when an authority is slow or asks for more information.",
+            "You must create an account and sign in to submit requests, upload documents and view private request information. You must have the legal capacity to contract, provide accurate and current information, keep your login credentials confidential and notify support if you suspect unauthorised use.",
+            "Impersonation, forged documents, misleading information and unlawful use are prohibited. A suspected activity may be paused or an account restricted to verify the circumstances and protect individuals' data. We notify you to the extent permitted by law and review outstanding obligations and payments. A restriction does not automatically result in forfeiture of your funds.",
           ],
         },
         {
-          h: "3. Your account",
-          ul: [
-            "Give accurate information and keep it up to date.",
-            "Choose a password of at least 8 characters with one uppercase letter and one number, and keep it private.",
-            "You are responsible for activity on your account. Tell us at once if you think it has been misused.",
-          ],
-        },
-        {
-          h: "4. Placing a request",
+          h: "3 Document requests for yourself or another person",
           p: [
-            "You confirm that the details and files you submit are correct before you pay. If you order for another person, you confirm that you are entitled to request the document and have that person's consent.",
-            "If we find a problem, we mark the request as Action Required and processing pauses until you respond.",
+            "Each service page explains the information, copies and originals required, and the conditions for application and collection. Selecting a family relationship in the form does not replace verification of eligibility, supporting evidence or any consent or authorisation required by the service and the competent authority.",
+            "On first use of document services, the applicant's identity must be checked using a clear ID image and a face image captured with the in-app camera. Authorised Inzerv personnel review them. This is an internal check, not government certification or a guarantee of automated biometric matching. Successful verification does not authorise access to another person's data or documents without a lawful basis.",
+            "When applying for another person, you must be authorised to provide their information and obtain the necessary consents or have the required legal authority. Each case is reviewed. Your acceptance of these terms does not replace the consent of the person concerned or their guardian where required.",
           ],
         },
         {
-          h: "5. Prices and payment",
+          h: "4 Prices and payment",
           p: [
-            "The total is the service fee for each copy plus the delivery fee for your destination. It is shown in Egyptian pounds before you pay, and that total is the amount you are charged.",
+            "Before confirmation, we display the service description, fees, currency and total amount, including applicable extras, delivery charges and taxes. No additional cost is collected without your approval. General price or requirement updates do not retrospectively change an accepted request. Any change specific to it requires notice to you and your approval.",
+            "Document services are paid for according to the order summary and available payment methods. At launch, limousine bookings do not require a deposit. The usual arrangement is full payment during the trip through the app or a secure payment link associated with the booking. Full advance payment is optional. Limousine payments are in Egyptian pounds. Currency conversion differences applied by your bank or payment provider are subject to the terms it presents to you.",
+            "Submitting a request or making a successful payment does not confirm a service that requires availability or eligibility review. You are shown whether the request is confirmed or remains under review. Collection of payment alone does not establish acceptance for execution. A transaction receipt is available to the authorised customer. Full card details or secret card codes must not be requested through chat.",
           ],
         },
         {
-          h: "6. Cancellation and refunds",
-          p: ["You can cancel a request until it is under delivery. Our Refund Policy explains what happens to your payment."],
-        },
-        {
-          h: "7. Delivery",
+          h: "5 Document service times and original documents",
           p: [
-            "We deliver to the address and phone number you provide. Delivery times depend on the destination and the courier. If a delivery fails because the address or phone number was wrong, extra delivery costs may apply.",
+            "The stated execution period begins once all information, documents and payment are complete and any required originals have been received and accepted. Periods are measured in working days or working hours as explained in the service information. Inbound shipping is excluded unless stated otherwise. The clock pauses while required information is awaited from you, then resumes for the remaining period after that information is accepted. We notify you of the revised expected date.",
+            "We inform you of material delays, their cause and the available remedy. An Inzerv delay is not classified as a customer delay. Describing a timeframe as an estimate does not remove your rights if we fail to meet the agreement or an applicable statutory deadline.",
+            "Send originals only as instructed for the request, to the approved address. Receipt and delivery are documented. Originals not retained by the issuing authority are returned. Another recipient may be nominated where the service permits, subject to identity checks. Requirements for personal attendance or legal guardianship apply where relevant. If loss or damage arises from our error, we handle the remedy and assess responsibility and compensation according to the circumstances and the law.",
           ],
         },
         {
-          h: "8. Acceptable use",
-          ul: [
-            "Do not submit forged, altered or someone else's documents without their authority.",
-            "Do not misuse the service, attempt to access other accounts, or interfere with how it works.",
-          ],
-        },
-        {
-          h: "9. Our responsibility",
+          h: "6 Airport reception and limousine rules",
           p: [
-            "We take care in handling your request, but we do not control decisions, delays or refusals by government authorities. To the extent the law allows, Inzerv is not liable for indirect or consequential losses.",
+            "Booking times use the local time at the pickup location. You are responsible for accurate locations, times, passenger and luggage numbers, child seat needs and special luggage details. We commit to the selected vehicle model; the colour may differ. The model is not replaced without your approval.",
+            "A standard booking for a supported model made at least twelve hours before pickup is confirmed once completed, without a mandatory deposit. Shorter notice bookings and special cases require review. For special cases, we provide an initial response within twenty minutes. It may explain that review is continuing and give a time for a final response. This is not a guarantee of final confirmation within twenty minutes.",
+            "Airport reception includes two hours of free waiting from the arrival time you entered, not the actual landing time. If you notify us of a change before the vehicle departs, waiting starts from the newly agreed time. After departure, or beyond the allowance, any cost is reviewed and explained to you. Do not rely on automatic flight monitoring; tell us about changes.",
+            "Stops follow the booking summary: one free stop of up to fifteen minutes per one hundred kilometres, with one stop also allowed for a trip shorter than one hundred kilometres. Your allowance and any additional charges are explained before approval. Changes to the route, time or model require an availability review and your approval of any price difference. The original booking remains in place until the change is approved.",
+            "You may book for another passenger after obtaining the consent needed to use their information and send them trip details. The account holder or passenger may pay, with controls to prevent duplicate collection. Changes and cancellation are handled by the account holder or verified support. Direct operational contact between the passenger and driver is available to coordinate the trip.",
           ],
         },
         {
-          h: "10. Changes to these terms",
-          p: ["We may update these terms. The date at the top shows the latest version. If you keep using Inzerv after a change, you accept the new terms."],
+          h: "7 Cancellation and complaints",
+          p: [
+            "The published Cancellation and Refund Policy supplied with the request applies. Voluntary cancellation of document services ends before In Progress; limousine cancellation depends on whether the vehicle has departed to carry out the booking. No term excludes responsibility for errors by Inzerv or its partners or removes a mandatory right to a remedy, refund or compensation.",
+            "Inzerv handles enquiries and complaints through its official channels. Support is available in Arabic and English around the clock through chat and the published hotline once activated. An automated assistant may respond first, with access to a staff member or a direct call. Do not use chat to send passwords or secret verification codes.",
+          ],
         },
         {
-          h: "11. Governing law",
-          p: ["These terms are governed by the laws of the Arab Republic of Egypt."],
+          h: "8 Changes and applicable law",
+          p: [
+            "Updates to these terms are published with their effective date, and material changes are explained appropriately. New versions apply to new contracts and do not retrospectively alter agreed rights under an existing request without valid consent. Egyptian law governs the relationship, subject to mandatory local rules applicable to services outside Egypt and consumers' rights to approach the competent authorities. Use of the platform alone does not impose arbitration or waive the right to go to court.",
+          ],
         },
       ],
     } as LegalDoc,
     refund: {
-      title: "Refund Policy",
-      intro: "This page explains when you can cancel a request and what happens to your payment.",
+      title: "Cancellation and Refund Policy",
+      intro:
+        "Behind every request is a person trusting us with their time, documents and peace of mind. These policies explain your rights, what we are responsible for, and how we will put things right if a service falls short. Accepting them does not mean giving up your rights. Your trust is a responsibility we carry at every step.",
       sections: [
         {
-          h: "1. When you can cancel",
-          ul: [
-            "Requested, Received, Under Review or Action Required: you can cancel and it takes effect immediately.",
-            "In Progress: you can ask to cancel. Our team reviews the request and confirms, because work with the authorities may already have started.",
-            "Under Delivery, Completed or Cancelled: the request can no longer be cancelled.",
+          h: "1 Cancelling government document requests",
+          p: [
+            "You may cancel your request directly before it enters the In Progress status, including while it is Under Review. Once you confirm an eligible cancellation, it is recorded immediately. Cancellation does not depend on discretionary staff approval or on completion of the refund.",
+            "In Progress means that Inzerv has verified that the service office has actually started carrying out the service. Receiving original documents or handing them to the office does not, by itself, mean that execution has started. We explain this cutoff before you submit the request, and its status is visible in your account.",
+            "Once a request is In Progress, voluntary cancellation by the customer is no longer available, whether in full or in part. You may still complain about an error, inability to provide the service or failure to meet the agreed requirements. Your statutory rights to a refund or compensation remain unaffected.",
           ],
         },
         {
-          h: "2. How to cancel",
+          h: "2 Refunds for document services",
           p: [
-            "Open the request in the Inzerv app, choose Cancel Request and give a reason. A cancellation cannot be undone; you would need to place a new request.",
+            "For an eligible cancellation before In Progress, payments for the cancelled services are refunded. Only actual, non-refundable payment processing fees may be deducted, where disclosed to you and permitted by law. We do not deduct fees returned by the payment gateway or an Inzerv commission for a service that was not performed.",
+            "If cancellation or inability to provide the service is attributable to Inzerv or an error by its partners, we do not pass the cost of our error on to you. We refund the amount due for the service not provided as agreed and bear the payment fees associated with that refund, without affecting your statutory rights to a remedy or compensation.",
+            "If we hold your original documents, we arrange their return with proof of delivery, unless the issuing authority retains them under the disclosed service requirements. Any delivery charge payable by you is explained before it is arranged. You do not bear a return cost caused by our error.",
           ],
         },
         {
-          h: "3. What you get back",
+          h: "3 Cancelling airport reception and limousine bookings",
           p: [
-            "If you cancel before processing starts, you are refunded the full amount you paid.",
-            "If work has already started, costs already spent with the authorities, and the service fee for work done, may be deducted. We tell you the refundable amount when we confirm the cancellation.",
+            "You may cancel without a cancellation charge before the vehicle departs to carry out your booking. If you paid in advance and the cancellation is attributable to you, actual, non-refundable payment gateway fees may be deducted from the refund, where disclosed and permitted by law.",
+            "After the vehicle has departed, or if the passenger does not attend, the responsible management team reviews the circumstances, evidence of departure and actual costs incurred. We explain any charge and its amount to you. A discretionary penalty is not deducted automatically merely because the trip status changed. Before confirmation, the booking summary alerts you to the possibility of a charge for the vehicle being sent to carry out the booking.",
+            "Cancellation of a return trip is handled separately and does not cancel the outbound trip. There is no cancellation charge before the vehicle departs to carry out the return trip. If the vehicle is already waiting as part of a round trip booking, any applicable waiting or vehicle dispatch cost is reviewed and explained to you.",
           ],
         },
         {
-          h: "4. If something is our fault",
+          h: "4 Unavailable trips and price changes",
           p: [
-            "If a document is delivered with an error that we caused, we will process it again at no extra charge or refund you.",
-            "If an authority refuses a request for a reason we cannot resolve, we refund the amount not already spent.",
+            "If the agreed vehicle cannot be provided, we seek a suitable replacement and bear any increase in the cost of that replacement. A different vehicle model requires your approval, even if it has the same category and capacity. If no replacement you accept is available, the booking is cancelled at no cost to you. All amounts paid are refunded and Inzerv bears the payment gateway fees.",
+            "If a service failure at or close to pickup disrupts your plans, management reviews appropriate compensation in light of the circumstances, without affecting your legal rights. This policy does not set a fixed compensation amount or waive your right to make a claim.",
+            "Full advance payment fixes the base trip price against later general price increases. For unpaid bookings, a general price increase requires disclosure and your approval before the vehicle departs to carry out your booking. If you reject the increase, you may cancel free of charge before departure. Additional services you request later are priced separately and submitted for your approval.",
           ],
         },
         {
-          h: "5. How refunds are paid",
+          h: "5 Refund processing and follow-up",
           p: [
-            "Refunds go back to the payment method you used. We notify you when a refund is issued; how long your bank takes to show it depends on the bank.",
+            "Use the cancellation option in your account for the relevant order or booking, or contact Inzerv support after identity verification. If the cancellation option does not work, contact us promptly. We review the time of your cancellation attempt against the recorded start of service execution or vehicle departure, as applicable. You will not bear the consequences of a technical error proven to be on our side.",
+            "We provide a breakdown of the amount paid, any lawful deduction and its reason, and the net refund due. Cancellation confirmation, refund amount approval, submission of the refund and the return of funds through the payment provider are separate stages. We do not describe a refund as complete before verifying the payment provider's confirmation.",
+            "Refunds are returned to the original payment method where available. If that is not possible, we agree on a secure alternative with the verified person entitled to the refund. We do not require you to accept wallet credit instead of a monetary refund. The time for funds to appear depends on the payment method and bank. We explain the expected timeframe when the refund is initiated and follow up on delays, subject to applicable statutory deadlines.",
+            "If a payment appears pending or duplicated, contact us with the booking or transaction reference so that we can verify it before you pay again. Any verified duplicate collection is resolved by refunding the excess amount due.",
+          ],
+        },
+        {
+          h: "6 Contact and disputes",
+          p: [
+            "For enquiries or disputes, use in-app chat or email hello@inzerv.co, quoting the request reference and the reason for your concern. Do not send your password, a verification code or full card details. Your right to contact the Consumer Protection Agency or the competent regulator or court remains unaffected.",
           ],
         },
       ],
     } as LegalDoc,
     privacy: {
       title: "Privacy Policy",
-      intro: "This page explains what personal data Inzerv collects, why, and the choices you have.",
+      intro:
+        "This policy explains how Inzerv, operated by INSERVE Group for Digital Marketing and Brokerage, handles information about website and app users, document service applicants, document holders and passengers. Inzerv is responsible for the purposes and means of the personal data processing it manages for the platform. Accepting the terms does not constitute unrestricted consent to every use of your information.",
       sections: [
         {
-          h: "1. What we collect",
-          ul: [
-            "Account data: name, email, phone number, country of residence and an encrypted password.",
-            "Request data: the document holder's name, national ID details, date of birth, mother's name and your relationship to them.",
-            "Files you upload, such as ID copies.",
-            "Delivery data: recipient name, phone number and address.",
-            "Payment records: the method used, the amount and a transaction reference. This website does not collect card numbers.",
-            "App data: a device token so we can send notifications, and any support tickets you open.",
-          ],
-        },
-        {
-          h: "2. Why we use it",
-          ul: [
-            "To process your request with the authorities and deliver the result.",
-            "To tell you about status changes and verify your identity when you reset a password.",
-            "To answer support questions and keep the service secure.",
-          ],
-        },
-        {
-          h: "3. Who we share it with",
-          p: ["Only as needed to do what you asked:"],
-          ul: [
-            "Egyptian authorities, for the document you requested.",
-            "Delivery couriers, for the recipient name, phone and address.",
-            "Service providers that host our systems and send our emails, under their own security obligations.",
-          ],
-        },
-        {
-          h: "4. How we protect it",
+          h: "1 Information we need",
           p: [
-            "Data travels over encrypted connections and passwords are stored hashed. Uploaded documents are available only to you and to staff who need them to process your request.",
+            "Account and contact information includes your name, username, phone number, email, saved addresses and protected login credentials. Service information includes request details, the applicant's relationship to the document holder, consents or authorisations, required documents, and the ID and face images needed to verify a document service applicant.",
+            "Trip information includes pickup and drop-off locations, time, passenger details and numbers, luggage, child seat requirements and the airport information you provide. We request only what is needed to arrange and carry out the booking safely. Booking does not require continuous background location tracking.",
+            "Transaction and support information includes payment amounts, references and status, refunds, communications, complaints and delivery evidence. Technical information includes device, browser and connection details, internet address, and access and security logs needed for operation and protection. Optional usage information is subject to the relevant tool notice and appropriate consent.",
           ],
         },
         {
-          h: "5. Cookies and local storage",
+          h: "2 Purposes and grounds for processing",
           p: [
-            "This website does not use advertising or tracking cookies. While you place a request, your sign-in is kept in your browser's session storage and is cleared when you close the tab.",
+            "We process the information needed to create your account, fulfil your request, verify eligibility, arrange the service, take payment, deliver documents and communicate with you. Where permitted by law, the basis is the contract or steps before entering it. We also process information necessary to meet specific legal obligations, such as financial recordkeeping or responding to a competent authority's request.",
+            "Where explicit consent is required, we request specific consent before processing and explain the purpose, information, parties involved and how to withdraw it. This is particularly relevant to verification data, information requiring special protection, optional marketing and any overseas transfer requiring consent. We do not use document or face images for advertising or to train general-purpose AI models.",
+            "Necessary records are used to detect unauthorised activity, protect rights and resolve complaints within the limits of the law. We do not introduce a new purpose incompatible with the disclosed purpose without an appropriate lawful basis and notice to you or consent where required.",
           ],
         },
         {
-          h: "6. Keeping your data",
-          p: ["We keep request records and files for as long as needed to deliver the service and meet legal obligations, then delete or anonymise them."],
-        },
-        {
-          h: "7. Your choices",
-          ul: [
-            "Update your personal information in the app's Personal Information screen.",
-            "Delete your account from the app's Account screen.",
-            "Ask us for a copy of your data or for its correction by email.",
+          h: "3 Other people's data and identity checks",
+          p: [
+            "If you provide another person's information or book for them, you must rely on their consent or valid legal authority. We provide the relevant privacy notice and request any required consent where applicable. A family relationship alone does not authorise access to their information or documents.",
+            "The platform does not provide independent accounts for children to enter into contracts. Information about a minor required for a document or trip is supplied by their guardian or another legally authorised person, subject to the applicable consents and safeguards. A child's age and approximate weight are requested where needed to select a suitable seat and are not used for marketing.",
+            "The first identity check for document services uses ID and face images captured with the in-app camera and reviewed by authorised personnel. It is not government certification or automated facial recognition. The review result, reference and date are retained separately from the temporary images. Verification does not replace checks of authority to apply for another person on each request.",
           ],
         },
         {
-          h: "8. Changes",
-          p: ["If we change this policy, the date at the top will change and we will tell you in the app for significant changes."],
+          h: "4 Who receives information",
+          p: [
+            "Only necessary information is shared with the service office assigned to the document request, the competent authority where the procedure requires submission, and the delivery provider handling delivery. Partners do not access requests not assigned to them or documents they do not need.",
+            "For trips, the passenger's name, contact number, trip locations and necessary execution details are shared with the transport company and driver. Booking and driver details are sent to the account holder and the relevant passenger. Transport companies do not receive images from government document services.",
+            "Payment providers use the transaction information needed to collect payments and issue refunds according to their legal roles and policies. Card information is entered through the secure payment interface. Full card numbers and card security codes are not stored in ordinary app data.",
+            "Hosting, operations and technical support providers may receive limited access under appropriate contractual safeguards and instructions. Information may also be disclosed to a competent authority where a valid legal obligation requires it, limited to what is necessary. We do not sell your personal data.",
+          ],
+        },
+        {
+          h: "5 Device permissions and digital tools",
+          p: [
+            "Camera permission is requested when needed for verification or document capture, photo access when an allowed attachment is uploaded, and location permission if you choose to use your location for a trip. You can manage permissions on your device. A feature may be unavailable if its necessary permission is refused. Manual location entry is available where the service supports it.",
+            "Support may include an automated assistant. This is identified during use, with an option to reach a staff member. Do not send ID images or confidential payment information to the assistant. Any transfer of chat information to an external provider is subject to notice, applicable legal limits and appropriate safeguards.",
+            "Necessary storage tools or cookies support website operation and session security. Non-essential analytics, advertising and interface interaction recording tools are activated only with the notice and choice required by law. Privacy settings identify the tools actually used, their purposes and durations, and how to change your choices. These tools must not capture document images or the contents of identity, payment or password fields.",
+          ],
+        },
+        {
+          h: "6 Retention and deletion",
+          p: [
+            "Document images and service attachments are deleted thirty days after delivery of the final output. This includes the ID and face images used for the first verification, thirty days after delivery of the first service. For an active complaint or dispute, only the evidence necessary for that case is retained until closure and then deleted, unless a specific legal obligation requires otherwise.",
+            "Core account information and saved addresses remain while the account exists, subject to correction and deletion request rights. The verification result and necessary audit information are retained separately. Images do not become a permanent part of the account profile. Administrative and security audit records are retained for at least twelve months under the approved retention schedule. Order and financial records follow a separate legally required retention period; their retention alone does not justify keeping document images.",
+            "Draft attachments are deleted after thirty days without editing, following a warning. After two years without a login or service request, we send a notice with an option to keep the account. If you do not respond within thirty days, the account is deleted, except for information required for a legal obligation or active claim. Choosing to keep the account resets the inactivity period.",
+            "Some records may need limited retention for a legal obligation or active dispute. We explain the reason and scope of an exception on request. Deletion procedures cover processing providers and backups through a documented deletion cycle. Backups are not used as a substitute for keeping deleted images in operational storage.",
+          ],
+        },
+        {
+          h: "7 Your rights and how to exercise them",
+          p: [
+            "Subject to the law, you may ask to know about, access and obtain your information, correct or complete it, request deletion, restrict its processing or object to processing. You may withdraw consent for processing that relies on it. Withdrawal does not affect the lawfulness of prior processing. A feature that needs that processing may no longer be available if there is no other lawful basis.",
+            "Request account deletion through app settings or hello@inzerv.co. We verify the requester's identity in a way proportionate to the sensitivity of the action, and explain the effects, expected timeframe and any information that must be retained and why. Deleting an account does not automatically cancel an active service request or remove your right to money owed to you or an existing lawful obligation.",
+            "A document holder or passenger may exercise their rights even if they do not own the account. We do not disclose other individuals' data when responding. Requests are handled under the applicable legal procedures and deadlines. You may complain to the Personal Data Protection Center or the competent authority and seek a judicial remedy.",
+          ],
+        },
+        {
+          h: "8 Security and overseas transfers",
+          p: [
+            "We apply safeguards appropriate to the sensitivity of the information, including protection of transmission and storage, access limited by role, logging of sensitive access and permission management. No system can prevent every incident. If an incident occurs, we take containment measures and make the notifications legally required to the competent authorities and affected individuals.",
+            "A service outside Egypt or an approved operating arrangement may require an overseas data transfer. Before transfer, the notice identifies the recipient, country, purpose, lawful basis and safeguards, and the required consents, licences or permits must be obtained. General acceptance of this policy is not blanket consent to an unspecified transfer.",
+            "Updates are published with their effective date. We notify you of material changes and request fresh consent where required. For privacy enquiries or to exercise your rights, email hello@inzerv.co with a clear subject. Do not include unnecessary sensitive information.",
+          ],
         },
       ],
     } as LegalDoc,

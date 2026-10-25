@@ -12,7 +12,18 @@ import type { GovService } from "@/lib/types";
 export async function generateMetadata({ params }: PageProps<"/[lang]/services">): Promise<Metadata> {
   const { lang } = await params;
   if (!hasLocale(lang)) return {};
-  return { title: getDictionary(lang).services.title };
+  const t = getDictionary(lang);
+  return {
+    title: t.services.metaTitle,
+    description: t.meta.pages.services,
+    alternates: {
+      canonical: `https://inzerv.co/${lang}/services`,
+      languages: {
+        en: "https://inzerv.co/en/services",
+        ar: "https://inzerv.co/ar/services",
+      },
+    },
+  };
 }
 
 const categoryIcons = [HomeIcon, CarIcon, HeartIcon, TagIcon];
@@ -171,6 +182,48 @@ export default async function ServicesPage({ params }: PageProps<"/[lang]/servic
           </div>
         </div>
       </section>
+
+      {/* BreadcrumbList structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: lang === "ar" ? "الرئيسية" : "Home", item: `https://inzerv.co/${lang}` },
+              { "@type": "ListItem", position: 2, name: t.services.title, item: `https://inzerv.co/${lang}/services` },
+            ],
+          }),
+        }}
+      />
+
+      {/* Service structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: t.services.docsTitle,
+            itemListElement: services.map((s, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              item: {
+                "@type": "Service",
+                name: serviceName(s, lang),
+                description: serviceDescription(s, lang),
+                provider: { "@type": "Organization", name: "Inzerv" },
+                offers: {
+                  "@type": "Offer",
+                  priceCurrency: "EGP",
+                  price: s.servicePrice,
+                },
+              },
+            })),
+          }),
+        }}
+      />
     </>
   );
 }

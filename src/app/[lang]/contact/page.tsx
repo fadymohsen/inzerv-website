@@ -9,7 +9,18 @@ import { ContactForm } from "./ContactForm";
 export async function generateMetadata({ params }: PageProps<"/[lang]/contact">): Promise<Metadata> {
   const { lang } = await params;
   if (!hasLocale(lang)) return {};
-  return { title: getDictionary(lang).contact.title };
+  const t = getDictionary(lang);
+  return {
+    title: t.contact.title,
+    description: t.meta.pages.contact,
+    alternates: {
+      canonical: `https://inzerv.co/${lang}/contact`,
+      languages: {
+        en: "https://inzerv.co/en/contact",
+        ar: "https://inzerv.co/ar/contact",
+      },
+    },
+  };
 }
 
 export default async function ContactPage({ params }: PageProps<"/[lang]/contact">) {
@@ -18,6 +29,20 @@ export default async function ContactPage({ params }: PageProps<"/[lang]/contact
   const t = getDictionary(lang).contact;
 
   return (
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: lang === "ar" ? "الرئيسية" : "Home", item: `https://inzerv.co/${lang}` },
+            { "@type": "ListItem", position: 2, name: t.title, item: `https://inzerv.co/${lang}/contact` },
+          ],
+        }),
+      }}
+    />
     <section className="bg-white">
       <div className="mx-auto grid max-w-7xl gap-14 px-5 py-20 lg:grid-cols-[1fr_1.1fr] lg:gap-24 lg:px-8 lg:py-28">
         <div>
@@ -53,5 +78,6 @@ export default async function ContactPage({ params }: PageProps<"/[lang]/contact
         </div>
       </div>
     </section>
+    </>
   );
 }
