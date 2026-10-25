@@ -43,6 +43,14 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
         ar: "https://inzerv.co/ar",
       },
     },
+    openGraph: {
+      type: "website",
+      siteName: "Inzerv",
+      title: t.meta.title,
+      description: t.meta.description,
+      url: `https://inzerv.co/${lang}`,
+      locale: lang === "ar" ? "ar_EG" : "en_US",
+    },
     twitter: {
       card: "summary_large_image",
       title: t.meta.title,
@@ -66,18 +74,36 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: "Inzerv",
-              url: "https://inzerv.co",
-              logo: "https://inzerv.co/logo_full_color.jpg",
-              contactPoint: {
-                "@type": "ContactPoint",
-                contactType: "customer service",
-                email: SUPPORT_EMAIL,
+            __html: JSON.stringify([
+              {
+                "@context": "https://schema.org",
+                "@type": "Organization",
+                name: "Inzerv",
+                url: "https://inzerv.co",
+                logo: "https://inzerv.co/logo_full_color.jpg",
+                description:
+                  "Inzerv handles Egyptian government paperwork on your behalf — birth certificates, family records, marriage documents — and delivers them to you in Egypt or abroad.",
+                areaServed: [
+                  { "@type": "Country", name: "Egypt" },
+                  { "@type": "Country", name: "Saudi Arabia" },
+                  { "@type": "Country", name: "United Arab Emirates" },
+                  { "@type": "Country", name: "Kuwait" },
+                ],
+                contactPoint: {
+                  "@type": "ContactPoint",
+                  contactType: "customer service",
+                  email: SUPPORT_EMAIL,
+                  availableLanguage: ["English", "Arabic"],
+                },
               },
-            }),
+              {
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                name: "Inzerv",
+                url: "https://inzerv.co",
+                inLanguage: ["en", "ar"],
+              },
+            ]),
           }}
         />
         <Script

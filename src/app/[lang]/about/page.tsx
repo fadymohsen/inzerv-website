@@ -21,6 +21,11 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/about">): 
         ar: "https://inzerv.co/ar/about",
       },
     },
+    openGraph: {
+      title: t.about.title,
+      description: t.meta.pages.about,
+      url: `https://inzerv.co/${lang}/about`,
+    },
   };
 }
 

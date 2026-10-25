@@ -23,6 +23,11 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/services">
         ar: "https://inzerv.co/ar/services",
       },
     },
+    openGraph: {
+      title: t.services.metaTitle,
+      description: t.meta.pages.services,
+      url: `https://inzerv.co/${lang}/services`,
+    },
   };
 }
 
@@ -213,11 +218,15 @@ export default async function ServicesPage({ params }: PageProps<"/[lang]/servic
                 "@type": "Service",
                 name: serviceName(s, lang),
                 description: serviceDescription(s, lang),
-                provider: { "@type": "Organization", name: "Inzerv" },
+                serviceType: "Government Document Processing",
+                provider: { "@type": "Organization", name: "Inzerv", url: "https://inzerv.co" },
+                areaServed: { "@type": "Country", name: "Egypt" },
+                url: `https://inzerv.co/${lang}/checkout?service=${s.type}`,
                 offers: {
                   "@type": "Offer",
                   priceCurrency: "EGP",
                   price: s.servicePrice,
+                  availability: "https://schema.org/InStock",
                 },
               },
             })),
