@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { getDictionary } from "@/lib/dictionaries";
 import { SUPPORT_EMAIL } from "@/lib/config";
 import { dirOf, hasLocale, locales } from "@/lib/i18n";
+import ScrollToTop from "@/components/ScrollToTop";
 import "../globals.css";
 
 const inter = Inter({
@@ -100,6 +101,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
+        <ScrollToTop />
         <Header locale={lang} t={t.nav} footer={t.footer} />
         <main id="main" className="flex-1">
           {children}

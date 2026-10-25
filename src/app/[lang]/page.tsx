@@ -153,7 +153,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       {/* Statement */}
       <section className="layer bg-white">
         <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-44">
-          <p className="max-w-[22ch] text-[clamp(2.25rem,5.4vw,4.75rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-navy rtl:leading-[1.35]">
+          <p className="max-w-[22ch] text-[clamp(1.75rem,4vw,3.5rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-navy rtl:leading-[1.35]">
             <ScrollWords text={t.home.statement.text} />
           </p>
           <div className="reveal mt-12 flex max-w-[52ch] gap-5">

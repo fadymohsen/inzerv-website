@@ -76,7 +76,6 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
 
   const links = [
     { href: `/${locale}/services`, label: t.services },
-    { href: `/${locale}#how-it-works`, label: t.howItWorks },
     { href: `/${locale}/about`, label: t.about },
     { href: `/${locale}/contact`, label: t.contact },
   ];
