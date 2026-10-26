@@ -95,3 +95,18 @@ export function publicUser(raw: Record<string, unknown> | null | undefined) {
     lastName: String(raw.lastName ?? ""),
   };
 }
+
+/** Profile fields the account pages may see. Never includes reset tokens or hashes. */
+export function publicProfile(raw: Record<string, unknown> | null | undefined) {
+  if (!raw) return null;
+  const s = (v: unknown) => (typeof v === "string" ? v : "");
+  return {
+    id: s(raw.id),
+    email: s(raw.email),
+    firstName: s(raw.firstName),
+    lastName: s(raw.lastName),
+    phone: s(raw.phone),
+    countryOfResidence: s(raw.countryOfResidence),
+    profilePhotoUrl: typeof raw.profilePhotoUrl === "string" ? raw.profilePhotoUrl : null,
+  };
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { AnonStrip } from "@/components/auth/AnonStrip";
 import { ArrowIcon } from "@/components/Icons";
 import { getCatalog } from "@/lib/catalog";
 import { getDictionary, money } from "@/lib/dictionaries";
@@ -37,6 +38,7 @@ export default async function RequestPage({ params }: PageProps<"/[lang]/request
           {t.request.title}
         </h1>
         <p className="mt-6 max-w-[56ch] text-lg leading-relaxed text-ink-muted">{t.request.sub}</p>
+        <AnonStrip lang={lang} text={t.request.anonText} signIn={t.nav.signIn} create={t.nav.createAccount} />
 
         <ul className="mt-14 border-t border-navy/15">
           {services.map((s, i) => (

@@ -111,15 +111,13 @@ export function SignInForm({ locale, t }: { locale: Locale; t: Dict["auth"] }) {
         {busy ? "…" : t.signin.submit}
       </button>
 
-      <p className="text-center text-sm text-ink-muted">
-        {t.signin.noAccount}{" "}
-        <Link
-          href={`/${locale}/signup${nextQuery}`}
-          className="font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-4"
-        >
+      <div className="mt-2 rounded-card border-2 border-turquoise/50 bg-turquoise/10 p-6 text-center">
+        <p className="text-lg font-semibold">{t.signin.newTitle}</p>
+        <p className="mx-auto mt-1 max-w-[36ch] text-ink-muted">{t.signin.newText}</p>
+        <Link href={`/${locale}/signup${nextQuery}`} className={buttonClass("navy", "mt-5 min-h-14 w-full text-lg")}>
           {t.signin.create}
         </Link>
-      </p>
+      </div>
     </form>
   );
 }

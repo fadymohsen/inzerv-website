@@ -95,7 +95,7 @@ function validate(body, allowed, rules) {
 
 const emailOk = (v) => typeof v === "string" && /^\S+@\S+\.\S+$/.test(v);
 const str = (v) => typeof v === "string" && v.trim().length > 0;
-const publicUser = (u) => ({ id: u.id, email: u.email, firstName: u.firstName, lastName: u.lastName, phone: u.phone, countryOfResidence: u.countryOfResidence ?? null, role: "user" });
+const publicUser = (u) => ({ id: u.id, email: u.email, firstName: u.firstName, lastName: u.lastName, phone: u.phone, countryOfResidence: u.countryOfResidence ?? null, profilePhotoUrl: u.profilePhotoUrl ?? null, role: "user" });
 
 function authUser(req) {
   const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
@@ -167,6 +167,32 @@ const server = http.createServer(async (req, res) => {
     const user = authUser(req);
     if (!user) return send(res, 401, { statusCode: 401, message: "Unauthorized" }, origin);
     return send(res, 200, publicUser(user), origin);
+  }
+
+  if (path.startsWith("/users/")) {
+    const me = authUser(req);
+    if (!me) return send(res, 401, { statusCode: 401, message: "Unauthorized" }, origin);
+    if (method === "PATCH" && path === "/users/profile") {
+      const j = parseJson(raw);
+      if (j === null) return bad(res, origin, ["Unexpected token in JSON"]);
+      for (const k of ["firstName", "lastName", "phone", "countryOfResidence"]) if (typeof j[k] === "string") me[k] = j[k];
+      return send(res, 200, publicUser(me), origin);
+    }
+    if (method === "POST" && path === "/users/change-password") {
+      const j = parseJson(raw) ?? {};
+      if (me.password !== j.oldPassword) return send(res, 401, { statusCode: 401, message: "Current password is incorrect.", error: "Unauthorized" }, origin);
+      if (!/^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_-]).{8,100}$/.test(j.newPassword ?? "")) return bad(res, origin, ["newPassword is too weak"]);
+      me.password = j.newPassword;
+      return send(res, 200, { message: "Password changed successfully." }, origin);
+    }
+    if (method === "POST" && path === "/users/profile/photo") {
+      me.profilePhotoUrl = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==";
+      return send(res, 201, publicUser(me), origin);
+    }
+    if (method === "DELETE" && path === "/users/profile/photo") {
+      me.profilePhotoUrl = null;
+      return send(res, 200, publicUser(me), origin);
+    }
   }
 
   if (method === "POST" && path === "/auth/forgot-password") {

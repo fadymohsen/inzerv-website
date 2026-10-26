@@ -100,3 +100,56 @@ export const orders = {
     return parse(res);
   },
 };
+
+export type Profile = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  countryOfResidence: string;
+  profilePhotoUrl: string | null;
+};
+
+async function withToken<T>(fn: (token: string) => Promise<T>): Promise<T> {
+  const { token } = await call<{ token: string }>("/api/auth/token");
+  return fn(token);
+}
+
+export const account = {
+  profile: () => call<{ profile: Profile }>("/api/account/profile").then((r) => r.profile),
+  update: (body: { firstName: string; lastName: string; phone: string; countryOfResidence: string }) =>
+    call<{ profile: Profile }>("/api/account/profile", { method: "PATCH", body: JSON.stringify(body) }).then(
+      (r) => r.profile,
+    ),
+  changePassword: (oldPassword: string, newPassword: string) =>
+    post<{ ok: true }>("/api/account/change-password", { oldPassword, newPassword }),
+
+  /** Photos go straight to the backend (up to 5 MB), like document uploads. */
+  uploadPhoto: (file: File) =>
+    withToken(async (token) => {
+      const form = new FormData();
+      form.append("photo", file);
+      let res: Response;
+      try {
+        res = await fetch(`${API_URL}/users/profile/photo`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        });
+      } catch {
+        throw new ApiError("network", 0);
+      }
+      return (await parse(res)) as { profilePhotoUrl?: string | null };
+    }),
+  removePhoto: () =>
+    withToken(async (token) => {
+      let res: Response;
+      try {
+        res = await fetch(`${API_URL}/users/profile/photo`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      } catch {
+        throw new ApiError("network", 0);
+      }
+      return parse(res);
+    }),
+};

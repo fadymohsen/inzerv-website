@@ -118,3 +118,46 @@ export const UserIcon = (p: P) => (
     <path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1" />
   </Svg>
 );
+
+export const ChevronRightIcon = (p: P) => (
+  <Svg {...p} className={`rtl:-scale-x-100 ${p.className ?? ""}`}>
+    <path d="M9 6l6 6-6 6" />
+  </Svg>
+);
+
+export const LockIcon = (p: P) => (
+  <Svg {...p}>
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </Svg>
+);
+
+export const HeadsetIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M4 14v-2a8 8 0 0 1 16 0v2" />
+    <rect x="3" y="14" width="4" height="6" rx="1.5" />
+    <rect x="17" y="14" width="4" height="6" rx="1.5" />
+    <path d="M19 20a4 4 0 0 1-4 2h-2" />
+  </Svg>
+);
+
+export const ShieldIcon = (p: P) => (
+  <Svg {...p}>
+    <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" />
+    <path d="M12 8v4M12 15v.5" />
+  </Svg>
+);
+
+export const GlobeIcon = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M3 12h18M12 3c2.5 2.7 3.8 5.7 3.8 9s-1.3 6.3-3.8 9c-2.5-2.7-3.8-5.7-3.8-9S9.5 5.7 12 3z" />
+  </Svg>
+);
+
+export const LogoutIcon = (p: P) => (
+  <Svg {...p} className={`rtl:-scale-x-100 ${p.className ?? ""}`}>
+    <path d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4" />
+    <path d="M15 8l4 4-4 4M19 12H9" />
+  </Svg>
+);
