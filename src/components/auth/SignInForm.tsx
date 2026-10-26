@@ -95,7 +95,7 @@ export function SignInForm({ locale, t }: { locale: Locale; t: Dict["auth"] }) {
       <div className="-mt-2">
         <Link
           href={`/${locale}/forgot-password${nextQuery}`}
-          className="text-sm font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-4"
+          className="inline-flex min-h-11 items-center text-sm font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-4"
         >
           {t.signin.forgot}
         </Link>

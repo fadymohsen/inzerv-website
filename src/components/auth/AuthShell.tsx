@@ -15,7 +15,7 @@ export function AuthShell({
 }) {
   return (
     <section className="bg-bg-light">
-      <div className="mx-auto grid max-w-6xl gap-8 px-5 py-10 lg:grid-cols-[1fr_1.1fr] lg:gap-14 lg:px-8 lg:py-20">
+      <div className="mx-auto grid max-w-7xl gap-8 px-5 py-10 lg:grid-cols-[1fr_1.1fr] lg:gap-14 lg:px-8 lg:py-20">
         <aside className="relative hidden overflow-hidden rounded-[2rem] bg-navy p-12 text-white lg:flex lg:flex-col lg:justify-between">
           <Rings className="pointer-events-none absolute -end-48 top-1/2 w-[40rem] -translate-y-1/2 opacity-90" />
           <h2 className="relative max-w-[14ch] text-[clamp(2rem,3vw,2.75rem)] font-semibold leading-[1.08] tracking-[-0.03em] rtl:leading-[1.35]">

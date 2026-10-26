@@ -17,7 +17,7 @@ const hrefs: Record<LegalKey, string> = {
 };
 
 function split(heading: string) {
-  const m = heading.match(/^(\d+)\.\s*(.*)$/);
+  const m = heading.match(/^(\d+)(?:\.\s*|\s+)(.*)$/);
   return m ? { n: m[1], text: m[2] } : { n: "", text: heading };
 }
 
@@ -52,7 +52,7 @@ export function LegalPage({
         <div className="pointer-events-none absolute -end-[18rem] top-1/2 hidden w-[52rem] -translate-y-1/2 lg:block">
           <Rings className="w-full" />
         </div>
-        <div className="relative mx-auto max-w-6xl px-5 pb-16 pt-16 lg:px-8 lg:pb-24 lg:pt-24">
+        <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-16 lg:px-8 lg:pb-24 lg:pt-24">
           <nav aria-label={footer.legal} className="flex flex-wrap gap-2">
             {(Object.keys(hrefs) as LegalKey[]).map((k) => (
               <Link
@@ -70,7 +70,7 @@ export function LegalPage({
             ))}
           </nav>
 
-          <h1 className="mt-10 max-w-[16ch] text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[1] tracking-[-0.035em] rtl:leading-[1.25]">
+          <h1 className="mt-10 max-w-[16ch] text-[clamp(2.75rem,6vw,5rem)] font-semibold leading-[1.05] tracking-[-0.035em] rtl:leading-[1.25]">
             <HeroWords text={doc.title} />
           </h1>
           <p className="fade-up mt-7 max-w-[56ch] text-xl leading-relaxed text-white/80" style={{ ["--d" as string]: "450ms" } as React.CSSProperties}>
@@ -93,7 +93,7 @@ export function LegalPage({
 
       {/* Body */}
       <section className="layer bg-white">
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 lg:grid-cols-[16rem_1fr] lg:gap-20 lg:px-8 lg:py-28">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 lg:grid-cols-[16rem_1fr] lg:gap-20 lg:px-8 lg:py-28">
           <LegalToc title={t.toc} items={sections.map((s) => ({ id: s.id, n: s.n, label: s.text }))} />
 
           <article className="min-w-0">
@@ -136,14 +136,14 @@ export function LegalPage({
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
                 dir="ltr"
-                className="group/btn mt-4 inline-flex items-center gap-3 text-lg font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
+                className="group/btn mt-3 inline-flex min-h-11 items-center gap-3 text-lg font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
               >
                 <MailIcon size={22} />
                 {SUPPORT_EMAIL}
                 <ArrowIcon size={18} />
               </a>
               <div className="mt-8 border-t border-line pt-5">
-                <a href="#" className="text-sm font-medium text-ink-muted hover:text-navy">
+                <a href="#" className="inline-flex min-h-11 items-center text-sm font-medium text-ink-muted hover:text-navy">
                   ↑ {t.top}
                 </a>
               </div>

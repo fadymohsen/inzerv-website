@@ -222,7 +222,7 @@ details[open]::details-content {
 .row-hover::before {
   content: "";
   position: absolute;
-  inset: 0 -1.5rem;
+  inset: 0 -1rem;
   z-index: -1;
   border-radius: 1.25rem;
   background: #fff;
@@ -231,6 +231,11 @@ details[open]::details-content {
   transition:
     opacity 250ms var(--ease-out-quart),
     transform 250ms var(--ease-out-quart);
+}
+@media (min-width: 1024px) {
+  .row-hover::before {
+    inset: 0 -1.5rem;
+  }
 }
 @media (hover: hover) {
   .row-hover:hover::before {
@@ -385,17 +390,25 @@ details[open]::details-content {
 }
 
 /* Layered sections: each rounded top overlaps the one above */
+:root {
+  --layer-overlap: 2.5rem;
+}
+@media (min-width: 1024px) {
+  :root {
+    --layer-overlap: 3.5rem;
+  }
+}
 .layer {
   position: relative;
   z-index: 10;
-  margin-top: -2.5rem;
-  border-radius: 2.5rem 2.5rem 0 0;
+  margin-top: calc(var(--layer-overlap) * -1);
+  border-radius: var(--layer-overlap) var(--layer-overlap) 0 0;
 }
-@media (min-width: 1024px) {
-  .layer {
-    margin-top: -3.5rem;
-    border-radius: 3.5rem 3.5rem 0 0;
-  }
+
+/* The footer is a layer, so the last block on every page reserves the overlap
+   and keeps its own padding visible. */
+main > :is(:last-child, :has(+ script:last-child)):not(script) {
+  padding-bottom: var(--layer-overlap);
 }
 
 /* Pinned gallery slides */

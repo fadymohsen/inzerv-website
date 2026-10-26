@@ -90,7 +90,7 @@ export function PinnedGallery({
         {background}
 
         <div
-          className={`relative mx-auto grid max-w-[100rem] items-center gap-x-10 gap-y-6 px-5 lg:grid-cols-[0.75fr_1.5fr] lg:px-12 ${
+          className={`relative mx-auto grid max-w-7xl items-center gap-x-10 gap-y-6 px-5 lg:grid-cols-[0.75fr_1.5fr] lg:px-8 ${
             pinned ? "h-full grid-rows-[auto_1fr_auto] py-6 lg:grid-rows-[1fr_1fr] lg:py-0" : "lg:grid-rows-[auto_1fr]"
           }`}
         >

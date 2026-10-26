@@ -23,7 +23,7 @@ export default async function RequestPage({ params }: PageProps<"/[lang]/request
   return (
     <section className="bg-white">
       <div className="mx-auto max-w-7xl px-5 py-14 lg:px-8 lg:py-24">
-        <ol className="mb-12 flex flex-wrap gap-x-8 gap-y-2 text-sm text-ink-muted" aria-label={t.request.title}>
+        <ol className="mb-12 grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-ink-muted sm:flex sm:flex-wrap sm:gap-x-8 sm:gap-y-2" aria-label={t.request.title}>
           {t.request.steps.map((s, i) => (
             <li key={s} className={`flex items-center gap-2 ${i === 0 ? "font-semibold text-navy" : ""}`}>
               <span className="tabular flex size-6 items-center justify-center rounded-full border border-line text-xs">

@@ -48,7 +48,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
         <div className="relative mx-auto grid max-w-7xl gap-6 px-5 pt-14 lg:min-h-[47rem] lg:grid-cols-[1.08fr_1fr] lg:px-8 lg:pt-24">
           <div className="flex flex-col pb-10 lg:justify-center lg:pb-16">
-            <h1 className="text-[clamp(2.6rem,5vw,4.6rem)] font-semibold leading-[1] tracking-[-0.04em] rtl:leading-[1.2]">
+            <h1 className="text-[clamp(2.6rem,5vw,4.6rem)] font-semibold leading-[1.05] tracking-[-0.04em] rtl:leading-[1.2]">
               <HeroWords text={t.home.hero.title} />{" "}
               <HeroWords text={t.home.hero.titleAccent} accent startDelay={titleWords * 80} />
             </h1>
@@ -72,7 +72,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
           {/* iPhone cluster */}
           <PointerStage className="relative -mx-5 h-[25rem] overflow-hidden sm:mx-0 sm:h-[36rem] sm:overflow-visible lg:h-auto">
             <div
-              className="rise absolute left-1/2 top-0 z-20 w-[13.25rem] -translate-x-1/2 sm:w-[17.5rem] lg:w-[19rem]"
+              className="rise absolute left-1/2 top-0 z-20 w-[13.25rem] -translate-x-1/2 sm:w-[17.5rem] lg:w-[15.5rem] xl:w-[19rem]"
               style={vars({ "--rise-from": "90px", "--rise-delay": "250ms" })}
             >
               <div className="hero-par" style={vars({ "--par": "5rem" })}>
@@ -82,7 +82,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                     locale={lang}
                     t={t.app}
                     priority
-                    sizes="(min-width: 1024px) 19rem, 17.5rem"
+                    sizes="(min-width: 1280px) 19rem, 17.5rem"
                     className="drop-shadow-[0_2.5rem_3rem_rgba(0,0,0,0.45)]"
                   />
                 </div>
@@ -90,7 +90,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             </div>
 
             <div
-              className="rise absolute start-[-1.75rem] top-[5.5rem] z-10 w-[8.75rem] sm:start-[-1rem] sm:top-[8rem] sm:w-[12.5rem] lg:start-[-2.5rem] lg:top-[9rem] lg:w-[14rem]"
+              className="rise absolute start-[-1.75rem] top-[5.5rem] z-10 w-[8.75rem] sm:start-[-1rem] sm:top-[8rem] sm:w-[12.5rem] lg:start-[0.5rem] lg:top-[9rem] lg:w-[10.5rem] xl:start-[-2.5rem] xl:w-[14rem]"
               style={vars({ "--rise-from": "70px", "--rise-delay": "450ms" })}
             >
               <div className="hero-par" style={vars({ "--par": "9rem" })}>
@@ -102,7 +102,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </div>
             </div>
             <div
-              className="rise absolute end-[-1.75rem] top-[7.5rem] z-10 w-[8.75rem] sm:end-[-1rem] sm:top-[11rem] sm:w-[12.5rem] lg:end-[-2.5rem] lg:top-[12rem] lg:w-[14rem]"
+              className="rise absolute end-[-1.75rem] top-[7.5rem] z-10 w-[8.75rem] sm:end-[-1rem] sm:top-[11rem] sm:w-[12.5rem] lg:end-[-0.5rem] lg:top-[12rem] lg:w-[10.5rem] xl:end-[-2.5rem] xl:w-[14rem]"
               style={vars({ "--rise-from": "70px", "--rise-delay": "550ms" })}
             >
               <div className="hero-par" style={vars({ "--par": "7rem" })}>
@@ -116,7 +116,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
             {/* callouts built from live data */}
             <div
-              className="rise absolute start-2 top-[16rem] z-30 hidden sm:start-[-1.5rem] sm:block lg:start-[-3rem] lg:top-[19rem]"
+              className="rise absolute start-2 top-[16rem] z-30 hidden sm:start-[-1.5rem] sm:block lg:start-[-1rem] lg:top-[19rem] xl:start-[-3rem]"
               style={vars({ "--rise-from": "28px", "--rise-delay": "950ms" })}
             >
               <div className="hero-par" style={vars({ "--par": "3rem" })}>
@@ -130,7 +130,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             </div>
             {first && (
               <div
-                className="rise absolute end-2 top-[25rem] z-30 hidden sm:end-[-1rem] sm:block lg:end-[-2rem] lg:top-[28rem]"
+                className="rise absolute end-2 top-[25rem] z-30 hidden sm:end-[-1rem] sm:block lg:end-[-0.5rem] lg:top-[28rem] xl:end-[-2rem]"
                 style={vars({ "--rise-from": "28px", "--rise-delay": "1100ms" })}
               >
                 <div className="hero-par" style={vars({ "--par": "2rem" })}>
@@ -152,12 +152,12 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
       {/* Statement */}
       <section className="layer bg-white">
-        <div className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-44">
+        <div className="mx-auto max-w-7xl px-5 pb-16 pt-20 lg:px-8 lg:pb-32 lg:pt-40">
           <p className="max-w-[22ch] text-[clamp(1.75rem,4vw,3.5rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-navy rtl:leading-[1.35]">
             <ScrollWords text={t.home.statement.text} />
           </p>
-          <div className="reveal mt-12 flex max-w-[52ch] gap-5">
-            <span aria-hidden className="mt-2 h-1.5 w-14 shrink-0 rounded-full bg-turquoise" />
+          <div className="reveal mt-12 flex max-w-[52ch] gap-4 sm:gap-5">
+            <span aria-hidden className="mt-2 h-1.5 w-10 shrink-0 sm:w-14 rounded-full bg-turquoise" />
             <p className="text-xl leading-snug text-ink-muted sm:text-2xl">{t.home.statement.sub}</p>
           </div>
         </div>
@@ -173,7 +173,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               return (
                 <article key={b.title} className="grid items-stretch gap-6 lg:grid-cols-2 lg:gap-8">
                   <div
-                    className={`reveal-start flex flex-col justify-center px-2 py-6 sm:px-6 lg:px-14 ${reverse ? "lg:order-2" : ""}`}
+                    className={`reveal-start flex flex-col justify-center py-2 lg:py-6 ${reverse ? "lg:order-2 lg:ps-14" : "lg:pe-14"}`}
                   >
                     <span className="tabular text-sm font-medium text-ink-muted">{pad2(i + 1, lang)}</span>
                     <h3 className="mt-5 max-w-[13ch] text-[clamp(2rem,3.6vw,3.25rem)] font-semibold leading-[1.04] tracking-[-0.03em] rtl:leading-[1.3]">
@@ -213,7 +213,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             </div>
             <Link
               href={`/${lang}/services`}
-              className="group/btn inline-flex items-center gap-2 font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
+              className="group/btn inline-flex min-h-11 items-center gap-2 font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
             >
               {t.home.services.all}
               <ArrowIcon size={18} />
@@ -310,7 +310,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
       {/* Steps */}
       <section id="how-it-works" className="layer bg-bg-light">
-        <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-40">
+        <div className="mx-auto max-w-7xl px-5 pb-24 pt-16 lg:px-8 lg:py-40">
           <h2 className="max-w-[15ch] text-[clamp(2.25rem,4.6vw,4rem)] font-semibold leading-[1.02] tracking-[-0.035em] rtl:leading-[1.3]">
             {t.home.steps.title}
           </h2>
@@ -343,7 +343,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             <p className="mt-6 max-w-[36ch] text-lg text-ink-muted">{t.home.faq.sub}</p>
             <Link
               href={`/${lang}/contact`}
-              className="group/btn mt-7 inline-flex items-center gap-2 font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
+              className="group/btn mt-4 inline-flex min-h-11 items-center gap-2 font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
             >
               {t.nav.contact}
               <ArrowIcon size={18} />

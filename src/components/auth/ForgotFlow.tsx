@@ -223,7 +223,7 @@ export function ForgotFlow({ locale, t }: { locale: Locale; t: Dict["auth"] }) {
       <p className="text-center text-sm">
         <Link
           href={`/${locale}/signin${nextQuery}`}
-          className="font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-4"
+          className="inline-flex min-h-11 items-center font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-4"
         >
           {t.forgot.back}
         </Link>

@@ -42,7 +42,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
 
   // close when the viewport grows past the mobile breakpoint
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
+    const mq = window.matchMedia("(min-width: 1024px)");
     const onChange = () => mq.matches && setState("closed");
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
@@ -87,7 +87,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
   const switchHref = swap(otherLocale(locale));
 
   const desktopLink = (href: string) =>
-    `rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 ${
+    `inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-medium transition-colors duration-150 ${
       pathname === href.split("#")[0] && !href.includes("#") ? "text-white" : "text-white/75 hover:text-white"
     }`;
 
@@ -101,10 +101,10 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
         {t.skip}
       </a>
 
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-5 md:h-18 lg:px-8">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-5 lg:h-18 lg:px-8">
         <Logo locale={locale} />
 
-        <nav aria-label={t.primary} className="hidden items-center gap-1 md:flex">
+        <nav aria-label={t.primary} className="hidden items-center gap-1 lg:flex">
           {links.map((l) => (
             <Link key={l.href} href={l.href} className={desktopLink(l.href)}>
               {l.label}
@@ -112,7 +112,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-3 lg:flex">
           <Link
             href={switchHref}
             hrefLang={otherLocale(locale)}
@@ -144,14 +144,14 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
               <>
                 <Link
                   href={`/${locale}/signin`}
-                  className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white/75 transition-colors duration-150 hover:text-white"
+                  className="inline-flex min-h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-white/75 transition-colors duration-150 hover:text-white"
                 >
                   <UserIcon size={20} />
                   {t.signIn}
                 </Link>
                 <Link
                   href={`/${locale}/signup`}
-                  className={buttonClass("outline-light", "hidden min-h-11 px-5 text-sm font-semibold lg:inline-flex")}
+                  className={buttonClass("outline-light", "hidden min-h-11 px-5 text-sm font-semibold xl:inline-flex")}
                 >
                   {t.createAccount}
                 </Link>
@@ -173,7 +173,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
           aria-expanded={isOpen}
           aria-haspopup="dialog"
           aria-label={t.openMenu}
-          className="-me-2 inline-flex size-11 items-center justify-center rounded-lg text-white md:hidden"
+          className="-me-2 inline-flex size-11 items-center justify-center rounded-lg text-white lg:hidden"
         >
           <MenuIcon size={26} />
         </button>
@@ -186,7 +186,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
           aria-modal="true"
           aria-label={t.primary}
           data-state={state}
-          className="menu-overlay fixed inset-0 z-[60] flex flex-col overflow-y-auto bg-navy text-white md:hidden"
+          className="menu-overlay fixed inset-0 z-[60] flex flex-col overflow-y-auto bg-navy text-white lg:hidden"
         >
           <Rings className="pointer-events-none absolute -end-[22rem] top-[28%] w-[52rem] opacity-90" />
 

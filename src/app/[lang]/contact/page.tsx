@@ -63,7 +63,7 @@ export default async function ContactPage({ params }: PageProps<"/[lang]/contact
                 <a
                   href={`mailto:${SUPPORT_EMAIL}`}
                   dir="ltr"
-                  className="inline-flex items-center gap-3 text-xl font-semibold underline decoration-turquoise decoration-2 underline-offset-8"
+                  className="inline-flex min-h-11 items-center gap-3 text-xl font-semibold underline decoration-turquoise decoration-2 underline-offset-8"
                 >
                   <MailIcon size={22} />
                   {SUPPORT_EMAIL}

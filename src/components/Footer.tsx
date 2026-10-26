@@ -17,8 +17,8 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
     { href: `/${locale}/privacy-policy`, label: t.privacy },
   ];
 
-  const colTitle = "mb-4 text-sm font-medium text-white/60";
-  const link = "text-sm text-white/85 transition-colors duration-150 hover:text-turquoise";
+  const colTitle = "mb-3 text-sm font-medium text-white/60";
+  const link = "inline-flex min-h-10 items-center text-sm text-white/85 transition-colors duration-150 hover:text-turquoise";
 
   return (
     <footer className="layer bg-navy-deep text-white">
@@ -30,7 +30,7 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
 
         <nav aria-label={t.explore}>
           <p className={colTitle}>{t.explore}</p>
-          <ul className="flex flex-col gap-3">
+          <ul className="flex flex-col">
             {explore.map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className={link}>
@@ -43,7 +43,7 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
 
         <nav aria-label={t.legal}>
           <p className={colTitle}>{t.legal}</p>
-          <ul className="flex flex-col gap-3">
+          <ul className="flex flex-col">
             {legal.map((l) => (
               <li key={l.href}>
                 <Link href={l.href} className={link}>
