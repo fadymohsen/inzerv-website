@@ -117,7 +117,7 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
           <h2 className="text-[clamp(1.75rem,3.2vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-navy rtl:leading-[1.35]">
             {t.ctaTitle}
           </h2>
-          <ButtonLink href={`/${lang}/checkout`} variant="navy" className="px-8">
+          <ButtonLink href={`/${lang}/request`} variant="navy" className="px-8">
             {t.ctaButton}
             <ArrowIcon size={20} />
           </ButtonLink>

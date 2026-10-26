@@ -9,7 +9,7 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
     { href: `/${locale}/services`, label: nav.services },
     { href: `/${locale}/about`, label: nav.about },
     { href: `/${locale}/contact`, label: nav.contact },
-    { href: `/${locale}/checkout`, label: t.checkout },
+    { href: `/${locale}/request`, label: t.checkout },
   ];
   const legal = [
     { href: `/${locale}/terms`, label: t.terms },

@@ -1,38 +1,7 @@
 "use client";
 
-import { API_URL, CHECKOUT_DEMO } from "./config";
+import { API_URL } from "./config";
 import type { AuthUser } from "./types";
-
-const TOKEN_KEY = "inzerv.token";
-const USER_KEY = "inzerv.user";
-
-export function getSession(): { token: string; user: AuthUser } | null {
-  try {
-    const token = sessionStorage.getItem(TOKEN_KEY);
-    const user = sessionStorage.getItem(USER_KEY);
-    return token && user ? { token, user: JSON.parse(user) } : null;
-  } catch {
-    return null;
-  }
-}
-
-export function saveSession(token: string, user: AuthUser) {
-  try {
-    sessionStorage.setItem(TOKEN_KEY, token);
-    sessionStorage.setItem(USER_KEY, JSON.stringify(user));
-  } catch {
-    /* storage blocked: session lasts for this page only */
-  }
-}
-
-export function clearSession() {
-  try {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(USER_KEY);
-  } catch {
-    /* ignore */
-  }
-}
 
 export class ApiError extends Error {
   constructor(
@@ -43,54 +12,43 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(
-  path: string,
-  init: RequestInit & { token?: string } = {},
-): Promise<T> {
-  const { token, headers, ...rest } = init;
-  let res: Response;
-  try {
-    res = await fetch(`${API_URL}${path}`, {
-      ...rest,
-      headers: {
-        ...(rest.body && !(rest.body instanceof FormData)
-          ? { "Content-Type": "application/json" }
-          : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        ...headers,
-      },
-    });
-  } catch {
-    throw new ApiError("network", 0);
-  }
-
+async function parse(res: Response) {
   const text = await res.text();
-  const data = text ? safeParse(text) : null;
+  let data: unknown = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
   if (!res.ok) {
     const raw = (data as { message?: string | string[] } | null)?.message;
     const message = Array.isArray(raw) ? raw.join(", ") : (raw ?? `HTTP ${res.status}`);
     throw new ApiError(message, res.status);
   }
-  return data as T;
+  return data;
 }
 
-function safeParse(text: string): unknown {
+async function call<T>(url: string, init: RequestInit = {}): Promise<T> {
+  let res: Response;
   try {
-    return JSON.parse(text);
+    res = await fetch(url, {
+      ...init,
+      headers: {
+        ...(init.body && !(init.body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
+        ...init.headers,
+      },
+    });
   } catch {
-    return null;
+    throw new ApiError("network", 0);
   }
+  return (await parse(res)) as T;
 }
 
-type AuthResponse = { user: AuthUser; accessToken: string };
+const post = <T,>(url: string, body: unknown) => call<T>(url, { method: "POST", body: JSON.stringify(body) });
 
-const realApi = {
-  login: (email: string, password: string) =>
-    request<AuthResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    }),
-
+export const auth = {
+  session: () => call<{ user: AuthUser | null }>("/api/auth/session"),
+  login: (email: string, password: string) => post<{ user: AuthUser }>("/api/auth/login", { email, password }),
   register: (body: {
     firstName: string;
     lastName: string;
@@ -98,76 +56,47 @@ const realApi = {
     password: string;
     phone: string;
     countryOfResidence?: string;
-  }) => request<AuthResponse>("/auth/register", { method: "POST", body: JSON.stringify(body) }),
+  }) => post<{ user: AuthUser }>("/api/auth/register", body),
+  logout: () => post<{ ok: true }>("/api/auth/logout", {}),
+  forgotPassword: (email: string) => post<{ ok: true }>("/api/auth/forgot-password", { email }),
+  verifyOtp: (email: string, otp: string) => post<{ resetToken: string }>("/api/auth/verify-otp", { email, otp }),
+  resetPassword: (resetToken: string, newPassword: string) =>
+    post<{ ok: true }>("/api/auth/reset-password", { resetToken, newPassword }),
+};
 
-  createRequest: (
-    token: string,
-    body: {
-      serviceId: string;
-      requestFor: "myself" | "another_person";
-      fieldValues: { fieldKey: string; value: string }[];
-      numberOfCopies: number;
-      deliveryDestinationId: string;
-      recipientName: string;
-      recipientPhone: string;
-      deliveryCity: string;
-      deliveryAddress: string;
-      deliveryGovernorate?: string;
-      deliveryPostalCode?: string;
-    },
-  ) =>
-    request<{ id: string; referenceNumber: string; totalAmount: number | string }>("/requests", {
-      method: "POST",
-      token,
-      body: JSON.stringify(body),
-    }),
+export const orders = {
+  create: (body: {
+    serviceId: string;
+    requestFor: "myself" | "another_person";
+    fieldValues: { fieldKey: string; value: string }[];
+    numberOfCopies: number;
+    deliveryDestinationId: string;
+    recipientName: string;
+    recipientPhone: string;
+    deliveryCity: string;
+    deliveryAddress: string;
+    deliveryGovernorate?: string;
+    deliveryPostalCode?: string;
+  }) => post<{ id: string; referenceNumber: string; totalAmount: number | string }>("/api/backend/requests", body),
 
-  uploadDocument: (token: string, requestId: string, key: string, file: File) => {
+  pay: (requestId: string, paymentMethod: "card" | "wallet") =>
+    post<{ transactionRef: string }>("/api/backend/payments", { requestId, paymentMethod }),
+
+  /** Files go straight to the backend (they can exceed the serverless body limit). */
+  upload: async (requestId: string, key: string, file: File) => {
+    const { token } = await call<{ token: string }>("/api/auth/token");
     const form = new FormData();
     form.append("file", file);
-    return request<unknown>(`/requests/${requestId}/documents?key=${encodeURIComponent(key)}`, {
-      method: "POST",
-      token,
-      body: form,
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API_URL}/requests/${requestId}/documents?key=${encodeURIComponent(key)}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+    } catch {
+      throw new ApiError("network", 0);
+    }
+    return parse(res);
   },
-
-  pay: (token: string, requestId: string, paymentMethod: "card" | "wallet") =>
-    request<{ transactionRef: string }>("/payments", {
-      method: "POST",
-      token,
-      body: JSON.stringify({ requestId, paymentMethod }),
-    }),
 };
-
-/**
- * Demo mode: the checkout runs entirely in the browser, any sign-in or sign-up is accepted.
- * Nothing is sent to the backend and no account, order or file is created.
- */
-export const DEMO = CHECKOUT_DEMO;
-
-const pause = <T,>(value: T, ms = 500) => new Promise<T>((resolve) => setTimeout(() => resolve(value), ms));
-
-const demoApi: typeof realApi = {
-  login: (email) =>
-    pause({ user: { id: "demo", email, firstName: "Demo", lastName: "User" }, accessToken: "demo" }),
-
-  register: (body) =>
-    pause({
-      user: { id: "demo", email: body.email, firstName: body.firstName, lastName: body.lastName },
-      accessToken: "demo",
-    }),
-
-  createRequest: () => {
-    const d = new Date();
-    const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-    const rand = Math.floor(1000 + Math.random() * 9000);
-    return pause({ id: "demo", referenceNumber: `DEMO-${stamp}-${rand}`, totalAmount: 0 }, 700);
-  },
-
-  uploadDocument: () => pause({}, 300),
-
-  pay: () => pause({ transactionRef: "DEMO" }, 700),
-};
-
-export const api = DEMO ? demoApi : realApi;

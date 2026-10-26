@@ -5,16 +5,19 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dict } from "@/dictionaries/en";
 import { SUPPORT_EMAIL } from "@/lib/config";
+import { fmt } from "@/lib/dictionaries";
 import { otherLocale, type Locale } from "@/lib/i18n";
 import { buttonClass } from "./Button";
 import { ArrowIcon, CloseIcon, MailIcon, MenuIcon, UserIcon } from "./Icons";
 import { Logo } from "./Logo";
 import { Rings } from "./Rings";
+import { useSession } from "./SessionProvider";
 
 const vars = (d: number) => ({ ["--d" as string]: `${d}ms` }) as React.CSSProperties;
 
 export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; footer: Dict["footer"] }) {
   const pathname = usePathname();
+  const { status, user, signOut } = useSession();
   const [state, setState] = useState<"closed" | "open" | "closing">("closed");
   const overlay = useRef<HTMLDivElement>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
@@ -118,14 +121,32 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
           >
             {locale === "en" ? "🇪🇬" : "🇬🇧"}
           </Link>
-          <Link
-            href={`/${locale}/checkout`}
-            aria-label="Account"
-            className="inline-flex size-10 items-center justify-center rounded-lg text-white/75 transition-colors duration-150 hover:text-white"
-          >
-            <UserIcon size={22} />
-          </Link>
-          <Link href={`/${locale}/checkout`} className={buttonClass("primary", "min-h-11 px-5 text-sm")}>
+          {status === "authenticated" && user ? (
+            <div className="flex items-center gap-1">
+              <span className="inline-flex max-w-[11rem] items-center gap-2 truncate px-2 text-sm text-white/85">
+                <UserIcon size={20} className="shrink-0" />
+                {fmt(t.hello, { name: user.firstName })}
+              </span>
+              <button
+                type="button"
+                onClick={signOut}
+                className="rounded-lg px-3 py-2 text-sm font-medium text-white/75 transition-colors duration-150 hover:text-white"
+              >
+                {t.signOut}
+              </button>
+            </div>
+          ) : (
+            status === "anonymous" && (
+              <Link
+                href={`/${locale}/signin`}
+                className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white/75 transition-colors duration-150 hover:text-white"
+              >
+                <UserIcon size={20} />
+                {t.signIn}
+              </Link>
+            )
+          )}
+          <Link href={`/${locale}/request`} className={buttonClass("primary", "min-h-11 px-5 text-sm")}>
             {t.cta}
           </Link>
         </div>
@@ -228,10 +249,34 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
               </a>
             </div>
 
+            {status === "authenticated" && user ? (
+              <div className="mt-6 flex items-center justify-between gap-4 rounded-btn border border-white/20 px-4 py-2">
+                <span className="truncate text-white/85">{fmt(t.hello, { name: user.firstName })}</span>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    close();
+                    await signOut();
+                  }}
+                  className="min-h-10 shrink-0 text-sm font-medium text-white underline underline-offset-4"
+                >
+                  {t.signOut}
+                </button>
+              </div>
+            ) : (
+              <Link
+                href={`/${locale}/signin`}
+                onClick={close}
+                className={buttonClass("outline-light", "mt-6 w-full")}
+              >
+                {t.signIn}
+              </Link>
+            )}
+
             <Link
-              href={`/${locale}/checkout`}
+              href={`/${locale}/request`}
               onClick={close}
-              className={buttonClass("primary", "group/btn mt-6 min-h-14 w-full text-lg")}
+              className={buttonClass("primary", "group/btn mt-3 min-h-14 w-full text-lg")}
             >
               {t.cta}
               <ArrowIcon size={22} />

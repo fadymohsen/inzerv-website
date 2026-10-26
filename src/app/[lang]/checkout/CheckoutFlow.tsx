@@ -1,31 +1,23 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buttonClass } from "@/components/Button";
 import { Field, describedBy, inputClass } from "@/components/forms";
 import { BackIcon, CheckIcon, UploadIcon } from "@/components/Icons";
 import type { Dict } from "@/dictionaries/en";
-import { ApiError, api, clearSession, getSession, saveSession } from "@/lib/api-client";
+import { ApiError, orders } from "@/lib/api-client";
 import { fmt, money } from "@/lib/dictionaries";
 import { countryName, digits, processingTime, serviceName } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
-import type { AuthUser, DeliveryDestination, GovService } from "@/lib/types";
+import { useSession } from "@/components/SessionProvider";
+import type { DeliveryDestination, GovService } from "@/lib/types";
 
-const STEPS = ["account", "details", "documents", "delivery", "review"] as const;
+const STEPS = ["details", "documents", "delivery", "review"] as const;
 type StepKey = (typeof STEPS)[number];
 type Errors = Record<string, string>;
 type Stage = "idle" | "creating" | "uploading" | "paying" | "done";
-
-const emailRe = /^\S+@\S+\.\S+$/;
-
-/** Random password for guest checkout. Never shown or stored; the customer can set one via Forgot password. */
-function guestPassword(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(24));
-  const alphabet = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return "Aa7" + Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
-}
 
 export function CheckoutFlow({
   locale,
@@ -43,24 +35,12 @@ export function CheckoutFlow({
   const search = useSearchParams();
   const pick = (en: string, ar: string) => (locale === "ar" ? ar : en);
 
-  const [session, setSession] = useState<{ token: string; user: AuthUser } | null>(null);
-  const [ready, setReady] = useState(false);
+  const { status, user } = useSession();
+  const router = useRouter();
+  const pathname = usePathname();
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
   const [focusTick, setFocusTick] = useState(0);
-
-  // account
-  const [authMode, setAuthMode] = useState<"signin" | "register">("signin");
-  const [auth, setAuth] = useState({
-    email: "",
-    password: "",
-    firstName: "",
-    lastName: "",
-    phone: "",
-    country: "",
-  });
-  const [authBusy, setAuthBusy] = useState(false);
-  const [authError, setAuthError] = useState("");
 
   // details
   const initialType = search.get("service");
@@ -95,6 +75,7 @@ export function CheckoutFlow({
   const created = useRef<{ id: string; ref: string } | null>(null);
   const uploaded = useRef(new Set<string>());
   const paid = useRef(false);
+  const [locked, setLocked] = useState(false);
   const [reference, setReference] = useState("");
 
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -103,15 +84,11 @@ export function CheckoutFlow({
   const service = services.find((s) => s.type === serviceType);
   const destination = destinations.find((d) => d.id === delivery.destinationId);
 
+  const signInUrl = `/${locale}/signin?next=${encodeURIComponent(`${pathname}${search.toString() ? `?${search.toString()}` : ""}`)}`;
+
   useEffect(() => {
-    // sessionStorage is unavailable during SSR, so the session is read after mount.
-    const s = getSession();
-    /* eslint-disable react-hooks/set-state-in-effect */
-    setSession(s);
-    setReady(true);
-    if (s) setStep(1);
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, []);
+    if (status === "anonymous") router.replace(signInUrl);
+  }, [status, router, signInUrl]);
 
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
@@ -150,59 +127,9 @@ export function CheckoutFlow({
     return true;
   }
 
-  /* ---------- account ---------- */
-
-  async function submitAuth(e: React.FormEvent) {
-    e.preventDefault();
-    const next: Errors = {};
-    if (!emailRe.test(auth.email.trim())) next.email = t.errors.email;
-    if (authMode === "register") {
-      if (!auth.firstName.trim()) next.firstName = t.errors.required;
-      if (!auth.lastName.trim()) next.lastName = t.errors.required;
-      if (!auth.phone.trim()) next.phone = t.errors.required;
-    } else if (!auth.password) {
-      next.password = t.errors.required;
-    }
-    if (!fail(next)) return;
-
-    setAuthBusy(true);
-    setAuthError("");
-    try {
-      const email = auth.email.trim().toLowerCase();
-      const res =
-        authMode === "signin"
-          ? await api.login(email, auth.password)
-          : await api.register({
-              firstName: auth.firstName.trim(),
-              lastName: auth.lastName.trim(),
-              email,
-              password: guestPassword(),
-              phone: auth.phone.trim(),
-              countryOfResidence: auth.country.trim() || undefined,
-            });
-      saveSession(res.accessToken, res.user);
-      setSession({ token: res.accessToken, user: res.user });
-      setStep(1);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setAuthError(/phone/i.test(err.message) ? t.errors.phoneExists : t.errors.emailExists);
-      } else {
-        setAuthError(errMessage(err));
-      }
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-
   function errMessage(err: unknown): string {
     if (err instanceof ApiError) return err.status === 0 ? t.errors.network : err.message;
     return t.errors.generic;
-  }
-
-  function signOut() {
-    clearSession();
-    setSession(null);
-    setStep(0);
   }
 
   /* ---------- step validation ---------- */
@@ -242,7 +169,7 @@ export function CheckoutFlow({
 
   function goBack() {
     setErrors({});
-    const lockedAt = created.current ? STEPS.indexOf("documents") : 1;
+    const lockedAt = created.current ? STEPS.indexOf("documents") : 0;
     setStep((s) => Math.max(s - 1, lockedAt));
     formRef.current?.scrollIntoView({ block: "start" });
   }
@@ -284,14 +211,12 @@ export function CheckoutFlow({
   /* ---------- place order ---------- */
 
   async function placeOrder() {
-    if (!validate("review") || !session || !service) return;
+    if (!validate("review") || status !== "authenticated" || !service) return;
     setSubmitError("");
-    const { token } = session;
-
     try {
       if (!created.current) {
         setStage("creating");
-        const res = await api.createRequest(token, {
+        const res = await orders.create({
           serviceId: service.id,
           requestFor,
           fieldValues: visibleFields
@@ -307,6 +232,7 @@ export function CheckoutFlow({
           deliveryPostalCode: delivery.postal.trim() || undefined,
         });
         created.current = { id: res.id, ref: res.referenceNumber };
+        setLocked(true);
       }
 
       const pending = visibleDocs.filter((d) => files[d.keyName] && !uploaded.current.has(d.keyName));
@@ -314,7 +240,7 @@ export function CheckoutFlow({
         setStage("uploading");
         setProgress({ i: i + 1, n: pending.length });
         try {
-          await api.uploadDocument(token, created.current.id, pending[i].keyName, files[pending[i].keyName]);
+          await orders.upload(created.current.id, pending[i].keyName, files[pending[i].keyName]);
         } catch (err) {
           if (err instanceof ApiError && err.status === 401) throw err;
           throw new UploadError(err);
@@ -325,7 +251,7 @@ export function CheckoutFlow({
       if (!paid.current) {
         setStage("paying");
         try {
-          await api.pay(token, created.current.id, method);
+          await orders.pay(created.current.id, method);
         } catch (err) {
           const already = err instanceof ApiError && /already been paid/i.test(err.message);
           if (!already) {
@@ -341,10 +267,7 @@ export function CheckoutFlow({
     } catch (err) {
       setStage("idle");
       if (err instanceof ApiError && err.status === 401) {
-        clearSession();
-        setSession(null);
-        setStep(0);
-        setAuthError(t.errors.session);
+        router.replace(signInUrl);
         return;
       }
       if (err instanceof UploadError) setSubmitError(`${t.errors.uploadFailed} ${detail(err.cause)}`.trim());
@@ -361,19 +284,20 @@ export function CheckoutFlow({
     created.current = null;
     uploaded.current = new Set();
     paid.current = false;
+    setLocked(false);
     setFiles({});
     setValues({});
     setAgree(false);
     setReference("");
     setSubmitError("");
     setStage("idle");
-    setStep(1);
+    setStep(0);
   }
 
   /* ---------- render ---------- */
 
-  if (!ready) {
-    return <p className="py-24 text-center text-ink-muted">{t.title}</p>;
+  if (status !== "authenticated" || !user) {
+    return <p className="py-24 text-center text-ink-muted">{t.account.checking}</p>;
   }
 
   if (stage === "done") {
@@ -399,73 +323,39 @@ export function CheckoutFlow({
 
   const current = STEPS[step];
   const working = stage !== "idle";
+  const numberedSteps = STEPS;
+
   return (
-    <div className={`grid gap-10 lg:gap-16 ${step >= 1 ? "lg:grid-cols-[1fr_21rem]" : "max-w-2xl"}`}>
+    <div className="grid gap-10 lg:grid-cols-[1fr_21rem] lg:gap-16">
       <div ref={formRef} className="min-w-0 scroll-mt-28">
+        {/* Stepper */}
+        <ol className="mb-10 flex items-center gap-2" aria-label={t.title}>
+          {numberedSteps.map((k) => {
+            const idx = STEPS.indexOf(k);
+            const done = idx < step;
+            const active = idx === step;
+            return (
+              <li key={k} className="flex flex-1 flex-col gap-2" aria-current={active ? "step" : undefined}>
+                <span className={`h-1 rounded-full ${done || active ? "bg-turquoise" : "bg-line"}`} />
+                <span className={`hidden text-sm sm:block ${active ? "font-semibold" : "text-ink-muted"}`}>
+                  {t.steps[k]}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <p className="mb-6 text-sm text-ink-muted sm:hidden">
+          {fmt(t.stepWord, {
+            n: digits(String(numberedSteps.indexOf(current) + 1), locale),
+            total: digits(String(numberedSteps.length), locale),
+          })}
+          {": "}
+          {t.steps[current]}
+        </p>
 
-        {session && (
-          <p className="mb-8 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
-            {fmt(t.account.signedInAs, { name: `${session.user.firstName} ${session.user.lastName}`.trim() })}
-            {!created.current && (
-              <button type="button" onClick={signOut} className="font-medium text-navy underline underline-offset-4">
-                {t.account.signOut}
-              </button>
-            )}
-          </p>
-        )}
-
-        {/* ACCOUNT */}
-        {current === "account" && (
-          <form onSubmit={submitAuth} noValidate className="flex flex-col gap-6">
-            <h2 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold outline-none">
-              {t.account.signIn}
-            </h2>
-
-            <Field id="a-email" label={t.account.email} error={errors.email} required>
-              <input
-                id="a-email"
-                type="email"
-                inputMode="email"
-                dir="ltr"
-                autoComplete="email"
-                value={auth.email}
-                onChange={(e) => setAuth({ ...auth, email: e.target.value })}
-                aria-invalid={!!errors.email}
-                aria-describedby={describedBy("a-email", !!errors.email, false)}
-                className={`${inputClass} text-start`}
-              />
-            </Field>
-
-            <Field
-              id="a-password"
-              label={t.account.password}
-              error={errors.password}
-              required
-            >
-              <input
-                id="a-password"
-                type="password"
-                dir="ltr"
-                autoComplete="current-password"
-                value={auth.password}
-                onChange={(e) => setAuth({ ...auth, password: e.target.value })}
-                aria-invalid={!!errors.password}
-                aria-describedby={describedBy("a-password", !!errors.password, false)}
-                className={`${inputClass} text-start`}
-              />
-            </Field>
-
-            {authError && (
-              <p role="alert" className="rounded-btn border border-error/40 px-4 py-3 text-sm text-error">
-                {authError}
-              </p>
-            )}
-
-            <button type="submit" disabled={authBusy} className={buttonClass("primary", "w-full sm:w-fit")}>
-              {authBusy ? t.account.signIn + "…" : t.account.signIn}
-            </button>
-          </form>
-        )}
+        <p className="mb-8 text-sm text-ink-muted">
+          {fmt(t.account.signedInAs, { name: `${user.firstName} ${user.lastName}`.trim() })}
+        </p>
 
         {/* DETAILS */}
         {current === "details" && service && (
@@ -867,29 +757,27 @@ export function CheckoutFlow({
         )}
 
         {/* Nav */}
-        {current !== "account" && (
-          <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-6">
-            {step > (created.current ? STEPS.indexOf("documents") : 1) && (
-              <button type="button" onClick={goBack} disabled={working} className={buttonClass("outline")}>
-                <BackIcon size={18} />
-                {t.back}
-              </button>
-            )}
-            {current === "review" ? (
-              <button type="button" onClick={placeOrder} disabled={working} className={buttonClass("primary", "grow sm:grow-0")}>
-                {working ? "…" : fmt(t.review.place, { amount: money(total, locale) })}
-              </button>
-            ) : (
-              <button type="button" onClick={goNext} className={buttonClass("primary", "grow sm:grow-0")}>
-                {t.next}
-              </button>
-            )}
-          </div>
-        )}
+        <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-6">
+          {step > (locked ? STEPS.indexOf("documents") : 0) && (
+            <button type="button" onClick={goBack} disabled={working} className={buttonClass("outline")}>
+              <BackIcon size={18} />
+              {t.back}
+            </button>
+          )}
+          {current === "review" ? (
+            <button type="button" onClick={placeOrder} disabled={working} className={buttonClass("primary", "grow sm:grow-0")}>
+              {working ? "…" : fmt(t.review.place, { amount: money(total, locale) })}
+            </button>
+          ) : (
+            <button type="button" onClick={goNext} className={buttonClass("primary", "grow sm:grow-0")}>
+              {t.next}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Summary */}
-      {step >= 1 && service && (
+      {service && (
         <aside aria-label={t.review.total} className="lg:sticky lg:top-28 lg:self-start">
           <div className="rounded-card border border-line bg-bg-light p-6">
             <p className="font-semibold">{serviceName(service, locale)}</p>

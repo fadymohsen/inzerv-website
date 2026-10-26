@@ -59,7 +59,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               {t.home.hero.sub}
             </p>
             <div className="fade-up mt-10 flex flex-wrap gap-3" style={vars({ "--d": "800ms" })}>
-              <ButtonLink href={`/${lang}/checkout`} className="min-h-14 flex-1 px-6 text-base sm:flex-none sm:px-8 sm:text-lg">
+              <ButtonLink href={`/${lang}/request`} className="min-h-14 flex-1 px-6 text-base sm:flex-none sm:px-8 sm:text-lg">
                 {t.home.hero.primary}
                 <ArrowIcon size={22} />
               </ButtonLink>
@@ -376,7 +376,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             <ScrollWords text={t.home.cta.title} />
           </h2>
           <p className="reveal max-w-[38ch] text-xl text-navy/85">{t.home.cta.sub}</p>
-          <ButtonLink href={`/${lang}/checkout`} variant="navy" className="reveal min-h-14 px-8 text-lg">
+          <ButtonLink href={`/${lang}/request`} variant="navy" className="reveal min-h-14 px-8 text-lg">
             {t.home.cta.button}
             <ArrowIcon size={22} />
           </ButtonLink>

@@ -4,6 +4,7 @@ import { Inter, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { notFound } from "next/navigation";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { SessionProvider } from "@/components/SessionProvider";
 import { getDictionary } from "@/lib/dictionaries";
 import { SUPPORT_EMAIL } from "@/lib/config";
 import { dirOf, hasLocale, locales } from "@/lib/i18n";
@@ -127,12 +128,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             style={{ display: "none", visibility: "hidden" }}
           />
         </noscript>
-        <ScrollToTop />
-        <Header locale={lang} t={t.nav} footer={t.footer} />
-        <main id="main" className="flex-1">
-          {children}
-        </main>
-        <Footer locale={lang} t={t.footer} nav={t.nav} />
+        <SessionProvider>
+          <ScrollToTop />
+          <Header locale={lang} t={t.nav} footer={t.footer} />
+          <main id="main" className="flex-1">
+            {children}
+          </main>
+          <Footer locale={lang} t={t.footer} nav={t.nav} />
+        </SessionProvider>
       </body>
     </html>
   );
