@@ -30,9 +30,13 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-top: 5rem;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 body {
+  overflow-x: clip;
+  max-width: 100%;
   background: #fff;
   color: var(--color-navy);
   font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;

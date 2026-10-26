@@ -51,6 +51,7 @@ export const ar: Dict = {
     refund: "سياسة الإلغاء والاسترداد",
     privacy: "سياسة الخصوصية",
     checkout: "قدّم طلبًا",
+    poweredBy: "بدعم من",
   },
 
   common: {
@@ -403,7 +404,9 @@ export const ar: Dict = {
 
   checkout: {
     title: "قدّم طلبًا",
-    sub: "لا تحتاج إلى حساب. أدخل البيانات وشاهد السعر الكامل قبل الدفع.",
+    sub: "أدخل البيانات وشاهد السعر الكامل قبل الدفع.",
+    selected: "خدمتك",
+    change: "تغيير",
     stepWord: "الخطوة {n} من {total}",
     steps: {
       account: "بياناتك",

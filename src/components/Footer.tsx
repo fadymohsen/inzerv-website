@@ -63,9 +63,22 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
       </div>
 
       <div className="border-t border-line-navy">
-        <p className="mx-auto max-w-7xl px-5 py-6 text-xs text-white/60 lg:px-8">
-          © {t.year} {t.rights}
-        </p>
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-xs text-white/60 sm:flex-row sm:items-center sm:justify-between lg:px-8">
+          <p>
+            © {t.year} {t.rights}
+          </p>
+          <p>
+            {t.poweredBy}{" "}
+            <a
+              href="https://veliq.co"
+              target="_blank"
+              rel="noopener"
+              className="font-semibold text-turquoise transition-opacity duration-150 hover:opacity-80"
+            >
+              VELIQ
+            </a>
+          </p>
+        </div>
       </div>
     </footer>
   );

@@ -52,6 +52,7 @@ export const en = {
     refund: "Cancellation and Refund Policy",
     privacy: "Privacy Policy",
     checkout: "Place a request",
+    poweredBy: "Powered by",
   },
 
   common: {
@@ -405,7 +406,9 @@ export const en = {
 
   checkout: {
     title: "Place a request",
-    sub: "No account needed. Fill in the details and see the full price before you pay.",
+    sub: "Fill in the details and see the full price before you pay.",
+    selected: "Your service",
+    change: "Change",
     stepWord: "Step {n} of {total}",
     steps: {
       account: "Your details",

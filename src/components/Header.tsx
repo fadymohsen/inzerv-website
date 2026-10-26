@@ -52,7 +52,9 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
   useEffect(() => {
     if (!isOpen) return;
     const prev = document.body.style.overflow;
+    const prevHtml = document.documentElement.style.overflow;
     document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
     closeBtn.current?.focus();
 
     const onKey = (e: KeyboardEvent) => {
@@ -73,6 +75,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
+      document.documentElement.style.overflow = prevHtml;
       window.removeEventListener("keydown", onKey);
     };
   }, [isOpen, close]);
@@ -186,9 +189,11 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
           aria-modal="true"
           aria-label={t.primary}
           data-state={state}
-          className="menu-overlay fixed inset-0 z-[60] flex flex-col overflow-y-auto bg-navy text-white lg:hidden"
+          className="menu-overlay fixed inset-0 z-[60] flex w-full max-w-full touch-pan-y flex-col overflow-y-auto overflow-x-clip overscroll-contain bg-navy text-white lg:hidden"
         >
-          <Rings className="pointer-events-none absolute -end-[22rem] top-[28%] w-[52rem] opacity-90" />
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <Rings className="absolute -end-[22rem] top-[28%] w-[52rem] opacity-90" />
+          </div>
 
           {/* top bar, same position as the header so nothing jumps */}
           <div className="relative flex h-16 shrink-0 items-center justify-between border-b border-line-navy px-5">
@@ -301,20 +306,6 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
               {t.cta}
               <ArrowIcon size={22} />
             </Link>
-
-            <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-1 text-sm text-white/60">
-              {[
-                { href: `/${locale}/terms`, label: footer.terms },
-                { href: `/${locale}/refund-policy`, label: footer.refund },
-                { href: `/${locale}/privacy-policy`, label: footer.privacy },
-              ].map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} onClick={close} className="inline-flex min-h-10 items-center hover:text-white">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
           </div>
         </div>
       )}

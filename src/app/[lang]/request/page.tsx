@@ -40,33 +40,40 @@ export default async function RequestPage({ params }: PageProps<"/[lang]/request
         <p className="mt-6 max-w-[56ch] text-lg leading-relaxed text-ink-muted">{t.request.sub}</p>
         <AnonStrip lang={lang} text={t.request.anonText} signIn={t.nav.signIn} create={t.nav.createAccount} />
 
-        <ul className="mt-14 border-t border-navy/15">
+        <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3 lg:gap-6">
           {services.map((s, i) => (
-            <li key={s.type} className="border-b border-navy/15">
+            <li key={s.type} className="flex">
               <Link
                 href={`/${lang}/checkout?service=${s.type}`}
-                className="group/btn row-hover grid items-center gap-x-10 gap-y-3 py-8 md:grid-cols-[3rem_1.7fr_1fr_auto_auto]"
+                className="group/btn flex w-full flex-col rounded-card border border-line bg-white p-6 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-navy hover:shadow-[0_12px_32px_-12px_rgba(6,37,68,0.25)] lg:p-7"
               >
-                <span className="tabular hidden text-sm font-medium text-ink-muted md:block">{pad2(i + 1, lang)}</span>
-                <span>
-                  <span className="block text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">
-                    {serviceName(s, lang)}
+                <span className="tabular flex size-10 items-center justify-center rounded-full bg-navy text-sm font-semibold text-white">
+                  {pad2(i + 1, lang)}
+                </span>
+                <span className="mt-6 block text-2xl font-semibold leading-tight tracking-[-0.02em] rtl:leading-snug">
+                  {serviceName(s, lang)}
+                </span>
+                <span className="mt-3 line-clamp-3 block leading-relaxed text-ink-muted">
+                  {firstSentence(serviceDescription(s, lang))}
+                </span>
+
+                <span className="mt-auto block pt-7">
+                  <span className="flex items-end justify-between gap-4 border-t border-line pt-5">
+                    <span className="block text-sm text-ink-muted">
+                      {t.request.time}
+                      <span className="mt-0.5 block text-base font-medium text-navy">{processingTime(s, lang)}</span>
+                    </span>
+                    <span className="tabular block text-end text-3xl font-semibold leading-none tracking-tight">
+                      {money(s.servicePrice, lang)}
+                      <span className="mt-1.5 block text-xs font-normal tracking-normal text-ink-muted">
+                        {t.common.perCopy}
+                      </span>
+                    </span>
                   </span>
-                  <span className="mt-2 line-clamp-2 block max-w-[52ch] leading-relaxed text-ink-muted">
-                    {firstSentence(serviceDescription(s, lang))}
+                  <span className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-btn bg-turquoise px-6 text-[0.9375rem] font-medium text-navy transition-colors duration-150 group-hover/btn:bg-navy group-hover/btn:text-white">
+                    {t.request.select}
+                    <ArrowIcon size={18} />
                   </span>
-                </span>
-                <span className="text-sm text-ink-muted">
-                  <span className="block">{t.request.time}</span>
-                  <span className="text-base font-medium text-navy">{processingTime(s, lang)}</span>
-                </span>
-                <span className="tabular text-3xl font-semibold tracking-tight">
-                  {money(s.servicePrice, lang)}
-                  <span className="ms-1.5 text-sm font-normal text-ink-muted">{t.common.perCopy}</span>
-                </span>
-                <span className="inline-flex min-h-12 items-center justify-center gap-2 rounded-btn bg-turquoise px-6 text-[0.9375rem] font-medium text-navy">
-                  {t.request.select}
-                  <ArrowIcon size={18} />
                 </span>
               </Link>
             </li>

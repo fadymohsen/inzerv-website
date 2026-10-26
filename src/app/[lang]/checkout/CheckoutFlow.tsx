@@ -328,6 +328,30 @@ export function CheckoutFlow({
   return (
     <div className="grid gap-10 lg:grid-cols-[1fr_21rem] lg:gap-16">
       <div ref={formRef} className="min-w-0 scroll-mt-28">
+        {/* Selected service */}
+        {service && (
+          <div className="mb-10 flex items-center justify-between gap-4 rounded-card border border-navy/15 bg-bg-light p-5 sm:p-6">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-ink-muted">{t.selected}</p>
+              <p className="mt-1 text-xl font-semibold leading-snug tracking-[-0.01em] sm:text-2xl">
+                {serviceName(service, locale)}
+              </p>
+              <p className="mt-1 text-sm text-ink-muted">
+                {fmt(t.details.processing, { t: processingTime(service, locale) })}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              <p className="tabular text-xl font-semibold sm:text-2xl">{money(service.servicePrice, locale)}</p>
+              <Link
+                href={`/${locale}/request`}
+                className="inline-flex min-h-11 items-center text-sm font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-4"
+              >
+                {t.change}
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Stepper */}
         <ol className="mb-10 flex items-center gap-2" aria-label={t.title}>
           {numberedSteps.map((k) => {
