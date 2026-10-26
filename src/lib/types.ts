@@ -31,6 +31,11 @@ export type GovService = {
   descriptionAr: string | null;
   servicePrice: number;
   estimatedProcessingTime: string | null;
+  sortOrder?: number;
+  subtitleEn?: string | null;
+  subtitleAr?: string | null;
+  iconKey?: string | null;
+  accentColor?: string | null;
   fields: ServiceField[];
   requiredDocuments: ServiceDocument[];
 };

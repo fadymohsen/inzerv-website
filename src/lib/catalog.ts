@@ -1,4 +1,4 @@
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import type { Catalog, DeliveryDestination, GovService } from "./types";
 
 import { API_URL } from "./config";
@@ -72,6 +72,7 @@ async function getJson<T>(path: string): Promise<T> {
 export async function getCatalog(): Promise<Catalog> {
   "use cache";
   cacheLife("minutes");
+  cacheTag("catalog");
 
   try {
     const [services, destinations] = await Promise.all([
