@@ -126,7 +126,7 @@ export const en = {
     services: {
       title: "Documents you can order today",
       sub: "Prices and processing times come from the live service.",
-      all: "Details and required documents",
+      all: "See all services",
       time: "Processing",
     },
     features: {

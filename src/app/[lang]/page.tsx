@@ -204,24 +204,15 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       {/* Services */}
       <section id="services" className="layer mt-12 bg-bg-light lg:mt-32">
         <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-36">
-          <div className="reveal flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <h2 className="text-[clamp(2.25rem,4.2vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.035em] rtl:leading-[1.3]">
-                {t.home.services.title}
-              </h2>
-              <p className="mt-4 text-lg text-ink-muted">{t.home.services.sub}</p>
-            </div>
-            <Link
-              href={`/${lang}/services`}
-              className="group/btn inline-flex min-h-11 items-center gap-2 font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
-            >
-              {t.home.services.all}
-              <ArrowIcon size={18} />
-            </Link>
+          <div className="reveal">
+            <h2 className="text-[clamp(2.25rem,4.2vw,3.5rem)] font-semibold leading-[1.02] tracking-[-0.035em] rtl:leading-[1.3]">
+              {t.home.services.title}
+            </h2>
+            <p className="mt-4 text-lg text-ink-muted">{t.home.services.sub}</p>
           </div>
 
           <ul className="mt-14 border-t border-navy/15">
-            {services.map((s) => (
+            {services.slice(0, 3).map((s) => (
               <li
                 key={s.type}
                 className="row-hover reveal grid items-center gap-x-10 gap-y-4 border-b border-navy/15 py-8 md:grid-cols-[1.7fr_1fr_auto_auto]"
@@ -247,6 +238,13 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </li>
             ))}
           </ul>
+
+          <div className="reveal mt-12 flex justify-center">
+            <ButtonLink href={`/${lang}/services`} variant="outline" className="min-h-14 px-8 text-base">
+              {t.home.services.all}
+              <ArrowIcon size={20} />
+            </ButtonLink>
+          </div>
         </div>
       </section>
 
