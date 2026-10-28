@@ -1,8 +1,10 @@
 import Link from "next/link";
 import type { Dict } from "@/dictionaries/en";
-import { SUPPORT_EMAIL } from "@/lib/config";
+import { SUPPORT_EMAIL, SUPPORT_PHONE_LANDLINE, SUPPORT_PHONE_MOBILE } from "@/lib/config";
 import type { Locale } from "@/lib/i18n";
 import { Logo } from "./Logo";
+
+const telHref = (number: string) => `tel:+20${number.replace(/^0/, "")}`;
 
 export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; nav: Dict["nav"] }) {
   const explore = [
@@ -56,9 +58,18 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
 
         <div className="col-span-2 lg:col-span-1">
           <p className={colTitle}>{t.contactTitle}</p>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className={link} dir="ltr">
-            {SUPPORT_EMAIL}
-          </a>
+          <div className="flex flex-col items-start gap-1">
+            <a href={`mailto:${SUPPORT_EMAIL}`} className={link} dir="ltr">
+              {SUPPORT_EMAIL}
+            </a>
+            <a href={telHref(SUPPORT_PHONE_MOBILE)} className={link}>
+              <span className="text-white/50">{t.mobile}:</span> <span dir="ltr">{SUPPORT_PHONE_MOBILE}</span>
+            </a>
+            <a href={telHref(SUPPORT_PHONE_LANDLINE)} className={link}>
+              <span className="text-white/50">{t.landline}:</span> <span dir="ltr">{SUPPORT_PHONE_LANDLINE}</span>
+            </a>
+            <p className="max-w-xs pt-1 text-sm leading-relaxed text-white/70">{t.address}</p>
+          </div>
         </div>
       </div>
 

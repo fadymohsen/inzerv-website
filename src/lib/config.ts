@@ -4,6 +4,8 @@ export const API_URL =
   "https://inzerv-app-production.up.railway.app/api/v1";
 
 export const SUPPORT_EMAIL = "Hello@inzerv.com";
+export const SUPPORT_PHONE_MOBILE = "01070608705";
+export const SUPPORT_PHONE_LANDLINE = "034234388";
 
 // Legal pages are drafts until reviewed. Flip to false once approved.
 export const LEGAL_IS_DRAFT = true;
