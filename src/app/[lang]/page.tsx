@@ -240,7 +240,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
           </ul>
 
           <div className="reveal mt-12 flex justify-center">
-            <ButtonLink href={`/${lang}/services`} variant="outline" className="min-h-14 px-8 text-base">
+            <ButtonLink href="https://www.inzerv.com/en/request" variant="outline" className="min-h-14 px-8 text-base">
               {t.home.services.all}
               <ArrowIcon size={20} />
             </ButtonLink>
