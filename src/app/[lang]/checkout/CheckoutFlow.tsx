@@ -352,15 +352,7 @@ export function CheckoutFlow({
                 {fmt(t.details.processing, { t: processingTime(service, locale) })}
               </p>
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-1">
-              <p className="tabular text-xl font-semibold sm:text-2xl">{money(service.servicePrice, locale)}</p>
-              <Link
-                href={`/${locale}/request`}
-                className="inline-flex min-h-11 items-center text-sm font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-4"
-              >
-                {t.change}
-              </Link>
-            </div>
+            <p className="tabular shrink-0 text-xl font-semibold sm:text-2xl">{money(service.servicePrice, locale)}</p>
           </div>
         )}
 
