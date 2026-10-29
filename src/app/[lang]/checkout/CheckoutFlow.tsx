@@ -14,6 +14,16 @@ import type { Locale } from "@/lib/i18n";
 import { useSession } from "@/components/SessionProvider";
 import type { DeliveryDestination, GovService } from "@/lib/types";
 
+const NATIONAL_ID_RE = /^[23]\d{13}$/;
+const NATIONAL_ID_KEYS = ["national_id", "nationalid", "nid"];
+function isNationalIdField(key: string) {
+  const k = key.toLowerCase();
+  return NATIONAL_ID_KEYS.some((id) => k.includes(id));
+}
+function isValidNationalId(value: string) {
+  return NATIONAL_ID_RE.test(value);
+}
+
 const STEPS = ["details", "documents", "delivery", "review"] as const;
 type StepKey = (typeof STEPS)[number];
 type Errors = Record<string, string>;
@@ -141,6 +151,8 @@ export function CheckoutFlow({
       if (!Number.isInteger(copies) || copies < 1 || copies > 10) next.copies = t.errors.required;
       for (const f of visibleFields) {
         if (f.isRequired && !values[f.keyName]?.trim()) next[`f_${f.keyName}`] = t.errors.required;
+        else if (isNationalIdField(f.keyName) && values[f.keyName]?.trim() && !isValidNationalId(values[f.keyName].trim()))
+          next[`f_${f.keyName}`] = t.errors.nationalId;
       }
     }
     if (key === "documents") {
@@ -482,8 +494,13 @@ export function CheckoutFlow({
                         <input
                           {...common}
                           type={f.fieldType === "date" ? "date" : f.fieldType === "number" ? "number" : "text"}
-                          inputMode={f.fieldType === "number" ? "numeric" : undefined}
-                          onChange={(e) => set(e.target.value)}
+                          inputMode={f.fieldType === "number" || isNationalIdField(f.keyName) ? "numeric" : undefined}
+                          maxLength={isNationalIdField(f.keyName) ? 14 : undefined}
+                          dir={isNationalIdField(f.keyName) ? "ltr" : undefined}
+                          onChange={(e) => {
+                            const v = isNationalIdField(f.keyName) ? e.target.value.replace(/\D/g, "").slice(0, 14) : e.target.value;
+                            set(v);
+                          }}
                         />
                       )}
                     </Field>

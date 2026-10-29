@@ -516,6 +516,7 @@ export const en = {
       select: "Please choose an option.",
       uploadFailed: "One of the files could not be uploaded. Your request is saved; try again.",
       payFailed: "Payment could not be confirmed. Your request is saved; try again.",
+      nationalId: "The National ID must be exactly 14 digits and start with 2 or 3.",
     },
   },
 
