@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buttonClass } from "@/components/Button";
-import { Field, describedBy, inputClass, selectClass } from "@/components/forms";
+import { Field, describedBy, inputClass } from "@/components/forms";
+import { Select } from "@/components/Select";
 import { BackIcon, CheckIcon, UploadIcon } from "@/components/Icons";
 import type { Dict } from "@/dictionaries/en";
 import { ApiError, orders } from "@/lib/api-client";
@@ -395,23 +396,22 @@ export function CheckoutFlow({
             </h2>
 
             <Field id="d-service" label={t.details.service} error={errors.service} required>
-              <select
+              <Select
                 id="d-service"
                 value={serviceType}
-                onChange={(e) => {
-                  setServiceType(e.target.value);
+                options={services.map((s) => ({
+                  value: s.type,
+                  label: `${serviceName(s, locale)}, ${money(s.servicePrice, locale)}`,
+                }))}
+                onChange={(v) => {
+                  setServiceType(v);
                   setValues({});
                   setFiles({});
                   setFileErrors({});
                 }}
-                className={selectClass}
-              >
-                {services.map((s) => (
-                  <option key={s.type} value={s.type}>
-                    {serviceName(s, locale)}, {money(s.servicePrice, locale)}
-                  </option>
-                ))}
-              </select>
+                aria-invalid={!!errors.service}
+                aria-describedby={describedBy("d-service", !!errors.service, false)}
+              />
               <p className="mt-2 text-sm text-ink-muted">
                 {fmt(t.details.processing, { t: processingTime(service, locale) })}
               </p>
@@ -476,14 +476,18 @@ export function CheckoutFlow({
                   return (
                     <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr)} error={err} required={f.isRequired}>
                       {f.fieldType === "select" ? (
-                        <select {...common} className={selectClass} onChange={(e) => set(e.target.value)}>
-                          <option value="">{t.details.choose}</option>
-                          {f.options?.map((o) => (
-                            <option key={o.value} value={o.value}>
-                              {pick(o.labelEn, o.labelAr)}
-                            </option>
-                          ))}
-                        </select>
+                        <Select
+                          id={id}
+                          value={values[f.keyName] ?? ""}
+                          placeholder={t.details.choose}
+                          options={(f.options ?? []).map((o) => ({
+                            value: o.value,
+                            label: pick(o.labelEn, o.labelAr),
+                          }))}
+                          onChange={set}
+                          aria-invalid={!!err}
+                          aria-describedby={describedBy(id, !!err, false)}
+                        />
                       ) : (
                         <input
                           {...common}
@@ -587,21 +591,18 @@ export function CheckoutFlow({
             </h2>
 
             <Field id="v-dest" label={t.delivery.destination} error={errors.destinationId} required>
-              <select
+              <Select
                 id="v-dest"
                 value={delivery.destinationId}
-                onChange={(e) => setDelivery({ ...delivery, destinationId: e.target.value, governorate: "" })}
+                placeholder={t.delivery.select}
+                options={destinations.map((d) => ({
+                  value: d.id,
+                  label: `${countryName(d.countryCode, d.country, locale)}, ${money(d.deliveryFee, locale)}`,
+                }))}
+                onChange={(v) => setDelivery({ ...delivery, destinationId: v, governorate: "" })}
                 aria-invalid={!!errors.destinationId}
                 aria-describedby={describedBy("v-dest", !!errors.destinationId, false)}
-                className={selectClass}
-              >
-                <option value="">{t.delivery.select}</option>
-                {destinations.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {countryName(d.countryCode, d.country, locale)}, {money(d.deliveryFee, locale)}
-                  </option>
-                ))}
-              </select>
+              />
             </Field>
 
             <div className="grid gap-6 sm:grid-cols-2">
@@ -646,22 +647,18 @@ export function CheckoutFlow({
               </Field>
               <Field id="v-gov" label={t.delivery.governorate} error={errors.governorate} required>
                 {destination && getRegions(destination.countryCode).length > 0 ? (
-                  <select
+                  <Select
                     id="v-gov"
-                    autoComplete="address-level1"
                     value={delivery.governorate}
-                    onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
+                    placeholder={t.delivery.selectGovernorate}
+                    options={getRegions(destination.countryCode).map((r) => ({
+                      value: r.en,
+                      label: locale === "ar" ? r.ar : r.en,
+                    }))}
+                    onChange={(v) => setDelivery({ ...delivery, governorate: v })}
                     aria-invalid={!!errors.governorate}
                     aria-describedby={describedBy("v-gov", !!errors.governorate, false)}
-                    className={selectClass}
-                  >
-                    <option value="">{t.delivery.selectGovernorate}</option>
-                    {getRegions(destination.countryCode).map((r) => (
-                      <option key={r.en} value={r.en}>
-                        {locale === "ar" ? r.ar : r.en}
-                      </option>
-                    ))}
-                  </select>
+                  />
                 ) : (
                   <input
                     id="v-gov"
