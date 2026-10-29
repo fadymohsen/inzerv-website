@@ -25,6 +25,10 @@ function isNationalIdField(key: string) {
 function isValidNationalId(value: string) {
   return NATIONAL_ID_RE.test(value);
 }
+function isNameField(key: string) {
+  const k = key.toLowerCase();
+  return k.includes("_name") || k === "holder_name";
+}
 
 const STEPS = ["details", "documents", "delivery", "review"] as const;
 type StepKey = (typeof STEPS)[number];
@@ -152,9 +156,12 @@ export function CheckoutFlow({
       if (!service) next.service = t.errors.select;
       if (!Number.isInteger(copies) || copies < 1 || copies > 10) next.copies = t.errors.required;
       for (const f of visibleFields) {
-        if (f.isRequired && !values[f.keyName]?.trim()) next[`f_${f.keyName}`] = t.errors.required;
-        else if (isNationalIdField(f.keyName) && values[f.keyName]?.trim() && !isValidNationalId(values[f.keyName].trim()))
+        const val = values[f.keyName]?.trim() ?? "";
+        if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
+        else if (isNationalIdField(f.keyName) && val && !isValidNationalId(val))
           next[`f_${f.keyName}`] = t.errors.nationalId;
+        else if (isNameField(f.keyName) && val && val.split(/\s+/).filter(Boolean).length < 4)
+          next[`f_${f.keyName}`] = t.errors.fullName;
       }
     }
     if (key === "documents") {
@@ -165,11 +172,16 @@ export function CheckoutFlow({
     }
     if (key === "delivery") {
       if (!delivery.destinationId) next.destinationId = t.errors.select;
+      const nameParts = delivery.recipientName.trim().split(/\s+/).filter(Boolean);
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
-      if (!delivery.recipientPhone.trim()) next.recipientPhone = t.errors.required;
+      else if (nameParts.length < 4) next.recipientName = t.errors.fullName;
+      const phone = delivery.recipientPhone.trim();
+      if (!phone) next.recipientPhone = t.errors.required;
+      else if (!/^\+?\d[\d\s-]{6,}$/.test(phone)) next.recipientPhone = t.errors.phone;
       if (!delivery.city.trim()) next.city = t.errors.required;
       if (!delivery.governorate.trim()) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
+      if (delivery.postal.trim() && !/^\d+$/.test(delivery.postal.trim())) next.postal = t.errors.postal;
     }
     if (key === "review" && !agree) next.agree = t.errors.agree;
     return fail(next);
@@ -625,7 +637,7 @@ export function CheckoutFlow({
                   dir="ltr"
                   autoComplete="tel"
                   value={delivery.recipientPhone}
-                  onChange={(e) => setDelivery({ ...delivery, recipientPhone: e.target.value })}
+                  onChange={(e) => setDelivery({ ...delivery, recipientPhone: e.target.value.replace(/[^\d+\s-]/g, "") })}
                   aria-invalid={!!errors.recipientPhone}
                   aria-describedby={describedBy("v-phone", !!errors.recipientPhone, false)}
                   className={`${inputClass} text-start`}
@@ -686,13 +698,16 @@ export function CheckoutFlow({
               />
             </Field>
 
-            <Field id="v-postal" label={t.delivery.postal}>
+            <Field id="v-postal" label={t.delivery.postal} error={errors.postal}>
               <input
                 id="v-postal"
                 autoComplete="postal-code"
                 dir="ltr"
                 value={delivery.postal}
-                onChange={(e) => setDelivery({ ...delivery, postal: e.target.value })}
+                inputMode="numeric"
+                onChange={(e) => setDelivery({ ...delivery, postal: e.target.value.replace(/\D/g, "") })}
+                aria-invalid={!!errors.postal}
+                aria-describedby={describedBy("v-postal", !!errors.postal, false)}
                 className={`${inputClass} max-w-48 text-start`}
               />
             </Field>

@@ -518,6 +518,9 @@ export const en = {
       uploadFailed: "One of the files could not be uploaded. Your request is saved; try again.",
       payFailed: "Payment could not be confirmed. Your request is saved; try again.",
       nationalId: "The National ID must be exactly 14 digits and start with 2 or 3.",
+      fullName: "Enter your full name (4 names).",
+      phone: "Enter a valid phone number (digits only).",
+      postal: "Postal code must be digits only.",
     },
   },
 
