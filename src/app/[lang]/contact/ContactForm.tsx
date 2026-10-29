@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Dict } from "@/dictionaries/en";
 import { buttonClass } from "@/components/Button";
+import { Select } from "@/components/Select";
 import { SUPPORT_EMAIL } from "@/lib/config";
 
 type Errors = Partial<Record<"name" | "email" | "message", string>>;
@@ -12,13 +13,14 @@ const inputClass =
 
 export function ContactForm({ t }: { t: Dict["contact"] }) {
   const [errors, setErrors] = useState<Errors>({});
+  const [topic, setTopic] = useState(t.topics[0]);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
-    const topic = String(data.get("topic") ?? "");
+    const topicValue = topic;
     const message = String(data.get("message") ?? "").trim();
 
     const next: Errors = {};
@@ -32,7 +34,7 @@ export function ContactForm({ t }: { t: Dict["contact"] }) {
       return;
     }
 
-    const subject = `Inzerv website: ${topic}`;
+    const subject = `Inzerv website: ${topicValue}`;
     const body = `${message}\n\n${name}\n${email}`;
     window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   }
@@ -81,16 +83,15 @@ export function ContactForm({ t }: { t: Dict["contact"] }) {
       </div>
 
       <div>
-        <label htmlFor="c-topic" className="text-sm font-medium">
+        <label htmlFor="c-topic" className="mb-2 block text-sm font-medium">
           {t.topic}
         </label>
-        <select id="c-topic" name="topic" className={inputClass} defaultValue={t.topics[0]}>
-          {t.topics.map((topic) => (
-            <option key={topic} value={topic}>
-              {topic}
-            </option>
-          ))}
-        </select>
+        <Select
+          id="c-topic"
+          value={topic}
+          options={t.topics.map((tp) => ({ value: tp, label: tp }))}
+          onChange={setTopic}
+        />
       </div>
 
       <div>
