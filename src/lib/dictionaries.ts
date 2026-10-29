@@ -13,12 +13,12 @@ export function fmt(template: string, vars: Record<string, string | number>): st
 }
 
 export function money(amount: number, locale: Locale): string {
-  const n = new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-US", {
+  const n = new Intl.NumberFormat("en-US", {
     maximumFractionDigits: 0,
   }).format(amount);
   return locale === "ar" ? `${n} ج.م` : `EGP ${n}`;
 }
 
-export function num(n: number, locale: Locale): string {
-  return new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-US").format(n);
+export function num(n: number, _locale: Locale): string {
+  return new Intl.NumberFormat("en-US").format(n);
 }
