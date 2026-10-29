@@ -13,6 +13,7 @@ import { countryName, digits, processingTime, serviceName } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
 import { useSession } from "@/components/SessionProvider";
 import type { DeliveryDestination, GovService } from "@/lib/types";
+import { getRegions } from "@/lib/governorates";
 
 const NATIONAL_ID_RE = /^[23]\d{13}$/;
 const NATIONAL_ID_KEYS = ["national_id", "nationalid", "nid"];
@@ -588,7 +589,7 @@ export function CheckoutFlow({
               <select
                 id="v-dest"
                 value={delivery.destinationId}
-                onChange={(e) => setDelivery({ ...delivery, destinationId: e.target.value })}
+                onChange={(e) => setDelivery({ ...delivery, destinationId: e.target.value, governorate: "" })}
                 aria-invalid={!!errors.destinationId}
                 aria-describedby={describedBy("v-dest", !!errors.destinationId, false)}
                 className={inputClass}
@@ -643,13 +644,30 @@ export function CheckoutFlow({
                 />
               </Field>
               <Field id="v-gov" label={t.delivery.governorate}>
-                <input
-                  id="v-gov"
-                  autoComplete="address-level1"
-                  value={delivery.governorate}
-                  onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
-                  className={inputClass}
-                />
+                {destination && getRegions(destination.countryCode).length > 0 ? (
+                  <select
+                    id="v-gov"
+                    autoComplete="address-level1"
+                    value={delivery.governorate}
+                    onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
+                    className={inputClass}
+                  >
+                    <option value="">{t.delivery.select}</option>
+                    {getRegions(destination.countryCode).map((r) => (
+                      <option key={r.en} value={r.en}>
+                        {locale === "ar" ? r.ar : r.en}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    id="v-gov"
+                    autoComplete="address-level1"
+                    value={delivery.governorate}
+                    onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
+                    className={inputClass}
+                  />
+                )}
               </Field>
             </div>
 
