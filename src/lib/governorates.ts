@@ -66,12 +66,6 @@ const data: Record<string, Region[]> = {
     { en: "Umm Salal", ar: "أم صلال" },
     { en: "Al Shahaniya", ar: "الشحانية" },
   ],
-  GB: [
-    { en: "England", ar: "إنجلترا" },
-    { en: "Scotland", ar: "اسكتلندا" },
-    { en: "Wales", ar: "ويلز" },
-    { en: "Northern Ireland", ar: "أيرلندا الشمالية" },
-  ],
 };
 
 export function getRegions(countryCode: string): Region[] {

@@ -49,7 +49,6 @@ const fallbackDestinations: DeliveryDestination[] = [
   ["outside_egypt", "Saudi Arabia", "SA", 250],
   ["outside_egypt", "United Arab Emirates", "AE", 250],
   ["outside_egypt", "Qatar", "QA", 250],
-  ["outside_egypt", "United Kingdom", "GB", 400],
 ].map(([zone, country, countryCode, deliveryFee]) => ({
   id: "",
   zone: zone as DeliveryDestination["zone"],

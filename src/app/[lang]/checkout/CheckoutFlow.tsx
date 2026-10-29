@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buttonClass } from "@/components/Button";
-import { Field, describedBy, inputClass } from "@/components/forms";
+import { Field, describedBy, inputClass, selectClass } from "@/components/forms";
 import { BackIcon, CheckIcon, UploadIcon } from "@/components/Icons";
 import type { Dict } from "@/dictionaries/en";
 import { ApiError, orders } from "@/lib/api-client";
@@ -167,6 +167,7 @@ export function CheckoutFlow({
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
       if (!delivery.recipientPhone.trim()) next.recipientPhone = t.errors.required;
       if (!delivery.city.trim()) next.city = t.errors.required;
+      if (!delivery.governorate.trim()) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
     }
     if (key === "review" && !agree) next.agree = t.errors.agree;
@@ -403,7 +404,7 @@ export function CheckoutFlow({
                   setFiles({});
                   setFileErrors({});
                 }}
-                className={inputClass}
+                className={selectClass}
               >
                 {services.map((s) => (
                   <option key={s.type} value={s.type}>
@@ -475,7 +476,7 @@ export function CheckoutFlow({
                   return (
                     <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr)} error={err} required={f.isRequired}>
                       {f.fieldType === "select" ? (
-                        <select {...common} onChange={(e) => set(e.target.value)}>
+                        <select {...common} className={selectClass} onChange={(e) => set(e.target.value)}>
                           <option value="">{t.details.choose}</option>
                           {f.options?.map((o) => (
                             <option key={o.value} value={o.value}>
@@ -592,7 +593,7 @@ export function CheckoutFlow({
                 onChange={(e) => setDelivery({ ...delivery, destinationId: e.target.value, governorate: "" })}
                 aria-invalid={!!errors.destinationId}
                 aria-describedby={describedBy("v-dest", !!errors.destinationId, false)}
-                className={inputClass}
+                className={selectClass}
               >
                 <option value="">{t.delivery.select}</option>
                 {destinations.map((d) => (
@@ -643,16 +644,18 @@ export function CheckoutFlow({
                   className={inputClass}
                 />
               </Field>
-              <Field id="v-gov" label={t.delivery.governorate}>
+              <Field id="v-gov" label={t.delivery.governorate} error={errors.governorate} required>
                 {destination && getRegions(destination.countryCode).length > 0 ? (
                   <select
                     id="v-gov"
                     autoComplete="address-level1"
                     value={delivery.governorate}
                     onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
-                    className={inputClass}
+                    aria-invalid={!!errors.governorate}
+                    aria-describedby={describedBy("v-gov", !!errors.governorate, false)}
+                    className={selectClass}
                   >
-                    <option value="">{t.delivery.select}</option>
+                    <option value="">{t.delivery.selectGovernorate}</option>
                     {getRegions(destination.countryCode).map((r) => (
                       <option key={r.en} value={r.en}>
                         {locale === "ar" ? r.ar : r.en}
@@ -665,6 +668,9 @@ export function CheckoutFlow({
                     autoComplete="address-level1"
                     value={delivery.governorate}
                     onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
+                    aria-invalid={!!errors.governorate}
+                    aria-describedby={describedBy("v-gov", !!errors.governorate, false)}
+                    placeholder={t.delivery.selectGovernorate}
                     className={inputClass}
                   />
                 )}
