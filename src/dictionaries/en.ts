@@ -529,6 +529,7 @@ export const en = {
       fullName: "Enter your full name (4 names).",
       phone: "Enter a valid phone number (digits only).",
       postal: "Postal code must be digits only.",
+      futureDate: "The date must be in the past.",
     },
   },
 

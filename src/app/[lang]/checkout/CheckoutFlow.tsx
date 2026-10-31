@@ -162,6 +162,11 @@ export function CheckoutFlow({
           next[`f_${f.keyName}`] = t.errors.nationalId;
         else if (isNameField(f.keyName) && val && val.split(/\s+/).filter(Boolean).length < 4)
           next[`f_${f.keyName}`] = t.errors.fullName;
+        else if (f.fieldType === "date" && val) {
+          const d = new Date(val + "T00:00:00");
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          if (d >= today) next[`f_${f.keyName}`] = t.errors.futureDate;
+        }
       }
     }
     if (key === "documents") {
@@ -506,6 +511,7 @@ export function CheckoutFlow({
                           type={f.fieldType === "date" ? "date" : f.fieldType === "number" ? "number" : "text"}
                           inputMode={f.fieldType === "number" || isNationalIdField(f.keyName) ? "numeric" : undefined}
                           maxLength={isNationalIdField(f.keyName) ? 14 : undefined}
+                          max={f.fieldType === "date" ? (() => { const y = new Date(); y.setDate(y.getDate() - 1); return y.toISOString().slice(0, 10); })() : undefined}
                           dir={isNationalIdField(f.keyName) ? "ltr" : undefined}
                           onChange={(e) => {
                             const v = isNationalIdField(f.keyName) ? e.target.value.replace(/\D/g, "").slice(0, 14) : e.target.value;
