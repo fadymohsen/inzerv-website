@@ -154,7 +154,7 @@ export function CheckoutFlow({
     const next: Errors = {};
     if (key === "details") {
       if (!service) next.service = t.errors.select;
-      if (!Number.isInteger(copies) || copies < 1 || copies > 10) next.copies = t.errors.required;
+      if (!Number.isInteger(copies) || copies < 1 || copies > 19) next.copies = t.errors.required;
       for (const f of visibleFields) {
         const val = values[f.keyName]?.trim() ?? "";
         if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
