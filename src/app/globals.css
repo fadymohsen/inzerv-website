@@ -75,6 +75,15 @@ html[dir="rtl"] * {
   font-variant-numeric: tabular-nums;
 }
 
+/* Force number spinner arrows visible on all devices (copies field) */
+.spinner-always::-webkit-inner-spin-button,
+.spinner-always::-webkit-outer-spin-button {
+  -webkit-appearance: inner-spin-button;
+  opacity: 1;
+  height: 100%;
+  cursor: pointer;
+}
+
 /* White logo is a black-background JPG; lighten drops the black on navy */
 .logo-on-navy {
   mix-blend-mode: lighten;

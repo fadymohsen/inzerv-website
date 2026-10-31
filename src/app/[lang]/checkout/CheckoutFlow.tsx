@@ -472,7 +472,7 @@ export function CheckoutFlow({
                 onChange={(e) => setCopies(Math.floor(Number(e.target.value)))}
                 aria-invalid={!!errors.copies}
                 aria-describedby={describedBy("d-copies", !!errors.copies, false)}
-                className={`${inputClass} max-w-32`}
+                className={`${inputClass} max-w-32 spinner-always`}
               />
             </Field>
 
