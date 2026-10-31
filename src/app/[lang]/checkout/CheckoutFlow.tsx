@@ -462,18 +462,32 @@ export function CheckoutFlow({
             </fieldset>
 
             <Field id="d-copies" label={t.details.copies} error={errors.copies} required>
-              <input
-                id="d-copies"
-                type="number"
-                min={1}
-                max={10}
-                inputMode="numeric"
-                value={copies}
-                onChange={(e) => setCopies(Math.floor(Number(e.target.value)))}
-                aria-invalid={!!errors.copies}
-                aria-describedby={describedBy("d-copies", !!errors.copies, false)}
-                className={`${inputClass} max-w-32 spinner-always`}
-              />
+              <div className="flex items-center gap-0 max-w-36">
+                <button
+                  type="button"
+                  aria-label="Decrease"
+                  disabled={copies <= 1}
+                  onClick={() => setCopies(Math.max(1, copies - 1))}
+                  className="flex items-center justify-center h-12 w-12 rounded-s-btn border border-line bg-bg-light text-navy text-lg font-bold select-none hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed"
+                >−</button>
+                <input
+                  id="d-copies"
+                  type="text"
+                  inputMode="numeric"
+                  readOnly
+                  value={copies}
+                  aria-invalid={!!errors.copies}
+                  aria-describedby={describedBy("d-copies", !!errors.copies, false)}
+                  className="h-12 w-14 border-y border-line bg-white text-center text-base font-semibold text-navy focus:outline-none"
+                />
+                <button
+                  type="button"
+                  aria-label="Increase"
+                  disabled={copies >= 19}
+                  onClick={() => setCopies(Math.min(19, copies + 1))}
+                  className="flex items-center justify-center h-12 w-12 rounded-e-btn border border-line bg-bg-light text-navy text-lg font-bold select-none hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed"
+                >+</button>
+              </div>
             </Field>
 
             {visibleFields.length > 0 && (
