@@ -79,8 +79,9 @@ export const orders = {
     deliveryPostalCode?: string;
   }) => post<{ id: string; referenceNumber: string; totalAmount: number | string }>("/api/backend/requests", body),
 
-  pay: (requestId: string, paymentMethod: "card" | "wallet") =>
-    post<{ transactionRef: string }>("/api/backend/payments", { requestId, paymentMethod }),
+  /** With a real gateway this returns a pending payment and the hosted page to send the customer to. */
+  pay: (requestId: string, paymentMethod: "card" | "wallet", lang: "en" | "ar") =>
+    post<PaymentView>("/api/backend/payments", { requestId, paymentMethod, lang }),
 
   /** Files go straight to the backend (they can exceed the serverless body limit). */
   upload: async (requestId: string, key: string, file: File) => {
@@ -99,6 +100,19 @@ export const orders = {
     }
     return parse(res);
   },
+};
+
+export type PaymentView = {
+  id: string;
+  status: "pending" | "success" | "failed";
+  amount: number;
+  checkoutUrl: string | null;
+  failureReason: string | null;
+  requestStatus?: string;
+};
+
+export const payments = {
+  status: (requestId: string) => call<PaymentView>(`/api/backend/payments/request/${requestId}`),
 };
 
 export type Profile = {
@@ -153,3 +167,13 @@ export const account = {
       return parse(res);
     }),
 };
+
+/** Payment pages must be https; plain http is only accepted for localhost (local testing). */
+export function isSafePaymentUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" || (u.protocol === "http:" && (u.hostname === "localhost" || u.hostname === "127.0.0.1"));
+  } catch {
+    return false;
+  }
+}

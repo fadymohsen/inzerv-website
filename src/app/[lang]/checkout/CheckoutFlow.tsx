@@ -9,7 +9,7 @@ import { Select } from "@/components/Select";
 import { BackIcon, CheckIcon, UploadIcon } from "@/components/Icons";
 import { PhoneField } from "@/components/PhoneField";
 import type { Dict } from "@/dictionaries/en";
-import { ApiError, orders } from "@/lib/api-client";
+import { ApiError, isSafePaymentUrl, orders } from "@/lib/api-client";
 import { fmt, money } from "@/lib/dictionaries";
 import { countryName, digits, processingTime, serviceName } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
@@ -45,7 +45,7 @@ function isPhoneField(key: string) {
 const STEPS = ["details", "documents", "delivery", "review"] as const;
 type StepKey = (typeof STEPS)[number];
 type Errors = Record<string, string>;
-type Stage = "idle" | "creating" | "uploading" | "paying" | "done";
+type Stage = "idle" | "creating" | "uploading" | "paying" | "redirecting" | "done";
 
 export function CheckoutFlow({
   locale,
@@ -311,7 +311,14 @@ export function CheckoutFlow({
       if (!paid.current) {
         setStage("paying");
         try {
-          await orders.pay(created.current.id, method);
+          const payment = await orders.pay(created.current.id, method, locale);
+          if (payment.status === "pending") {
+            // real gateway: the customer pays on the hosted page and returns to /checkout/result
+            if (!payment.checkoutUrl || !isSafePaymentUrl(payment.checkoutUrl)) throw new Error("No payment page");
+            setStage("redirecting");
+            window.location.assign(payment.checkoutUrl);
+            return;
+          }
         } catch (err) {
           const already = err instanceof ApiError && /already been paid/i.test(err.message);
           if (!already) {
@@ -880,6 +887,7 @@ export function CheckoutFlow({
                   n: digits(String(progress.n), locale),
                 })}
               {stage === "paying" && t.progress.paying}
+              {stage === "redirecting" && t.progress.redirecting}
             </div>
           </div>
         )}
