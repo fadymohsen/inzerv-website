@@ -37,6 +37,10 @@ function isNameField(key: string) {
   const k = key.toLowerCase();
   return k.includes("_name") || k === "holder_name";
 }
+function isPhoneField(key: string) {
+  const k = key.toLowerCase();
+  return k.includes("phone") || k.includes("mobile") || k === "tel" || k.includes("_tel");
+}
 
 const STEPS = ["details", "documents", "delivery", "review"] as const;
 type StepKey = (typeof STEPS)[number];
@@ -76,6 +80,7 @@ export function CheckoutFlow({
   const [requestFor, setRequestFor] = useState<"myself" | "another_person">("myself");
   const [copies, setCopies] = useState(1);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [fieldPhoneCountries, setFieldPhoneCountries] = useState<Record<string, CountryCode>>({});
 
   // documents
   const [files, setFiles] = useState<Record<string, File>>({});
@@ -179,6 +184,8 @@ export function CheckoutFlow({
           next[`f_${f.keyName}`] = t.errors.nationalId;
         else if (isNameField(f.keyName) && val && val.split(/\s+/).filter(Boolean).length < 4)
           next[`f_${f.keyName}`] = t.errors.fullName;
+        else if (isPhoneField(f.keyName) && val && !isPhoneLengthValid(val, fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY))
+          next[`f_${f.keyName}`] = t.errors.phoneInvalid;
         else if (f.fieldType === "date" && val) {
           const d = new Date(val + "T00:00:00");
           const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -269,7 +276,12 @@ export function CheckoutFlow({
           requestFor,
           fieldValues: visibleFields
             .filter((f) => values[f.keyName]?.trim())
-            .map((f) => ({ fieldKey: f.keyName, value: values[f.keyName].trim() })),
+            .map((f) => ({
+              fieldKey: f.keyName,
+              value: isPhoneField(f.keyName)
+                ? (toE164(values[f.keyName], fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY) ?? values[f.keyName].trim())
+                : values[f.keyName].trim(),
+            })),
           numberOfCopies: copies,
           deliveryDestinationId: delivery.destinationId,
           recipientName: delivery.recipientName.trim(),
@@ -522,7 +534,19 @@ export function CheckoutFlow({
                   const set = (v: string) => setValues((prev) => ({ ...prev, [f.keyName]: v }));
                   return (
                     <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr)} error={err} required={f.isRequired}>
-                      {f.fieldType === "select" ? (
+                      {isPhoneField(f.keyName) && f.fieldType !== "select" ? (
+                        <PhoneField
+                          id={id}
+                          locale={locale}
+                          countryLabel={phoneCountryLabel}
+                          country={fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY}
+                          onCountryChange={(c) => setFieldPhoneCountries((prev) => ({ ...prev, [f.keyName]: c }))}
+                          value={values[f.keyName] ?? ""}
+                          onChange={(v) => set(v.replace(/[^\d+\s-]/g, ""))}
+                          invalid={!!err}
+                          describedBy={describedBy(id, !!err, false)}
+                        />
+                      ) : f.fieldType === "select" ? (
                         <Select
                           id={id}
                           value={values[f.keyName] ?? ""}
