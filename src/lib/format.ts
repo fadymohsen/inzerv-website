@@ -1,10 +1,8 @@
 import type { GovService } from "./types";
 import type { Locale } from "./i18n";
 
-const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
-
-export function digits(value: string, locale: Locale): string {
-  return locale === "ar" ? value.replace(/\d/g, (d) => arabicDigits[Number(d)]) : value;
+export function digits(value: string, _locale: Locale): string {
+  return value;
 }
 
 export function serviceName(s: GovService, locale: Locale): string {

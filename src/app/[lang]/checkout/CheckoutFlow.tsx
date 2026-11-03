@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { buttonClass } from "@/components/Button";
 import { Field, describedBy, inputClass } from "@/components/forms";
+import { Select } from "@/components/Select";
 import { BackIcon, CheckIcon, UploadIcon } from "@/components/Icons";
 import { PhoneField } from "@/components/PhoneField";
 import type { Dict } from "@/dictionaries/en";
@@ -21,6 +22,21 @@ import {
 } from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
 import type { DeliveryDestination, GovService } from "@/lib/types";
+import { getRegions } from "@/lib/governorates";
+
+const NATIONAL_ID_RE = /^[23]\d{13}$/;
+const NATIONAL_ID_KEYS = ["national_id", "nationalid", "nid"];
+function isNationalIdField(key: string) {
+  const k = key.toLowerCase();
+  return NATIONAL_ID_KEYS.some((id) => k.includes(id));
+}
+function isValidNationalId(value: string) {
+  return NATIONAL_ID_RE.test(value);
+}
+function isNameField(key: string) {
+  const k = key.toLowerCase();
+  return k.includes("_name") || k === "holder_name";
+}
 
 const STEPS = ["details", "documents", "delivery", "review"] as const;
 type StepKey = (typeof STEPS)[number];
@@ -96,7 +112,7 @@ export function CheckoutFlow({
   const destination = destinations.find((d) => d.id === delivery.destinationId);
 
   function setDestination(destinationId: string) {
-    setDelivery((d) => ({ ...d, destinationId }));
+    setDelivery((d) => ({ ...d, destinationId, governorate: "" }));
     const next = destinations.find((d) => d.id === destinationId);
     if (next && isSupportedPhoneCountry(next.countryCode)) setRecipientPhoneCountry(next.countryCode);
   }
@@ -155,9 +171,19 @@ export function CheckoutFlow({
     const next: Errors = {};
     if (key === "details") {
       if (!service) next.service = t.errors.select;
-      if (!Number.isInteger(copies) || copies < 1 || copies > 10) next.copies = t.errors.required;
+      if (!Number.isInteger(copies) || copies < 1 || copies > 19) next.copies = t.errors.required;
       for (const f of visibleFields) {
-        if (f.isRequired && !values[f.keyName]?.trim()) next[`f_${f.keyName}`] = t.errors.required;
+        const val = values[f.keyName]?.trim() ?? "";
+        if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
+        else if (isNationalIdField(f.keyName) && val && !isValidNationalId(val))
+          next[`f_${f.keyName}`] = t.errors.nationalId;
+        else if (isNameField(f.keyName) && val && val.split(/\s+/).filter(Boolean).length < 4)
+          next[`f_${f.keyName}`] = t.errors.fullName;
+        else if (f.fieldType === "date" && val) {
+          const d = new Date(val + "T00:00:00");
+          const today = new Date(); today.setHours(0, 0, 0, 0);
+          if (d >= today) next[`f_${f.keyName}`] = t.errors.futureDate;
+        }
       }
     }
     if (key === "documents") {
@@ -168,11 +194,15 @@ export function CheckoutFlow({
     }
     if (key === "delivery") {
       if (!delivery.destinationId) next.destinationId = t.errors.select;
+      const nameParts = delivery.recipientName.trim().split(/\s+/).filter(Boolean);
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
+      else if (nameParts.length < 4) next.recipientName = t.errors.fullName;
       if (!delivery.recipientPhone.trim()) next.recipientPhone = t.errors.required;
       else if (!isPhoneLengthValid(delivery.recipientPhone, recipientPhoneCountry)) next.recipientPhone = t.errors.phoneInvalid;
       if (!delivery.city.trim()) next.city = t.errors.required;
+      if (!delivery.governorate.trim()) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
+      if (delivery.postal.trim() && !/^\d+$/.test(delivery.postal.trim())) next.postal = t.errors.postal;
     }
     if (key === "review" && !agree) next.agree = t.errors.agree;
     return fail(next);
@@ -358,15 +388,7 @@ export function CheckoutFlow({
                 {fmt(t.details.processing, { t: processingTime(service, locale) })}
               </p>
             </div>
-            <div className="flex shrink-0 flex-col items-end gap-1">
-              <p className="tabular text-xl font-semibold sm:text-2xl">{money(service.servicePrice, locale)}</p>
-              <Link
-                href={`/${locale}/request`}
-                className="inline-flex min-h-11 items-center text-sm font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-4"
-              >
-                {t.change}
-              </Link>
-            </div>
+            <p className="tabular shrink-0 text-xl font-semibold sm:text-2xl">{money(service.servicePrice, locale)}</p>
           </div>
         )}
 
@@ -407,23 +429,22 @@ export function CheckoutFlow({
             </h2>
 
             <Field id="d-service" label={t.details.service} error={errors.service} required>
-              <select
+              <Select
                 id="d-service"
                 value={serviceType}
-                onChange={(e) => {
-                  setServiceType(e.target.value);
+                options={services.map((s) => ({
+                  value: s.type,
+                  label: `${serviceName(s, locale)}, ${money(s.servicePrice, locale)}`,
+                }))}
+                onChange={(v) => {
+                  setServiceType(v);
                   setValues({});
                   setFiles({});
                   setFileErrors({});
                 }}
-                className={inputClass}
-              >
-                {services.map((s) => (
-                  <option key={s.type} value={s.type}>
-                    {serviceName(s, locale)}, {money(s.servicePrice, locale)}
-                  </option>
-                ))}
-              </select>
+                aria-invalid={!!errors.service}
+                aria-describedby={describedBy("d-service", !!errors.service, false)}
+              />
               <p className="mt-2 text-sm text-ink-muted">
                 {fmt(t.details.processing, { t: processingTime(service, locale) })}
               </p>
@@ -457,18 +478,32 @@ export function CheckoutFlow({
             </fieldset>
 
             <Field id="d-copies" label={t.details.copies} error={errors.copies} required>
-              <input
-                id="d-copies"
-                type="number"
-                min={1}
-                max={10}
-                inputMode="numeric"
-                value={copies}
-                onChange={(e) => setCopies(Math.floor(Number(e.target.value)))}
-                aria-invalid={!!errors.copies}
-                aria-describedby={describedBy("d-copies", !!errors.copies, false)}
-                className={`${inputClass} max-w-32`}
-              />
+              <div className="flex items-center gap-0 max-w-36">
+                <button
+                  type="button"
+                  aria-label="Decrease"
+                  disabled={copies <= 1}
+                  onClick={() => setCopies(Math.max(1, copies - 1))}
+                  className="flex items-center justify-center h-12 w-12 rounded-s-btn border border-line bg-bg-light text-navy text-lg font-bold select-none hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed"
+                >−</button>
+                <input
+                  id="d-copies"
+                  type="text"
+                  inputMode="numeric"
+                  readOnly
+                  value={copies}
+                  aria-invalid={!!errors.copies}
+                  aria-describedby={describedBy("d-copies", !!errors.copies, false)}
+                  className="h-12 w-14 border-y border-line bg-white text-center text-base font-semibold text-navy focus:outline-none"
+                />
+                <button
+                  type="button"
+                  aria-label="Increase"
+                  disabled={copies >= 19}
+                  onClick={() => setCopies(Math.min(19, copies + 1))}
+                  className="flex items-center justify-center h-12 w-12 rounded-e-btn border border-line bg-bg-light text-navy text-lg font-bold select-none hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed"
+                >+</button>
+              </div>
             </Field>
 
             {visibleFields.length > 0 && (
@@ -488,20 +523,30 @@ export function CheckoutFlow({
                   return (
                     <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr)} error={err} required={f.isRequired}>
                       {f.fieldType === "select" ? (
-                        <select {...common} onChange={(e) => set(e.target.value)}>
-                          <option value="">{t.details.choose}</option>
-                          {f.options?.map((o) => (
-                            <option key={o.value} value={o.value}>
-                              {pick(o.labelEn, o.labelAr)}
-                            </option>
-                          ))}
-                        </select>
+                        <Select
+                          id={id}
+                          value={values[f.keyName] ?? ""}
+                          placeholder={t.details.choose}
+                          options={(f.options ?? []).map((o) => ({
+                            value: o.value,
+                            label: pick(o.labelEn, o.labelAr),
+                          }))}
+                          onChange={set}
+                          aria-invalid={!!err}
+                          aria-describedby={describedBy(id, !!err, false)}
+                        />
                       ) : (
                         <input
                           {...common}
                           type={f.fieldType === "date" ? "date" : f.fieldType === "number" ? "number" : "text"}
-                          inputMode={f.fieldType === "number" ? "numeric" : undefined}
-                          onChange={(e) => set(e.target.value)}
+                          inputMode={f.fieldType === "number" || isNationalIdField(f.keyName) ? "numeric" : undefined}
+                          maxLength={isNationalIdField(f.keyName) ? 14 : undefined}
+                          max={f.fieldType === "date" ? (() => { const y = new Date(); y.setDate(y.getDate() - 1); return y.toISOString().slice(0, 10); })() : undefined}
+                          dir={isNationalIdField(f.keyName) ? "ltr" : undefined}
+                          onChange={(e) => {
+                            const v = isNationalIdField(f.keyName) ? e.target.value.replace(/\D/g, "").slice(0, 14) : e.target.value;
+                            set(v);
+                          }}
                         />
                       )}
                     </Field>
@@ -594,21 +639,18 @@ export function CheckoutFlow({
             </h2>
 
             <Field id="v-dest" label={t.delivery.destination} error={errors.destinationId} required>
-              <select
+              <Select
                 id="v-dest"
                 value={delivery.destinationId}
-                onChange={(e) => setDestination(e.target.value)}
+                placeholder={t.delivery.select}
+                options={destinations.map((d) => ({
+                  value: d.id,
+                  label: `${countryName(d.countryCode, d.country, locale)}, ${money(d.deliveryFee, locale)}`,
+                }))}
+                onChange={setDestination}
                 aria-invalid={!!errors.destinationId}
                 aria-describedby={describedBy("v-dest", !!errors.destinationId, false)}
-                className={inputClass}
-              >
-                <option value="">{t.delivery.select}</option>
-                {destinations.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {countryName(d.countryCode, d.country, locale)}, {money(d.deliveryFee, locale)}
-                  </option>
-                ))}
-              </select>
+              />
             </Field>
 
             <div className="grid gap-6 sm:grid-cols-2">
@@ -631,7 +673,7 @@ export function CheckoutFlow({
                   country={recipientPhoneCountry}
                   onCountryChange={setRecipientPhoneCountry}
                   value={delivery.recipientPhone}
-                  onChange={(v) => setDelivery({ ...delivery, recipientPhone: v })}
+                  onChange={(v) => setDelivery({ ...delivery, recipientPhone: v.replace(/[^\d+\s-]/g, "") })}
                   invalid={!!errors.recipientPhone}
                   describedBy={describedBy("v-phone", !!errors.recipientPhone, false)}
                 />
@@ -650,14 +692,32 @@ export function CheckoutFlow({
                   className={inputClass}
                 />
               </Field>
-              <Field id="v-gov" label={t.delivery.governorate}>
-                <input
-                  id="v-gov"
-                  autoComplete="address-level1"
-                  value={delivery.governorate}
-                  onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
-                  className={inputClass}
-                />
+              <Field id="v-gov" label={t.delivery.governorate} error={errors.governorate} required>
+                {destination && getRegions(destination.countryCode).length > 0 ? (
+                  <Select
+                    id="v-gov"
+                    value={delivery.governorate}
+                    placeholder={t.delivery.selectGovernorate}
+                    options={getRegions(destination.countryCode).map((r) => ({
+                      value: r.en,
+                      label: locale === "ar" ? r.ar : r.en,
+                    }))}
+                    onChange={(v) => setDelivery({ ...delivery, governorate: v })}
+                    aria-invalid={!!errors.governorate}
+                    aria-describedby={describedBy("v-gov", !!errors.governorate, false)}
+                  />
+                ) : (
+                  <input
+                    id="v-gov"
+                    autoComplete="address-level1"
+                    value={delivery.governorate}
+                    onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
+                    aria-invalid={!!errors.governorate}
+                    aria-describedby={describedBy("v-gov", !!errors.governorate, false)}
+                    placeholder={t.delivery.selectGovernorate}
+                    className={inputClass}
+                  />
+                )}
               </Field>
             </div>
 
@@ -673,13 +733,16 @@ export function CheckoutFlow({
               />
             </Field>
 
-            <Field id="v-postal" label={t.delivery.postal}>
+            <Field id="v-postal" label={t.delivery.postal} error={errors.postal}>
               <input
                 id="v-postal"
                 autoComplete="postal-code"
                 dir="ltr"
                 value={delivery.postal}
-                onChange={(e) => setDelivery({ ...delivery, postal: e.target.value })}
+                inputMode="numeric"
+                onChange={(e) => setDelivery({ ...delivery, postal: e.target.value.replace(/\D/g, "") })}
+                aria-invalid={!!errors.postal}
+                aria-describedby={describedBy("v-postal", !!errors.postal, false)}
                 className={`${inputClass} max-w-48 text-start`}
               />
             </Field>
