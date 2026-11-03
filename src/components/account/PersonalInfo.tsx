@@ -7,10 +7,12 @@ import { buttonClass } from "@/components/Button";
 import { Field, describedBy, inputClass } from "@/components/forms";
 import { ChevronRightIcon } from "@/components/Icons";
 import { Modal } from "@/components/Modal";
+import { PhoneField } from "@/components/PhoneField";
 import { useSession } from "@/components/SessionProvider";
 import type { Dict } from "@/dictionaries/en";
 import { account, ApiError, type Profile } from "@/lib/api-client";
 import type { Locale } from "@/lib/i18n";
+import { DEFAULT_PHONE_COUNTRY, isPhoneLengthValid, splitPhone, toE164, type CountryCode } from "@/lib/phone";
 import { AccountGate } from "./AccountGate";
 import { Avatar } from "./Avatar";
 import { useProfile } from "./useAccount";
@@ -23,13 +25,23 @@ export function PersonalInfo({ locale, t }: { locale: Locale; t: Dict }) {
   );
 }
 
-type Form = { firstName: string; lastName: string; phone: string; countryOfResidence: string };
-const toForm = (p: Profile): Form => ({
-  firstName: p.firstName,
-  lastName: p.lastName,
-  phone: p.phone,
-  countryOfResidence: p.countryOfResidence,
-});
+type Form = {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  phoneCountry: CountryCode;
+  countryOfResidence: string;
+};
+const toForm = (p: Profile): Form => {
+  const { country, national } = splitPhone(p.phone, DEFAULT_PHONE_COUNTRY);
+  return {
+    firstName: p.firstName,
+    lastName: p.lastName,
+    phone: national,
+    phoneCountry: country,
+    countryOfResidence: p.countryOfResidence,
+  };
+};
 
 function Inner({ locale, t }: { locale: Locale; t: Dict }) {
   const a = t.account;
@@ -55,6 +67,7 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
     if (!draft.firstName.trim()) found.firstName = i.required;
     if (!draft.lastName.trim()) found.lastName = i.required;
     if (!draft.phone.trim()) found.phone = i.required;
+    else if (!isPhoneLengthValid(draft.phone, draft.phoneCountry)) found.phone = i.phoneInvalid;
     setErrors(found);
     if (Object.keys(found).length) return;
     setBusy(true);
@@ -63,7 +76,7 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
       const next = await account.update({
         firstName: draft.firstName.trim(),
         lastName: draft.lastName.trim(),
-        phone: draft.phone.trim(),
+        phone: toE164(draft.phone, draft.phoneCountry) ?? draft.phone.trim(),
         countryOfResidence: draft.countryOfResidence.trim(),
       });
       setProfile(next);
@@ -178,7 +191,17 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
                 </Field>
                 <Field id="pi-phone" label={i.phone} error={errors.phone}>
                   {draft ? (
-                    <input id="pi-phone" type="tel" inputMode="tel" dir="ltr" value={draft.phone} onChange={(e) => set("phone")(e.target.value)} autoComplete="tel" aria-invalid={!!errors.phone} aria-describedby={describedBy("pi-phone", !!errors.phone, false)} className={`${inputClass} text-start`} />
+                    <PhoneField
+                      id="pi-phone"
+                      locale={locale}
+                      countryLabel={t.common.phoneCountry}
+                      country={draft.phoneCountry}
+                      onCountryChange={(c) => setDraft((d) => (d ? { ...d, phoneCountry: c } : d))}
+                      value={draft.phone}
+                      onChange={set("phone")}
+                      invalid={!!errors.phone}
+                      describedBy={describedBy("pi-phone", !!errors.phone, false)}
+                    />
                   ) : (
                     <p dir="ltr" className={`${readValue} text-start rtl:text-end`}>{profile.phone || "—"}</p>
                   )}

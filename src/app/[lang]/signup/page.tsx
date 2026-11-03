@@ -21,7 +21,12 @@ export default async function SignUpPage({ params }: PageProps<"/[lang]/signup">
   return (
     <AuthShell t={t} title={t.signup.title} sub={t.signup.sub}>
       <Suspense fallback={null}>
-        <SignUpForm locale={lang} t={t} legal={{ terms: dict.footer.terms, privacy: dict.footer.privacy }} />
+        <SignUpForm
+          locale={lang}
+          t={t}
+          legal={{ terms: dict.footer.terms, privacy: dict.footer.privacy }}
+          phoneCountryLabel={dict.common.phoneCountry}
+        />
       </Suspense>
     </AuthShell>
   );

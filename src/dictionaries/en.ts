@@ -70,6 +70,7 @@ export const en = {
     required: "Required",
     optional: "Optional",
     loading: "Loading",
+    phoneCountry: "Country code",
   },
 
   app: {
@@ -335,6 +336,7 @@ export const en = {
       invalid: "Invalid email or password.",
       emailExists: "This email already has an account. Sign in instead.",
       phoneExists: "This phone number is already linked to an account. Sign in instead.",
+      phoneInvalid: "Enter a valid phone number for the selected country code.",
       code: "Enter the 6-digit code.",
       codeWrong: "The code is wrong or has expired.",
       tooMany: "Too many attempts. Please wait a minute and try again.",
@@ -387,6 +389,7 @@ export const en = {
       discard: "Discard Changes",
       keep: "Continue Editing",
       required: "Required",
+      phoneInvalid: "Enter a valid phone number for the selected country code.",
     },
     password: {
       title: "Change Password",
@@ -516,6 +519,7 @@ export const en = {
       select: "Please choose an option.",
       uploadFailed: "One of the files could not be uploaded. Your request is saved; try again.",
       payFailed: "Payment could not be confirmed. Your request is saved; try again.",
+      phoneInvalid: "Enter a valid phone number for the selected country code.",
     },
   },
 

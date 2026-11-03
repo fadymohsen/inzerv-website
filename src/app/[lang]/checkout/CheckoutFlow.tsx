@@ -6,11 +6,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { buttonClass } from "@/components/Button";
 import { Field, describedBy, inputClass } from "@/components/forms";
 import { BackIcon, CheckIcon, UploadIcon } from "@/components/Icons";
+import { PhoneField } from "@/components/PhoneField";
 import type { Dict } from "@/dictionaries/en";
 import { ApiError, orders } from "@/lib/api-client";
 import { fmt, money } from "@/lib/dictionaries";
 import { countryName, digits, processingTime, serviceName } from "@/lib/format";
 import type { Locale } from "@/lib/i18n";
+import {
+  DEFAULT_PHONE_COUNTRY,
+  isPhoneLengthValid,
+  isSupportedPhoneCountry,
+  toE164,
+  type CountryCode,
+} from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
 import type { DeliveryDestination, GovService } from "@/lib/types";
 
@@ -25,12 +33,14 @@ export function CheckoutFlow({
   legal,
   services,
   destinations,
+  phoneCountryLabel,
 }: {
   locale: Locale;
   t: Dict["checkout"];
   legal: { terms: string; refund: string; privacy: string };
   services: GovService[];
   destinations: DeliveryDestination[];
+  phoneCountryLabel: string;
 }) {
   const search = useSearchParams();
   const pick = (en: string, ar: string) => (locale === "ar" ? ar : en);
@@ -65,6 +75,7 @@ export function CheckoutFlow({
     address: "",
     postal: "",
   });
+  const [recipientPhoneCountry, setRecipientPhoneCountry] = useState<CountryCode>(DEFAULT_PHONE_COUNTRY);
 
   // review
   const [method, setMethod] = useState<"card" | "wallet">("card");
@@ -83,6 +94,12 @@ export function CheckoutFlow({
 
   const service = services.find((s) => s.type === serviceType);
   const destination = destinations.find((d) => d.id === delivery.destinationId);
+
+  function setDestination(destinationId: string) {
+    setDelivery((d) => ({ ...d, destinationId }));
+    const next = destinations.find((d) => d.id === destinationId);
+    if (next && isSupportedPhoneCountry(next.countryCode)) setRecipientPhoneCountry(next.countryCode);
+  }
 
   const signInUrl = `/${locale}/signin?next=${encodeURIComponent(`${pathname}${search.toString() ? `?${search.toString()}` : ""}`)}`;
 
@@ -153,6 +170,7 @@ export function CheckoutFlow({
       if (!delivery.destinationId) next.destinationId = t.errors.select;
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
       if (!delivery.recipientPhone.trim()) next.recipientPhone = t.errors.required;
+      else if (!isPhoneLengthValid(delivery.recipientPhone, recipientPhoneCountry)) next.recipientPhone = t.errors.phoneInvalid;
       if (!delivery.city.trim()) next.city = t.errors.required;
       if (!delivery.address.trim()) next.address = t.errors.required;
     }
@@ -225,7 +243,7 @@ export function CheckoutFlow({
           numberOfCopies: copies,
           deliveryDestinationId: delivery.destinationId,
           recipientName: delivery.recipientName.trim(),
-          recipientPhone: delivery.recipientPhone.trim(),
+          recipientPhone: toE164(delivery.recipientPhone, recipientPhoneCountry) ?? delivery.recipientPhone.trim(),
           deliveryCity: delivery.city.trim(),
           deliveryAddress: delivery.address.trim(),
           deliveryGovernorate: delivery.governorate.trim() || undefined,
@@ -579,7 +597,7 @@ export function CheckoutFlow({
               <select
                 id="v-dest"
                 value={delivery.destinationId}
-                onChange={(e) => setDelivery({ ...delivery, destinationId: e.target.value })}
+                onChange={(e) => setDestination(e.target.value)}
                 aria-invalid={!!errors.destinationId}
                 aria-describedby={describedBy("v-dest", !!errors.destinationId, false)}
                 className={inputClass}
@@ -606,17 +624,16 @@ export function CheckoutFlow({
                 />
               </Field>
               <Field id="v-phone" label={t.delivery.recipientPhone} error={errors.recipientPhone} required>
-                <input
+                <PhoneField
                   id="v-phone"
-                  type="tel"
-                  inputMode="tel"
-                  dir="ltr"
-                  autoComplete="tel"
+                  locale={locale}
+                  countryLabel={phoneCountryLabel}
+                  country={recipientPhoneCountry}
+                  onCountryChange={setRecipientPhoneCountry}
                   value={delivery.recipientPhone}
-                  onChange={(e) => setDelivery({ ...delivery, recipientPhone: e.target.value })}
-                  aria-invalid={!!errors.recipientPhone}
-                  aria-describedby={describedBy("v-phone", !!errors.recipientPhone, false)}
-                  className={`${inputClass} text-start`}
+                  onChange={(v) => setDelivery({ ...delivery, recipientPhone: v })}
+                  invalid={!!errors.recipientPhone}
+                  describedBy={describedBy("v-phone", !!errors.recipientPhone, false)}
                 />
               </Field>
             </div>

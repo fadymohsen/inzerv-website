@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { buttonClass } from "@/components/Button";
 import { Field, describedBy, inputClass } from "@/components/forms";
+import { PhoneField } from "@/components/PhoneField";
 import { useSession } from "@/components/SessionProvider";
 import type { Dict } from "@/dictionaries/en";
 import { ApiError, auth } from "@/lib/api-client";
 import type { Locale } from "@/lib/i18n";
+import { DEFAULT_PHONE_COUNTRY, isPhoneLengthValid, toE164, type CountryCode } from "@/lib/phone";
 import { safeNext } from "@/lib/safe-next";
 import { PasswordInput } from "./PasswordInput";
 
@@ -19,10 +21,12 @@ export function SignUpForm({
   locale,
   t,
   legal,
+  phoneCountryLabel,
 }: {
   locale: Locale;
   t: Dict["auth"];
   legal: { terms: string; privacy: string };
+  phoneCountryLabel: string;
 }) {
   const router = useRouter();
   const search = useSearchParams();
@@ -40,6 +44,7 @@ export function SignUpForm({
     password: "",
     confirm: "",
   });
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_PHONE_COUNTRY);
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
@@ -57,6 +62,7 @@ export function SignUpForm({
     if (!f.lastName.trim()) found.lastName = t.errors.required;
     if (!emailRe.test(f.email.trim())) found.email = t.errors.email;
     if (!f.phone.trim()) found.phone = t.errors.required;
+    else if (!isPhoneLengthValid(f.phone, phoneCountry)) found.phone = t.errors.phoneInvalid;
     if (!passwordRe.test(f.password)) found.password = t.errors.password;
     if (f.confirm !== f.password) found.confirm = t.errors.match;
     if (!consent) found.consent = t.errors.consent;
@@ -74,7 +80,7 @@ export function SignUpForm({
         lastName: f.lastName.trim(),
         email: f.email.trim().toLowerCase(),
         password: f.password,
-        phone: f.phone.trim(),
+        phone: toE164(f.phone, phoneCountry) ?? f.phone.trim(),
         countryOfResidence: f.country.trim() || undefined,
       });
       setUser(user);
@@ -157,17 +163,16 @@ export function SignUpForm({
 
       <div className="grid gap-6 sm:grid-cols-2">
         <Field id="su-phone" label={t.signup.phone} error={errors.phone} required>
-          <input
+          <PhoneField
             id="su-phone"
-            type="tel"
-            inputMode="tel"
-            dir="ltr"
-            autoComplete="tel"
+            locale={locale}
+            countryLabel={phoneCountryLabel}
+            country={phoneCountry}
+            onCountryChange={setPhoneCountry}
             value={f.phone}
-            onChange={(e) => set("phone")(e.target.value)}
-            aria-invalid={!!errors.phone}
-            aria-describedby={describedBy("su-phone", !!errors.phone, false)}
-            className={`${inputClass} text-start`}
+            onChange={set("phone")}
+            invalid={!!errors.phone}
+            describedBy={describedBy("su-phone", !!errors.phone, false)}
           />
         </Field>
         <Field id="su-country" label={t.signup.country}>
