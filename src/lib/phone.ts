@@ -5,6 +5,7 @@ import {
   parsePhoneNumberFromString,
   type CountryCode,
 } from "libphonenumber-js/max";
+import metadata from "libphonenumber-js/metadata.max.json";
 
 export type { CountryCode };
 
@@ -35,6 +36,20 @@ export function phoneCountryOptions(locale: string): PhoneCountryOption[] {
 export function normalizePhoneCountry(code: string): CountryCode | null {
   const normalized = code.trim().toUpperCase();
   return (getCountries() as readonly string[]).includes(normalized) ? (normalized as CountryCode) : null;
+}
+
+/** A generous default for countries whose metadata entry has no usable length data. */
+const DEFAULT_MAX_NATIONAL_DIGITS = 15;
+
+/**
+ * The most digits a national number can have for `country`, plus one to allow for a
+ * leading trunk/national-prefix digit some people type out of habit (e.g. a leading
+ * "0" in Egypt). Used to stop a phone field accepting arbitrarily long input.
+ */
+export function maxNationalDigits(country: CountryCode): number {
+  const lengths = (metadata.countries as Record<string, unknown[]>)[country]?.[3];
+  if (!Array.isArray(lengths) || lengths.length === 0) return DEFAULT_MAX_NATIONAL_DIGITS;
+  return Math.max(...(lengths as number[])) + 1;
 }
 
 /** True length and format for `country`'s numbering plan (not just a plausible length). `nationalNumber` excludes the dial code. */

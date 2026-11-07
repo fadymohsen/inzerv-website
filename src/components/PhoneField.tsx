@@ -1,7 +1,8 @@
 "use client";
 
 import { inputClass } from "./forms";
-import { phoneCountryOptions, type CountryCode } from "@/lib/phone";
+import { Select } from "./Select";
+import { maxNationalDigits, phoneCountryOptions, type CountryCode } from "@/lib/phone";
 import type { Locale } from "@/lib/i18n";
 
 export function PhoneField({
@@ -28,29 +29,32 @@ export function PhoneField({
   autoComplete?: string;
 }) {
   const options = phoneCountryOptions(locale);
+  const maxDigits = maxNationalDigits(country);
 
   return (
     <div dir="ltr" className="flex gap-2">
-      <select
-        id={`${id}-country`}
-        value={country}
-        onChange={(e) => onCountryChange(e.target.value as CountryCode)}
-        aria-label={countryLabel}
-        className={`${inputClass} !w-[6.5rem] shrink-0 px-2`}
-      >
-        {options.map((o) => (
-          <option key={o.code} value={o.code}>
-            +{o.dialCode} {o.code}
-          </option>
-        ))}
-      </select>
+      <div className="w-28 shrink-0">
+        <Select
+          id={`${id}-country`}
+          value={country}
+          options={options.map((o) => ({
+            value: o.code,
+            label: `+${o.dialCode} ${o.name}`,
+            shortLabel: `+${o.dialCode}`,
+          }))}
+          onChange={(v) => onCountryChange(v as CountryCode)}
+          aria-invalid={invalid}
+          aria-label={countryLabel}
+        />
+      </div>
       <input
         id={id}
         type="tel"
-        inputMode="tel"
+        inputMode="numeric"
         autoComplete={autoComplete}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        maxLength={maxDigits}
+        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, maxDigits))}
         aria-invalid={invalid}
         aria-describedby={describedBy}
         className={`${inputClass} !w-auto min-w-0 flex-1 text-start`}

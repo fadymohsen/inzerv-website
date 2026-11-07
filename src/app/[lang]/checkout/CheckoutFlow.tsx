@@ -550,7 +550,7 @@ export function CheckoutFlow({
                           country={fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY}
                           onCountryChange={(c) => setFieldPhoneCountries((prev) => ({ ...prev, [f.keyName]: c }))}
                           value={values[f.keyName] ?? ""}
-                          onChange={(v) => set(v.replace(/[^\d+\s-]/g, ""))}
+                          onChange={set}
                           invalid={!!err}
                           describedBy={describedBy(id, !!err, false)}
                         />
@@ -705,7 +705,7 @@ export function CheckoutFlow({
                   country={recipientPhoneCountry}
                   onCountryChange={setRecipientPhoneCountry}
                   value={delivery.recipientPhone}
-                  onChange={(v) => setDelivery({ ...delivery, recipientPhone: v.replace(/[^\d+\s-]/g, "") })}
+                  onChange={(v) => setDelivery({ ...delivery, recipientPhone: v })}
                   invalid={!!errors.recipientPhone}
                   describedBy={describedBy("v-phone", !!errors.recipientPhone, false)}
                 />

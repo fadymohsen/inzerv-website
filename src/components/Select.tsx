@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 
-export type SelectOption = { value: string; label: string };
+/** `shortLabel`, if given, is shown only on the closed button; the open list always shows `label`. */
+export type SelectOption = { value: string; label: string; shortLabel?: string };
 
 export function Select({
   id,
@@ -12,6 +13,7 @@ export function Select({
   onChange,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedby,
+  "aria-label": ariaLabel,
 }: {
   id: string;
   value: string;
@@ -20,6 +22,7 @@ export function Select({
   onChange: (value: string) => void;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
+  "aria-label"?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -82,6 +85,7 @@ export function Select({
         aria-controls={`${id}-list`}
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedby}
+        aria-label={ariaLabel}
         onClick={() => setOpen((o) => !o)}
         onKeyDown={onKeyDown}
         className={`flex min-h-12 w-full items-center justify-between rounded-btn border bg-white px-4 text-start text-base transition-colors duration-150 ${
@@ -92,8 +96,8 @@ export function Select({
               : "border-line hover:border-navy/40"
         }`}
       >
-        <span className={selected ? "text-navy" : "text-text-secondary"}>
-          {selected?.label ?? placeholder ?? ""}
+        <span className={`truncate ${selected ? "text-navy" : "text-text-secondary"}`}>
+          {(selected?.shortLabel ?? selected?.label) ?? placeholder ?? ""}
         </span>
         <svg
           width="20"
