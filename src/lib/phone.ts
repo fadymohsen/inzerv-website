@@ -1,10 +1,10 @@
 import {
   getCountries,
   getCountryCallingCode,
-  isPossiblePhoneNumber,
+  isValidPhoneNumber,
   parsePhoneNumberFromString,
   type CountryCode,
-} from "libphonenumber-js/min";
+} from "libphonenumber-js/max";
 
 export type { CountryCode };
 
@@ -26,15 +26,22 @@ export function phoneCountryOptions(locale: string): PhoneCountryOption[] {
   return options;
 }
 
-export function isSupportedPhoneCountry(code: string): code is CountryCode {
-  return (getCountries() as readonly string[]).includes(code);
+/**
+ * Normalizes case/whitespace and returns the matching dial-code country, since a
+ * country code from an external catalog may arrive as e.g. "qa" or " QA " rather
+ * than the exact-cased ISO value libphonenumber-js expects (it rejects anything else,
+ * silently failing every validation for that country). Returns null when unrecognized.
+ */
+export function normalizePhoneCountry(code: string): CountryCode | null {
+  const normalized = code.trim().toUpperCase();
+  return (getCountries() as readonly string[]).includes(normalized) ? (normalized as CountryCode) : null;
 }
 
-/** Plausible length for `country`'s numbering plan. `nationalNumber` excludes the dial code. */
+/** True length and format for `country`'s numbering plan (not just a plausible length). `nationalNumber` excludes the dial code. */
 export function isPhoneLengthValid(nationalNumber: string, country: CountryCode): boolean {
   const trimmed = nationalNumber.trim();
   if (!trimmed) return false;
-  return isPossiblePhoneNumber(trimmed, country);
+  return isValidPhoneNumber(trimmed, country);
 }
 
 /** Combines a national number with its country's dial code into E.164, e.g. "+201070608705". */

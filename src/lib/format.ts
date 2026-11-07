@@ -26,7 +26,7 @@ export function pad2(n: number, locale: Locale): string {
 
 export function countryName(code: string, fallback: string, locale: Locale): string {
   try {
-    return new Intl.DisplayNames([locale], { type: "region" }).of(code) ?? fallback;
+    return new Intl.DisplayNames([locale], { type: "region" }).of(code.trim().toUpperCase()) ?? fallback;
   } catch {
     return fallback;
   }

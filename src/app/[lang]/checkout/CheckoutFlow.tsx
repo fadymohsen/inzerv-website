@@ -16,7 +16,7 @@ import type { Locale } from "@/lib/i18n";
 import {
   DEFAULT_PHONE_COUNTRY,
   isPhoneLengthValid,
-  isSupportedPhoneCountry,
+  normalizePhoneCountry,
   toE164,
   type CountryCode,
 } from "@/lib/phone";
@@ -119,7 +119,8 @@ export function CheckoutFlow({
   function setDestination(destinationId: string) {
     setDelivery((d) => ({ ...d, destinationId, governorate: "" }));
     const next = destinations.find((d) => d.id === destinationId);
-    if (next && isSupportedPhoneCountry(next.countryCode)) setRecipientPhoneCountry(next.countryCode);
+    const normalized = next && normalizePhoneCountry(next.countryCode);
+    if (normalized) setRecipientPhoneCountry(normalized);
   }
 
   const signInUrl = `/${locale}/signin?next=${encodeURIComponent(`${pathname}${search.toString() ? `?${search.toString()}` : ""}`)}`;
