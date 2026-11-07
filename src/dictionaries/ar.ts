@@ -70,6 +70,7 @@ export const ar: Dict = {
     optional: "اختياري",
     loading: "جارٍ التحميل",
     phoneCountry: "كود الدولة",
+    searchCountry: "ابحث عن الدولة",
   },
 
   app: {

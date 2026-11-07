@@ -26,6 +26,7 @@ export default async function SignUpPage({ params }: PageProps<"/[lang]/signup">
           t={t}
           legal={{ terms: dict.footer.terms, privacy: dict.footer.privacy }}
           phoneCountryLabel={dict.common.phoneCountry}
+          searchCountryLabel={dict.common.searchCountry}
         />
       </Suspense>
     </AuthShell>

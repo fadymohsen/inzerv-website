@@ -35,6 +35,7 @@ export default async function CheckoutPage({ params }: PageProps<"/[lang]/checko
               services={catalog.services}
               destinations={catalog.destinations}
               phoneCountryLabel={t.common.phoneCountry}
+              searchCountryLabel={t.common.searchCountry}
             />
           </Suspense>
         ) : (

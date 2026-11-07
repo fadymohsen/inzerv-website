@@ -54,6 +54,7 @@ export function CheckoutFlow({
   services,
   destinations,
   phoneCountryLabel,
+  searchCountryLabel,
 }: {
   locale: Locale;
   t: Dict["checkout"];
@@ -61,6 +62,7 @@ export function CheckoutFlow({
   services: GovService[];
   destinations: DeliveryDestination[];
   phoneCountryLabel: string;
+  searchCountryLabel: string;
 }) {
   const search = useSearchParams();
   const pick = (en: string, ar: string) => (locale === "ar" ? ar : en);
@@ -547,6 +549,7 @@ export function CheckoutFlow({
                           id={id}
                           locale={locale}
                           countryLabel={phoneCountryLabel}
+                          searchPlaceholder={searchCountryLabel}
                           country={fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY}
                           onCountryChange={(c) => setFieldPhoneCountries((prev) => ({ ...prev, [f.keyName]: c }))}
                           value={values[f.keyName] ?? ""}
@@ -702,6 +705,7 @@ export function CheckoutFlow({
                   id="v-phone"
                   locale={locale}
                   countryLabel={phoneCountryLabel}
+                  searchPlaceholder={searchCountryLabel}
                   country={recipientPhoneCountry}
                   onCountryChange={setRecipientPhoneCountry}
                   value={delivery.recipientPhone}

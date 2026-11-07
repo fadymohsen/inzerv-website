@@ -11,9 +11,16 @@ export type { CountryCode };
 
 export const DEFAULT_PHONE_COUNTRY: CountryCode = "EG";
 
-export type PhoneCountryOption = { code: CountryCode; dialCode: string; name: string };
+export type PhoneCountryOption = { code: CountryCode; dialCode: string; name: string; flag: string };
 
 const optionsCache = new Map<string, PhoneCountryOption[]>();
+
+/** Regional-indicator flag emoji for a 2-letter ISO country code, e.g. "QA" -> "🇶🇦". */
+export function flagEmoji(code: CountryCode): string {
+  return code
+    .toUpperCase()
+    .replace(/./g, (c) => String.fromCodePoint(127397 + c.charCodeAt(0)));
+}
 
 /** Dial-code options for the phone country picker, sorted by localized country name. */
 export function phoneCountryOptions(locale: string): PhoneCountryOption[] {
@@ -21,7 +28,7 @@ export function phoneCountryOptions(locale: string): PhoneCountryOption[] {
   if (cached) return cached;
   const names = new Intl.DisplayNames([locale], { type: "region" });
   const options = getCountries()
-    .map((code) => ({ code, dialCode: getCountryCallingCode(code), name: names.of(code) ?? code }))
+    .map((code) => ({ code, dialCode: getCountryCallingCode(code), name: names.of(code) ?? code, flag: flagEmoji(code) }))
     .sort((a, b) => a.name.localeCompare(b.name, locale));
   optionsCache.set(locale, options);
   return options;

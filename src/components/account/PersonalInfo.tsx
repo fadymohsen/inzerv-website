@@ -195,6 +195,7 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
                       id="pi-phone"
                       locale={locale}
                       countryLabel={t.common.phoneCountry}
+                      searchPlaceholder={t.common.searchCountry}
                       country={draft.phoneCountry}
                       onCountryChange={(c) => setDraft((d) => (d ? { ...d, phoneCountry: c } : d))}
                       value={draft.phone}

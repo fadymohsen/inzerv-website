@@ -11,6 +11,8 @@ export function Select({
   options,
   placeholder,
   onChange,
+  searchable = false,
+  searchPlaceholder,
   "aria-invalid": ariaInvalid,
   "aria-describedby": ariaDescribedby,
   "aria-label": ariaLabel,
@@ -20,16 +22,30 @@ export function Select({
   options: SelectOption[];
   placeholder?: string;
   onChange: (value: string) => void;
+  /** Adds a type-to-filter box at the top of the list — for long lists (e.g. country pickers). */
+  searchable?: boolean;
+  searchPlaceholder?: string;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
   "aria-label"?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const selected = options.find((o) => o.value === value);
 
   const close = useCallback(() => setOpen(false), []);
+  const toggle = useCallback(() => {
+    setOpen((o) => !o);
+    setQuery("");
+  }, []);
+
+  const filtered =
+    searchable && query.trim()
+      ? options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()))
+      : options;
 
   useEffect(() => {
     if (!open) return;
@@ -47,6 +63,11 @@ export function Select({
     };
   }, [open, close]);
 
+  // Focus the filter box fresh each time the list opens.
+  useEffect(() => {
+    if (open && searchable) searchRef.current?.focus();
+  }, [open, searchable]);
+
   // Scroll active option into view when opening
   useEffect(() => {
     if (!open || !listRef.current) return;
@@ -58,7 +79,7 @@ export function Select({
   function onKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      setOpen((o) => !o);
+      toggle();
     }
     if (!open) return;
     const idx = options.findIndex((o) => o.value === value);
@@ -74,6 +95,15 @@ export function Select({
     }
   }
 
+  function onSearchKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "Escape") close();
+    if (e.key === "Enter" && filtered.length) {
+      e.preventDefault();
+      onChange(filtered[0].value);
+      close();
+    }
+  }
+
   return (
     <div ref={ref} className="relative">
       <button
@@ -86,7 +116,7 @@ export function Select({
         aria-invalid={ariaInvalid}
         aria-describedby={ariaDescribedby}
         aria-label={ariaLabel}
-        onClick={() => setOpen((o) => !o)}
+        onClick={toggle}
         onKeyDown={onKeyDown}
         className={`flex min-h-12 w-full items-center justify-between rounded-btn border bg-white px-4 text-start text-base transition-colors duration-150 ${
           ariaInvalid
@@ -111,42 +141,63 @@ export function Select({
       </button>
 
       {open && (
-        <ul
-          id={`${id}-list`}
-          ref={listRef}
-          role="listbox"
-          aria-activedescendant={value ? `${id}-opt-${value}` : undefined}
-          className="absolute z-50 mt-1.5 max-h-64 w-full overflow-auto rounded-btn border border-line bg-white py-1 shadow-lg shadow-navy/8"
+        <div
+          className={`absolute z-50 mt-1.5 overflow-hidden rounded-btn border border-line bg-white shadow-lg shadow-navy/8 ${
+            searchable ? "min-w-[14rem] w-max max-w-[min(20rem,90vw)]" : "w-full"
+          }`}
         >
-          {options.map((o) => {
-            const active = o.value === value;
-            return (
-              <li
-                key={o.value}
-                id={`${id}-opt-${o.value}`}
-                role="option"
-                aria-selected={active}
-                data-active={active ? "" : undefined}
-                onClick={() => {
-                  onChange(o.value);
-                  close();
-                }}
-                className={`flex min-h-11 cursor-pointer items-center gap-3 px-4 text-sm transition-colors duration-100 ${
-                  active
-                    ? "bg-turquoise/10 font-medium text-navy"
-                    : "text-navy hover:bg-bg-light"
-                }`}
-              >
-                {active && (
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-turquoise">
-                    <path d="M3 8.5L6.5 12L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-                <span className={active ? "" : "ps-7"}>{o.label}</span>
-              </li>
-            );
-          })}
-        </ul>
+          {searchable && (
+            <div className="border-b border-line p-2">
+              <input
+                ref={searchRef}
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={onSearchKeyDown}
+                placeholder={searchPlaceholder}
+                aria-label={searchPlaceholder}
+                className="block min-h-10 w-full rounded-btn border border-line bg-bg-light px-3 text-sm text-navy placeholder:text-text-secondary focus:border-turquoise focus:outline-none focus:ring-2 focus:ring-turquoise"
+              />
+            </div>
+          )}
+          <ul
+            id={`${id}-list`}
+            ref={listRef}
+            role="listbox"
+            aria-activedescendant={value ? `${id}-opt-${value}` : undefined}
+            className="max-h-64 overflow-auto py-1"
+          >
+            {filtered.length === 0 && <li className="px-4 py-3 text-sm text-ink-muted">—</li>}
+            {filtered.map((o) => {
+              const active = o.value === value;
+              return (
+                <li
+                  key={o.value}
+                  id={`${id}-opt-${o.value}`}
+                  role="option"
+                  aria-selected={active}
+                  data-active={active ? "" : undefined}
+                  onClick={() => {
+                    onChange(o.value);
+                    close();
+                  }}
+                  className={`flex min-h-11 cursor-pointer items-center gap-3 whitespace-nowrap px-4 text-sm transition-colors duration-100 ${
+                    active
+                      ? "bg-turquoise/10 font-medium text-navy"
+                      : "text-navy hover:bg-bg-light"
+                  }`}
+                >
+                  {active && (
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="shrink-0 text-turquoise">
+                      <path d="M3 8.5L6.5 12L13 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                  <span className={active ? "" : "ps-7"}>{o.label}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       )}
     </div>
   );

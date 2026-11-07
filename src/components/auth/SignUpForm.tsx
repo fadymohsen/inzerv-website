@@ -22,11 +22,13 @@ export function SignUpForm({
   t,
   legal,
   phoneCountryLabel,
+  searchCountryLabel,
 }: {
   locale: Locale;
   t: Dict["auth"];
   legal: { terms: string; privacy: string };
   phoneCountryLabel: string;
+  searchCountryLabel: string;
 }) {
   const router = useRouter();
   const search = useSearchParams();
@@ -167,6 +169,7 @@ export function SignUpForm({
             id="su-phone"
             locale={locale}
             countryLabel={phoneCountryLabel}
+            searchPlaceholder={searchCountryLabel}
             country={phoneCountry}
             onCountryChange={setPhoneCountry}
             value={f.phone}

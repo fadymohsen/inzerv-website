@@ -71,6 +71,7 @@ export const en = {
     optional: "Optional",
     loading: "Loading",
     phoneCountry: "Country code",
+    searchCountry: "Search country",
   },
 
   app: {

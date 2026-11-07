@@ -9,6 +9,7 @@ export function PhoneField({
   id,
   locale,
   countryLabel,
+  searchPlaceholder,
   country,
   onCountryChange,
   value,
@@ -20,6 +21,7 @@ export function PhoneField({
   id: string;
   locale: Locale;
   countryLabel: string;
+  searchPlaceholder?: string;
   country: CountryCode;
   onCountryChange: (country: CountryCode) => void;
   value: string;
@@ -39,10 +41,12 @@ export function PhoneField({
           value={country}
           options={options.map((o) => ({
             value: o.code,
-            label: `+${o.dialCode} ${o.name}`,
-            shortLabel: `+${o.dialCode}`,
+            label: `${o.flag} +${o.dialCode} ${o.name}`,
+            shortLabel: `${o.flag} +${o.dialCode}`,
           }))}
           onChange={(v) => onCountryChange(v as CountryCode)}
+          searchable
+          searchPlaceholder={searchPlaceholder}
           aria-invalid={invalid}
           aria-label={countryLabel}
         />
