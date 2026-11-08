@@ -81,8 +81,30 @@ export type UserRequest = {
   };
 };
 
+export type StatusHistoryEntry = {
+  id: string;
+  status: string;
+  note: string | null;
+  noteAr: string | null;
+  createdAt: string;
+};
+
+export type RequestDetail = UserRequest & {
+  requestFor: string;
+  servicePrice: number | string;
+  deliveryFee: number | string;
+  deliveryCity: string | null;
+  deliveryGovernorate: string | null;
+  deliveryAddress: string | null;
+  recipientName: string | null;
+  recipientPhone: string | null;
+  actionRequiredMessage: string | null;
+  statusHistory: StatusHistoryEntry[];
+};
+
 export const orders = {
   list: () => call<UserRequest[]>("/api/backend/requests"),
+  detail: (id: string) => call<RequestDetail>(`/api/backend/requests/${id}`),
   create: (body: {
     serviceId: string;
     requestFor: "myself" | "another_person";
