@@ -108,7 +108,7 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
         <button
           type="button"
           onClick={() => setSheet("signout")}
-          className="mt-5 flex min-h-14 w-full items-center justify-center gap-3 rounded-card border border-error/40 bg-white text-base font-semibold text-error transition-colors hover:bg-error/5"
+          className="mb-10 mt-5 flex min-h-14 w-full items-center justify-center gap-3 rounded-card border border-error/40 bg-white text-base font-semibold text-error transition-colors hover:bg-error/5"
         >
           <LogoutIcon size={22} />
           {a.signOut}
