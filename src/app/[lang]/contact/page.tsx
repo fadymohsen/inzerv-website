@@ -79,7 +79,7 @@ export default async function ContactPage({ params }: PageProps<"/[lang]/contact
 
         <div className="rounded-card border border-line bg-bg-light p-6 sm:p-9">
           <h2 className="mb-7 text-2xl font-semibold">{t.formTitle}</h2>
-          <ContactForm t={t} />
+          <ContactForm t={t} locale={lang} />
         </div>
       </div>
     </section>

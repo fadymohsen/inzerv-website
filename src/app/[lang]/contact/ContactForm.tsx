@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Dict } from "@/dictionaries/en";
 import { buttonClass } from "@/components/Button";
 import { Select } from "@/components/Select";
+import type { Locale } from "@/lib/i18n";
 
 type Errors = Partial<Record<"name" | "email" | "message", string>>;
 type Status = "idle" | "sending" | "sent" | "error";
@@ -11,7 +12,7 @@ type Status = "idle" | "sending" | "sent" | "error";
 const inputClass =
   "mt-2 block min-h-12 w-full rounded-btn border border-line bg-white px-4 text-base text-navy placeholder:text-text-secondary focus:border-turquoise focus:outline-none focus:ring-2 focus:ring-turquoise aria-[invalid=true]:border-error";
 
-export function ContactForm({ t }: { t: Dict["contact"] }) {
+export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale }) {
   const [errors, setErrors] = useState<Errors>({});
   const [topic, setTopic] = useState(t.topics[0]);
   const [status, setStatus] = useState<Status>("idle");
@@ -40,7 +41,7 @@ export function ContactForm({ t }: { t: Dict["contact"] }) {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, topic: topicValue, message }),
+        body: JSON.stringify({ name, email, topic: topicValue, message, locale }),
       });
       if (!res.ok) throw new Error("Request failed");
       setStatus("sent");
