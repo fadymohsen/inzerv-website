@@ -59,7 +59,7 @@ export function ContactForm({ t }: { t: Dict["contact"] }) {
         </div>
         <p className="text-lg font-semibold">{t.successTitle}</p>
         <p className="max-w-[44ch] text-ink-muted">{t.successText}</p>
-        <button type="button" onClick={() => setStatus("idle")} className={buttonClass("secondary", "mt-2")}>
+        <button type="button" onClick={() => setStatus("idle")} className={buttonClass("outline", "mt-2")}>
           {t.sendAnother}
         </button>
       </div>
