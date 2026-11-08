@@ -33,11 +33,11 @@ export function AuthShell({
           </ul>
         </aside>
 
-        <div className="rounded-card border border-line bg-white p-6 sm:p-10">
-          <h1 className="text-[clamp(1.875rem,3.4vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.025em] rtl:leading-[1.35]">
+        <div className="rounded-card border border-line bg-white p-5 sm:p-10">
+          <h1 className="text-center text-[clamp(1.75rem,3.4vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.025em] rtl:leading-[1.35] lg:text-start">
             {title}
           </h1>
-          {sub && <p className="mt-3 max-w-[46ch] text-ink-muted">{sub}</p>}
+          {sub && <p className="mx-auto mt-3 max-w-[46ch] text-center text-ink-muted lg:mx-0 lg:text-start">{sub}</p>}
           <div className="mt-8">{children}</div>
         </div>
       </div>
