@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { buttonClass } from "@/components/Button";
-import { ChevronRightIcon, DocumentIcon, GlobeIcon, HeadsetIcon, LockIcon, LogoutIcon, ShieldIcon, UserIcon, CheckIcon } from "@/components/Icons";
+import { ChevronRightIcon, ClipboardListIcon, DocumentIcon, GlobeIcon, HeadsetIcon, LockIcon, LogoutIcon, ShieldIcon, UserIcon, CheckIcon } from "@/components/Icons";
 import { Modal } from "@/components/Modal";
 import { Rings } from "@/components/Rings";
 import { useSession } from "@/components/SessionProvider";
@@ -12,7 +12,6 @@ import type { Dict } from "@/dictionaries/en";
 import type { Locale } from "@/lib/i18n";
 import { AccountGate } from "./AccountGate";
 import { Avatar } from "./Avatar";
-import { RequestsList } from "./RequestsList";
 import { useProfile } from "./useAccount";
 
 type Item = { href?: string; onClick?: () => void; icon: React.ReactNode; label: string; trailing?: string };
@@ -39,6 +38,7 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
   const swap = (l: Locale) => pathname.replace(/^\/(en|ar)(?=\/|$)/, `/${l}`) || `/${l}`;
 
   const items: Item[] = [
+    { href: `/${locale}/account/requests`, icon: <ClipboardListIcon size={22} />, label: a.requests.title },
     { href: `/${locale}/account/personal`, icon: <UserIcon size={22} />, label: a.personal },
     { href: `/${locale}/account/password`, icon: <LockIcon size={22} />, label: a.changePassword },
     { href: `/${locale}/contact`, icon: <HeadsetIcon size={22} />, label: a.help },
@@ -97,12 +97,6 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
             <p className="truncate text-xl font-semibold">{name}</p>
             <p dir="ltr" className="truncate text-start text-ink-muted rtl:text-end">{email}</p>
           </div>
-        </section>
-
-        <section className="mt-5 rounded-card border border-line bg-white p-5">
-          <h2 className="mb-1 text-lg font-semibold">{a.requests.title}</h2>
-          <p className="mb-5 text-sm text-ink-muted">{a.requests.sub}</p>
-          <RequestsList locale={locale} t={a.requests} />
         </section>
 
         <ul className="mt-5 divide-y divide-line overflow-hidden rounded-card border border-line bg-white">
