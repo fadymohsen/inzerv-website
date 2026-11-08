@@ -12,6 +12,7 @@ import type { Dict } from "@/dictionaries/en";
 import type { Locale } from "@/lib/i18n";
 import { AccountGate } from "./AccountGate";
 import { Avatar } from "./Avatar";
+import { RequestsList } from "./RequestsList";
 import { useProfile } from "./useAccount";
 
 type Item = { href?: string; onClick?: () => void; icon: React.ReactNode; label: string; trailing?: string };
@@ -96,6 +97,12 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
             <p className="truncate text-xl font-semibold">{name}</p>
             <p dir="ltr" className="truncate text-start text-ink-muted rtl:text-end">{email}</p>
           </div>
+        </section>
+
+        <section className="mt-5 rounded-card border border-line bg-white p-5">
+          <h2 className="mb-1 text-lg font-semibold">{a.requests.title}</h2>
+          <p className="mb-5 text-sm text-ink-muted">{a.requests.sub}</p>
+          <RequestsList locale={locale} t={a.requests} />
         </section>
 
         <ul className="mt-5 divide-y divide-line overflow-hidden rounded-card border border-line bg-white">

@@ -64,7 +64,25 @@ export const auth = {
     post<{ ok: true }>("/api/auth/reset-password", { resetToken, newPassword }),
 };
 
+export type UserRequest = {
+  id: string;
+  referenceNumber: string;
+  status: string;
+  totalAmount: number | string;
+  numberOfCopies: number;
+  createdAt: string;
+  updatedAt: string;
+  govService: {
+    id: string;
+    nameEn: string;
+    nameAr: string;
+    type: string;
+    iconKey?: string | null;
+  };
+};
+
 export const orders = {
+  list: () => call<UserRequest[]>("/api/backend/requests"),
   create: (body: {
     serviceId: string;
     requestFor: "myself" | "another_person";
