@@ -323,8 +323,8 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                 <span className="tabular block text-[4.5rem] font-semibold leading-none tracking-[-0.04em] text-navy">
                   {pad2(i + 1, lang)}
                 </span>
-                <h3 className="mt-8 text-xl font-semibold leading-snug">{s.title}</h3>
-                <p className="mt-3 leading-relaxed text-ink-muted">{s.text}</p>
+                <h3 className="mt-3 text-xl font-semibold leading-snug">{s.title}</h3>
+                <p className="mt-1.5 leading-relaxed text-ink-muted">{s.text}</p>
               </li>
             ))}
           </ol>
