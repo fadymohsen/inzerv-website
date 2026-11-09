@@ -269,6 +269,7 @@ export const en = {
     sending: "Sending...",
     note: "We will reply to your email during working hours.",
     successTitle: "Message sent",
+    successRef: "Your reference number",
     successText: "Thank you for reaching out. Our team will get back to you during working hours (9 AM – 9 PM Cairo time).",
     sendAnother: "Send another message",
     errorText: "Something went wrong. Please try again or email us directly.",

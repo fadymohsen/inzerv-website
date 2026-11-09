@@ -20,6 +20,7 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
   const [topic, setTopic] = useState("");
   const [orderRef, setOrderRef] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+  const [ticketRef, setTicketRef] = useState("");
 
   const topicIndex = t.topics.indexOf(topic);
   const showOrderRef = ORDER_REF_TOPIC_INDICES.has(topicIndex);
@@ -58,6 +59,8 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
         }),
       });
       if (!res.ok) throw new Error("Request failed");
+      const data = await res.json();
+      setTicketRef(data.ticketRef ?? "");
       setStatus("sent");
       form.reset();
       setTopic("");
@@ -74,6 +77,12 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
           <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
         </div>
         <p className="text-lg font-semibold">{t.successTitle}</p>
+        {ticketRef && (
+          <div className="rounded-btn bg-navy px-5 py-3 text-center">
+            <p className="text-xs text-white/60">{t.successRef}</p>
+            <p dir="ltr" className="mt-0.5 text-lg font-bold tracking-wider text-white">{ticketRef}</p>
+          </div>
+        )}
         <p className="max-w-[44ch] text-ink-muted">{t.successText}</p>
         <button type="button" onClick={() => setStatus("idle")} className={buttonClass("outline", "mt-2")}>
           {t.sendAnother}

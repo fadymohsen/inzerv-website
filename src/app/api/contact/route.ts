@@ -13,6 +13,7 @@ const i18n = {
     greeting: (name: string) => `Hi ${name},`,
     body: "Thank you for contacting Inzerv. We've received your message, and our customer service team will review it and respond during our working hours: 9:00 AM–9:00 PM, Cairo time.",
     followUp: 'If you would like to add details to your enquiry, you can reply to this email or contact us through the <a href="https://inzerv.com/en/contact" style="color:#10B7BE;text-decoration:underline">Contact Us</a> page on the Inzerv website.',
+    refLabel: "Reference:",
     topicLabel: "Topic:",
     orderRefLabel: "Order Reference:",
     messageLabel: "Your message:",
@@ -27,6 +28,7 @@ const i18n = {
     greeting: (name: string) => `أهلًا ${name}،`,
     body: "شكرًا لتواصلك مع إنزيرف. استلمنا رسالتك، وسيراجعها فريق خدمة العملاء ويرد عليك خلال ساعات العمل: من ٩ صباحًا إلى ٩ مساءً بتوقيت القاهرة.",
     followUp: 'لو حابب تضيف تفاصيل لاستفسارك، تقدر ترد على الإيميل ده أو تتواصل معانا من صفحة <a href="https://inzerv.com/ar/contact" style="color:#10B7BE;text-decoration:underline">تواصل معنا</a> على موقع إنزيرف.',
+    refLabel: "رقم المرجع:",
     topicLabel: "موضوع الرسالة:",
     orderRefLabel: "رقم الطلب المرجعي:",
     messageLabel: "رسالتك:",
@@ -51,6 +53,7 @@ export async function POST(req: Request) {
     }
 
     const lang: Lang = locale === "ar" ? "ar" : "en";
+    const ticketRef = generateTicketRef();
     const safeName = escapeHtml(name);
     const safeEmail = escapeHtml(email);
     const safeTopic = escapeHtml(topic);
@@ -61,8 +64,8 @@ export async function POST(req: Request) {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
-      subject: `Contact: ${topic || "General"} — ${name}`,
-      html: adminEmail(safeName, safeEmail, safeTopic, safeOrderRef, safeMessage),
+      subject: `[${ticketRef}] Contact: ${topic || "General"} — ${name}`,
+      html: adminEmail(ticketRef, safeName, safeEmail, safeTopic, safeOrderRef, safeMessage),
       replyTo: email,
     });
 
@@ -72,11 +75,11 @@ export async function POST(req: Request) {
       from: FROM_EMAIL,
       to: email,
       subject: t.subject,
-      html: userEmail(t, safeName, safeTopic, safeOrderRef, safeMessage),
+      html: userEmail(t, ticketRef, safeName, safeTopic, safeOrderRef, safeMessage),
       replyTo: ADMIN_EMAIL,
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, ticketRef });
   } catch (err) {
     console.error("Contact form error:", err);
     return NextResponse.json({ error: "Failed to send message." }, { status: 500 });
@@ -132,9 +135,10 @@ function layout(body: string, dir: "ltr" | "rtl" = "ltr", lang = "en"): string {
 
 /* ── Admin notification email ──────────────────────────────── */
 
-function adminEmail(name: string, email: string, topic: string, orderRef: string, message: string): string {
+function adminEmail(ticketRef: string, name: string, email: string, topic: string, orderRef: string, message: string): string {
   return layout(`
-    <h1 style="margin:0 0 24px;font-size:22px;font-weight:600;color:#062544">New Contact Submission</h1>
+    <h1 style="margin:0 0 8px;font-size:22px;font-weight:600;color:#062544">New Contact Submission</h1>
+    <p style="margin:0 0 24px;font-size:14px;color:#667785" dir="ltr">${ticketRef}</p>
 
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#F5F7F9;border-radius:12px;margin-bottom:24px">
       <tr><td style="padding:20px 24px">
@@ -168,13 +172,21 @@ function adminEmail(name: string, email: string, topic: string, orderRef: string
 
 /* ── User confirmation email ───────────────────────────────── */
 
-function userEmail(t: (typeof i18n)["en"] | (typeof i18n)["ar"], name: string, topic: string, orderRef: string, message: string): string {
+function userEmail(t: (typeof i18n)["en"] | (typeof i18n)["ar"], ticketRef: string, name: string, topic: string, orderRef: string, message: string): string {
   const borderSide = t.dir === "rtl" ? "border-right" : "border-left";
 
   return layout(`
     <p style="margin:0 0 20px;font-size:16px;line-height:1.7;color:#062544">${t.greeting(name)}</p>
 
     <p style="margin:0 0 28px;font-size:15px;line-height:1.8;color:#062544">${t.body}</p>
+
+    <!-- Ticket reference -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px">
+      <tr><td style="background-color:#062544;border-radius:12px;padding:16px 20px">
+        <p style="margin:0 0 2px;font-size:12px;color:rgba(255,255,255,0.6)">${t.refLabel}</p>
+        <p style="margin:0;font-size:18px;font-weight:700;color:#FFFFFF;letter-spacing:1px" dir="ltr">${ticketRef}</p>
+      </td></tr>
+    </table>
 
     <!-- Message recap -->
     <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#062544">${t.topicLabel}</p>
@@ -201,6 +213,14 @@ function userEmail(t: (typeof i18n)["en"] | (typeof i18n)["ar"], name: string, t
 }
 
 /* ── Utility ───────────────────────────────────────────────── */
+
+/** Generates a ticket reference like CS-20261109-A3F7 */
+function generateTicketRef(): string {
+  const now = new Date();
+  const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `CS-${date}-${rand}`;
+}
 
 function escapeHtml(str: string): string {
   return str
