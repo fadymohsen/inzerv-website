@@ -3,7 +3,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const ADMIN_EMAIL = "hello@inzerv.com";
-const FROM_EMAIL = "Inzerv <no-reply@inzerv.com>";
+const FROM_EMAIL = "Inzerv <hello@inzerv.com>";
 
 type Lang = "ar" | "en";
 
