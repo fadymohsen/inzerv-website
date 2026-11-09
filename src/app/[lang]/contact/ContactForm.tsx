@@ -6,16 +6,23 @@ import { buttonClass } from "@/components/Button";
 import { Select } from "@/components/Select";
 import type { Locale } from "@/lib/i18n";
 
-type Errors = Partial<Record<"name" | "email" | "message", string>>;
+type Errors = Partial<Record<"name" | "email" | "topic" | "message", string>>;
 type Status = "idle" | "sending" | "sent" | "error";
 
 const inputClass =
   "mt-2 block min-h-12 w-full rounded-btn border border-line bg-white px-4 text-base text-navy placeholder:text-text-secondary focus:border-turquoise focus:outline-none focus:ring-2 focus:ring-turquoise aria-[invalid=true]:border-error";
 
+/** Topics that should show the order-reference field (matched by index). */
+const ORDER_REF_TOPIC_INDICES = new Set([1, 2]); // "Regarding an Existing Order", "Cancellation and Refund"
+
 export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale }) {
   const [errors, setErrors] = useState<Errors>({});
-  const [topic, setTopic] = useState(t.topics[0]);
+  const [topic, setTopic] = useState("");
+  const [orderRef, setOrderRef] = useState("");
   const [status, setStatus] = useState<Status>("idle");
+
+  const topicIndex = t.topics.indexOf(topic);
+  const showOrderRef = ORDER_REF_TOPIC_INDICES.has(topicIndex);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -23,12 +30,12 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
     const data = new FormData(form);
     const name = String(data.get("name") ?? "").trim();
     const email = String(data.get("email") ?? "").trim();
-    const topicValue = topic;
     const message = String(data.get("message") ?? "").trim();
 
     const next: Errors = {};
     if (!name) next.name = t.errors.name;
     if (!/^\S+@\S+\.\S+$/.test(email)) next.email = t.errors.email;
+    if (!topic) next.topic = t.errors.topic;
     if (!message) next.message = t.errors.message;
     setErrors(next);
     if (Object.keys(next).length) {
@@ -41,12 +48,20 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, topic: topicValue, message, locale }),
+        body: JSON.stringify({
+          name,
+          email,
+          topic,
+          orderRef: showOrderRef ? orderRef.trim() : undefined,
+          message,
+          locale,
+        }),
       });
       if (!res.ok) throw new Error("Request failed");
       setStatus("sent");
       form.reset();
-      setTopic(t.topics[0]);
+      setTopic("");
+      setOrderRef("");
     } catch {
       setStatus("error");
     }
@@ -71,7 +86,7 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
       <div>
         <label htmlFor="c-name" className="text-sm font-medium">
-          {t.name}
+          {t.name} <span className="text-error">*</span>
         </label>
         <input
           id="c-name"
@@ -82,15 +97,13 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
           className={inputClass}
         />
         {errors.name && (
-          <p id="c-name-err" role="alert" className="mt-2 text-sm text-error">
-            {errors.name}
-          </p>
+          <p id="c-name-err" role="alert" className="mt-2 text-sm text-error">{errors.name}</p>
         )}
       </div>
 
       <div>
         <label htmlFor="c-email" className="text-sm font-medium">
-          {t.email}
+          {t.email} <span className="text-error">*</span>
         </label>
         <input
           id="c-email"
@@ -104,27 +117,47 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
           className={`${inputClass} text-start`}
         />
         {errors.email && (
-          <p id="c-email-err" role="alert" className="mt-2 text-sm text-error">
-            {errors.email}
-          </p>
+          <p id="c-email-err" role="alert" className="mt-2 text-sm text-error">{errors.email}</p>
         )}
       </div>
 
       <div>
         <label htmlFor="c-topic" className="mb-2 block text-sm font-medium">
-          {t.topic}
+          {t.topic} <span className="text-error">*</span>
         </label>
         <Select
           id="c-topic"
           value={topic}
+          placeholder={t.topicPlaceholder}
           options={t.topics.map((tp) => ({ value: tp, label: tp }))}
           onChange={setTopic}
+          aria-invalid={!!errors.topic}
+          aria-describedby={errors.topic ? "c-topic-err" : undefined}
         />
+        {errors.topic && (
+          <p id="c-topic-err" role="alert" className="mt-2 text-sm text-error">{errors.topic}</p>
+        )}
       </div>
+
+      {showOrderRef && (
+        <div>
+          <label htmlFor="c-orderref" className="text-sm font-medium">
+            {t.orderRef}
+          </label>
+          <input
+            id="c-orderref"
+            dir="ltr"
+            value={orderRef}
+            onChange={(e) => setOrderRef(e.target.value)}
+            placeholder={t.orderRefPlaceholder}
+            className={`${inputClass} text-start`}
+          />
+        </div>
+      )}
 
       <div>
         <label htmlFor="c-message" className="text-sm font-medium">
-          {t.message}
+          {t.message} <span className="text-error">*</span>
         </label>
         <textarea
           id="c-message"
@@ -136,9 +169,7 @@ export function ContactForm({ t, locale }: { t: Dict["contact"]; locale: Locale 
           className={`${inputClass} py-3`}
         />
         {errors.message && (
-          <p id="c-message-err" role="alert" className="mt-2 text-sm text-error">
-            {errors.message}
-          </p>
+          <p id="c-message-err" role="alert" className="mt-2 text-sm text-error">{errors.message}</p>
         )}
       </div>
 

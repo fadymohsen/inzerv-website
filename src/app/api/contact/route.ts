@@ -12,7 +12,9 @@ const i18n = {
     subject: "We received your message — Inzerv",
     greeting: (name: string) => `Hi ${name},`,
     body: "Thank you for contacting Inzerv. We've received your message, and our customer service team will review it and respond during our working hours: 9:00 AM–9:00 PM, Cairo time.",
+    followUp: 'If you would like to add details to your enquiry, you can reply to this email or contact us through the <a href="https://inzerv.com/en/contact" style="color:#10B7BE;text-decoration:underline">Contact Us</a> page on the Inzerv website.',
     topicLabel: "Topic:",
+    orderRefLabel: "Order Reference:",
     messageLabel: "Your message:",
     regards: "Best regards,",
     team: "The Inzerv Team",
@@ -24,7 +26,9 @@ const i18n = {
     subject: "استلمنا رسالتك — إنزيرف",
     greeting: (name: string) => `أهلًا ${name}،`,
     body: "شكرًا لتواصلك مع إنزيرف. استلمنا رسالتك، وسيراجعها فريق خدمة العملاء ويرد عليك خلال ساعات العمل: من ٩ صباحًا إلى ٩ مساءً بتوقيت القاهرة.",
+    followUp: 'لو حابب تضيف تفاصيل لاستفسارك، تقدر ترد على الإيميل ده أو تتواصل معانا من صفحة <a href="https://inzerv.com/ar/contact" style="color:#10B7BE;text-decoration:underline">تواصل معنا</a> على موقع إنزيرف.',
     topicLabel: "موضوع الرسالة:",
+    orderRefLabel: "رقم الطلب المرجعي:",
     messageLabel: "رسالتك:",
     regards: "تحياتنا،",
     team: "فريق إنزيرف",
@@ -36,7 +40,7 @@ const i18n = {
 
 export async function POST(req: Request) {
   try {
-    const { name, email, topic, message, locale } = await req.json();
+    const { name, email, topic, orderRef, message, locale } = await req.json();
 
     if (!name?.trim() || !email?.trim() || !message?.trim()) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
@@ -50,6 +54,7 @@ export async function POST(req: Request) {
     const safeName = escapeHtml(name);
     const safeEmail = escapeHtml(email);
     const safeTopic = escapeHtml(topic);
+    const safeOrderRef = orderRef ? escapeHtml(String(orderRef).trim()) : "";
     const safeMessage = escapeHtml(message).replace(/\n/g, "<br />");
 
     // Send notification to admin
@@ -57,7 +62,7 @@ export async function POST(req: Request) {
       from: FROM_EMAIL,
       to: ADMIN_EMAIL,
       subject: `Contact: ${topic || "General"} — ${name}`,
-      html: adminEmail(safeName, safeEmail, safeTopic, safeMessage),
+      html: adminEmail(safeName, safeEmail, safeTopic, safeOrderRef, safeMessage),
       replyTo: email,
     });
 
@@ -67,7 +72,8 @@ export async function POST(req: Request) {
       from: FROM_EMAIL,
       to: email,
       subject: t.subject,
-      html: userEmail(t, safeName, safeTopic, safeMessage),
+      html: userEmail(t, safeName, safeTopic, safeOrderRef, safeMessage),
+      replyTo: ADMIN_EMAIL,
     });
 
     return NextResponse.json({ ok: true });
@@ -126,7 +132,7 @@ function layout(body: string, dir: "ltr" | "rtl" = "ltr", lang = "en"): string {
 
 /* ── Admin notification email ──────────────────────────────── */
 
-function adminEmail(name: string, email: string, topic: string, message: string): string {
+function adminEmail(name: string, email: string, topic: string, orderRef: string, message: string): string {
   return layout(`
     <h1 style="margin:0 0 24px;font-size:22px;font-weight:600;color:#062544">New Contact Submission</h1>
 
@@ -134,7 +140,7 @@ function adminEmail(name: string, email: string, topic: string, message: string)
       <tr><td style="padding:20px 24px">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           <tr>
-            <td style="padding:6px 0;font-size:13px;font-weight:500;color:#667785;width:70px;vertical-align:top">Name</td>
+            <td style="padding:6px 0;font-size:13px;font-weight:500;color:#667785;width:80px;vertical-align:top">Name</td>
             <td style="padding:6px 0;font-size:15px;color:#062544;font-weight:600">${name}</td>
           </tr>
           <tr>
@@ -145,6 +151,10 @@ function adminEmail(name: string, email: string, topic: string, message: string)
             <td style="padding:6px 0;font-size:13px;font-weight:500;color:#667785;vertical-align:top">Topic</td>
             <td style="padding:6px 0;font-size:15px;color:#062544">${topic}</td>
           </tr>
+          ${orderRef ? `<tr>
+            <td style="padding:6px 0;font-size:13px;font-weight:500;color:#667785;vertical-align:top">Order Ref</td>
+            <td style="padding:6px 0;font-size:15px;color:#062544;font-weight:600" dir="ltr">${orderRef}</td>
+          </tr>` : ""}
         </table>
       </td></tr>
     </table>
@@ -158,7 +168,7 @@ function adminEmail(name: string, email: string, topic: string, message: string)
 
 /* ── User confirmation email ───────────────────────────────── */
 
-function userEmail(t: (typeof i18n)["en"] | (typeof i18n)["ar"], name: string, topic: string, message: string): string {
+function userEmail(t: (typeof i18n)["en"] | (typeof i18n)["ar"], name: string, topic: string, orderRef: string, message: string): string {
   const borderSide = t.dir === "rtl" ? "border-right" : "border-left";
 
   return layout(`
@@ -168,12 +178,17 @@ function userEmail(t: (typeof i18n)["en"] | (typeof i18n)["ar"], name: string, t
 
     <!-- Message recap -->
     <p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#062544">${t.topicLabel}</p>
-    <p style="margin:0 0 20px;font-size:15px;color:#062544">${topic}</p>
+    <p style="margin:0 0 ${orderRef ? "16" : "20"}px;font-size:15px;color:#062544">${topic}</p>
+
+    ${orderRef ? `<p style="margin:0 0 4px;font-size:15px;font-weight:600;color:#062544">${t.orderRefLabel}</p>
+    <p style="margin:0 0 20px;font-size:15px;color:#062544" dir="ltr">${orderRef}</p>` : ""}
 
     <p style="margin:0 0 8px;font-size:15px;font-weight:600;color:#062544">${t.messageLabel}</p>
-    <div style="background-color:#F5F7F9;${borderSide}:4px solid #10B7BE;border-radius:${t.dir === "rtl" ? "12px 0 0 12px" : "0 12px 12px 0"};padding:20px 24px;font-size:15px;line-height:1.8;color:#062544;margin:0 0 32px">
+    <div style="background-color:#F5F7F9;${borderSide}:4px solid #10B7BE;border-radius:${t.dir === "rtl" ? "12px 0 0 12px" : "0 12px 12px 0"};padding:20px 24px;font-size:15px;line-height:1.8;color:#062544;margin:0 0 24px">
       ${message}
     </div>
+
+    <p style="margin:0 0 28px;font-size:14px;line-height:1.6;color:#667785">${t.followUp}</p>
 
     <!-- Sign-off -->
     <p style="margin:0 0 4px;font-size:15px;color:#667785">${t.regards}</p>

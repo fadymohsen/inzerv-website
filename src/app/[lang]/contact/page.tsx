@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MailIcon } from "@/components/Icons";
+import { ArrowIcon, MailIcon } from "@/components/Icons";
 import { SUPPORT_EMAIL } from "@/lib/config";
 import { getDictionary } from "@/lib/dictionaries";
 import { hasLocale } from "@/lib/i18n";
@@ -56,7 +57,7 @@ export default async function ContactPage({ params }: PageProps<"/[lang]/contact
           </h1>
           <p className="mt-5 max-w-[48ch] text-lg leading-relaxed text-ink-muted">{t.sub}</p>
 
-          <dl className="mt-12 flex flex-col gap-10">
+          <dl className="mt-10 flex flex-col gap-8">
             <div>
               <dt className="text-sm font-medium text-ink-muted">{t.emailLabel}</dt>
               <dd className="mt-2">
@@ -70,9 +71,22 @@ export default async function ContactPage({ params }: PageProps<"/[lang]/contact
                 </a>
               </dd>
             </div>
-            <div className="max-w-[44ch] border-t border-line pt-8">
-              <dt className="font-semibold">{t.inAppTitle}</dt>
+            <div className="border-t border-line pt-6">
+              <dt className="whitespace-nowrap font-semibold">{t.inAppTitle}</dt>
               <dd className="mt-2 leading-relaxed text-ink-muted">{t.inAppText}</dd>
+            </div>
+            <div className="border-t border-line pt-6">
+              <dt className="font-semibold">{t.trackTitle}</dt>
+              <dd className="mt-2 leading-relaxed text-ink-muted">{t.trackText}</dd>
+              <dd className="mt-3">
+                <Link
+                  href={`/${lang}/account/requests`}
+                  className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-turquoise underline decoration-turquoise/40 decoration-2 underline-offset-4 hover:decoration-turquoise"
+                >
+                  {t.trackLink}
+                  <ArrowIcon size={16} />
+                </Link>
+              </dd>
             </div>
           </dl>
         </div>
