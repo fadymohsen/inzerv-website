@@ -17,6 +17,7 @@ export function PhoneField({
   invalid,
   describedBy,
   autoComplete = "tel",
+  placeholder,
 }: {
   id: string;
   locale: Locale;
@@ -29,9 +30,17 @@ export function PhoneField({
   invalid: boolean;
   describedBy?: string;
   autoComplete?: string;
+  placeholder?: string;
 }) {
   const options = phoneCountryOptions(locale);
   const maxDigits = maxNationalDigits(country);
+
+  function handleChange(raw: string) {
+    let cleaned = raw.replace(/\D/g, "");
+    // Auto-strip leading zero (trunk prefix) for countries that use one
+    if (cleaned.startsWith("0") && cleaned.length > 1) cleaned = cleaned.slice(1);
+    onChange(cleaned.slice(0, maxDigits));
+  }
 
   return (
     <div dir="ltr" className="flex gap-2">
@@ -58,7 +67,8 @@ export function PhoneField({
         autoComplete={autoComplete}
         value={value}
         maxLength={maxDigits}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, maxDigits))}
+        placeholder={placeholder}
+        onChange={(e) => handleChange(e.target.value)}
         aria-invalid={invalid}
         aria-describedby={describedBy}
         className={`${inputClass} !w-auto min-w-0 flex-1 text-start`}

@@ -99,11 +99,11 @@ function layout(body: string, dir: "ltr" | "rtl" = "ltr", lang = "en"): string {
       <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">
 
         <!-- Header -->
-        <tr><td style="background-color:#062544;padding:32px 40px;border-radius:16px 16px 0 0" align="center">
+        <tr><td style="background-color:#062544;padding:28px 40px;border-radius:16px 16px 0 0" align="center">
           <table role="presentation" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="font-size:28px;font-weight:700;color:#FFFFFF;letter-spacing:-0.5px" dir="ltr">
-                <span style="color:#10B7BE">I</span>NZERV
+              <td align="center">
+                <img src="https://inzerv.com/logo_full_white.jpg" alt="Inzerv" width="140" height="auto" style="display:block;max-width:140px;height:auto" />
               </td>
             </tr>
           </table>

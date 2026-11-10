@@ -309,15 +309,15 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       {/* Steps */}
       <section id="how-it-works" className="layer bg-bg-light">
         <div className="mx-auto max-w-7xl px-5 pb-24 pt-16 lg:px-8 lg:py-40">
-          <h2 className="max-w-[15ch] text-[clamp(2.25rem,4.6vw,4rem)] font-semibold leading-[1.02] tracking-[-0.035em] rtl:leading-[1.3]">
+          <h2 className="max-w-[15ch] text-[clamp(2.25rem,4.6vw,4rem)] font-semibold leading-[1.02] tracking-[-0.035em] rtl:max-w-[22ch] rtl:leading-[1.3]">
             {t.home.steps.title}
           </h2>
           <p className="mt-6 max-w-[48ch] text-lg text-ink-muted">{t.home.steps.sub}</p>
 
-          <div className="relative mt-20 h-px bg-navy/15">
+          <div className="relative mt-12 h-px bg-navy/15 lg:mt-16">
             <span aria-hidden className="grow-x absolute inset-x-0 -top-px h-[3px] bg-turquoise" />
           </div>
-          <ol className="mt-10 grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+          <ol className="mt-8 grid gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
             {t.home.steps.items.map((s, i) => (
               <li key={s.title} className="reveal">
                 <span className="tabular block text-[4.5rem] font-semibold leading-none tracking-[-0.04em] text-navy">

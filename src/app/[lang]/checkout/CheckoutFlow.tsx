@@ -119,10 +119,14 @@ export function CheckoutFlow({
   const destination = destinations.find((d) => d.id === delivery.destinationId);
 
   function setDestination(destinationId: string) {
-    setDelivery((d) => ({ ...d, destinationId, governorate: "" }));
+    setDelivery((d) => ({ ...d, destinationId, governorate: "", city: "", postal: "" }));
     const next = destinations.find((d) => d.id === destinationId);
     const normalized = next && normalizePhoneCountry(next.countryCode);
     if (normalized) setRecipientPhoneCountry(normalized);
+  }
+
+  function setGovernorate(governorate: string) {
+    setDelivery((d) => ({ ...d, governorate, city: "" }));
   }
 
   const signInUrl = `/${locale}/signin?next=${encodeURIComponent(`${pathname}${search.toString() ? `?${search.toString()}` : ""}`)}`;
@@ -212,7 +216,15 @@ export function CheckoutFlow({
       if (!delivery.city.trim()) next.city = t.errors.required;
       if (!delivery.governorate.trim()) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
-      if (delivery.postal.trim() && !/^\d+$/.test(delivery.postal.trim())) next.postal = t.errors.postal;
+      if (delivery.postal.trim()) {
+        const p = delivery.postal.trim();
+        if (!/^\d+$/.test(p)) next.postal = t.errors.postal;
+        else if (destination?.countryCode === "EG" && p.length !== 5) next.postal = t.errors.postalLength;
+        else if (destination?.countryCode === "SA" && p.length !== 5) next.postal = t.errors.postalLength;
+        else if (destination?.countryCode === "AE" && p.length !== 0 && !/^\d{5,6}$/.test(p)) next.postal = t.errors.postalLength;
+        else if (destination?.countryCode === "QA" && p.length !== 0 && !/^\d{4,6}$/.test(p)) next.postal = t.errors.postalLength;
+        else if (destination?.countryCode === "KW" && p.length !== 5) next.postal = t.errors.postalLength;
+      }
     }
     if (key === "review" && !agree) next.agree = t.errors.agree;
     return fail(next);
@@ -488,7 +500,18 @@ export function CheckoutFlow({
                       checked={requestFor === v}
                       onChange={() => {
                         setRequestFor(v);
-                        setFiles({});
+                        // Keep files whose document key still exists for the new requestFor value
+                        const nextDocs = (service?.requiredDocuments ?? [])
+                          .filter((d) => v === "another_person" || !d.showForAnotherPerson)
+                          .map((d) => d.keyName);
+                        const nextKeys = new Set(nextDocs);
+                        setFiles((prev) => {
+                          const kept: Record<string, File> = {};
+                          for (const [k, f] of Object.entries(prev)) {
+                            if (nextKeys.has(k)) kept[k] = f;
+                          }
+                          return kept;
+                        });
                         setFileErrors({});
                       }}
                       className="size-4 accent-navy"
@@ -543,7 +566,7 @@ export function CheckoutFlow({
                   };
                   const set = (v: string) => setValues((prev) => ({ ...prev, [f.keyName]: v }));
                   return (
-                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr)} error={err} required={f.isRequired}>
+                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr)} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : undefined}>
                       {isPhoneField(f.keyName) && f.fieldType !== "select" ? (
                         <PhoneField
                           id={id}
@@ -647,6 +670,13 @@ export function CheckoutFlow({
                         </span>
                         <button
                           type="button"
+                          onClick={() => window.open(URL.createObjectURL(file), "_blank")}
+                          className="text-sm font-medium text-turquoise underline underline-offset-4"
+                        >
+                          {t.review.preview}
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => removeFile(d.keyName)}
                           className="text-sm font-medium text-navy underline underline-offset-4"
                         >
@@ -712,6 +742,7 @@ export function CheckoutFlow({
                   onChange={(v) => setDelivery({ ...delivery, recipientPhone: v })}
                   invalid={!!errors.recipientPhone}
                   describedBy={describedBy("v-phone", !!errors.recipientPhone, false)}
+                  placeholder={t.delivery.phonePlaceholder}
                 />
               </Field>
             </div>
@@ -738,7 +769,7 @@ export function CheckoutFlow({
                       value: r.en,
                       label: locale === "ar" ? r.ar : r.en,
                     }))}
-                    onChange={(v) => setDelivery({ ...delivery, governorate: v })}
+                    onChange={setGovernorate}
                     aria-invalid={!!errors.governorate}
                     aria-describedby={describedBy("v-gov", !!errors.governorate, false)}
                   />
@@ -747,7 +778,7 @@ export function CheckoutFlow({
                     id="v-gov"
                     autoComplete="address-level1"
                     value={delivery.governorate}
-                    onChange={(e) => setDelivery({ ...delivery, governorate: e.target.value })}
+                    onChange={(e) => setGovernorate(e.target.value)}
                     aria-invalid={!!errors.governorate}
                     aria-describedby={describedBy("v-gov", !!errors.governorate, false)}
                     placeholder={t.delivery.selectGovernorate}
@@ -811,24 +842,46 @@ export function CheckoutFlow({
                     </div>
                   );
                 })}
-              {Object.keys(files).length > 0 && (
-                <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
-                  <dt className="text-sm text-ink-muted">{t.review.files}</dt>
-                  <dd dir="ltr" className="font-medium">
-                    {Object.values(files)
-                      .map((f) => f.name)
-                      .join(", ")}
+              {visibleDocs.filter((d) => files[d.keyName]).map((d) => (
+                <div key={d.id} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
+                  <dt className="text-sm text-ink-muted">{pick(d.labelEn, d.labelAr)}</dt>
+                  <dd dir="ltr" className="flex items-center gap-2 font-medium">
+                    <span className="truncate max-w-[20ch]">{files[d.keyName].name}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = URL.createObjectURL(files[d.keyName]);
+                        window.open(url, "_blank");
+                      }}
+                      className="shrink-0 text-xs font-semibold text-turquoise underline underline-offset-2"
+                    >
+                      {t.review.preview}
+                    </button>
                   </dd>
                 </div>
-              )}
-              <div className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
-                <dt className="text-sm text-ink-muted">{t.delivery.recipient}</dt>
-                <dd className="font-medium">
-                  {delivery.recipientName}, {delivery.city}
-                  {destination ? `, ${countryName(destination.countryCode, destination.country, locale)}` : ""}
-                </dd>
-              </div>
+              ))}
             </dl>
+
+            {/* Delivery summary */}
+            <div className="rounded-card border border-line">
+              <p className="px-5 py-3 text-sm font-semibold">{t.delivery.title.replace(/\?$/, "")}</p>
+              <dl className="divide-y divide-line border-t border-line">
+                {[
+                  { label: t.delivery.recipient, value: delivery.recipientName },
+                  { label: t.delivery.recipientPhone, value: delivery.recipientPhone, dir: "ltr" },
+                  { label: t.delivery.destination, value: destination ? countryName(destination.countryCode, destination.country, locale) : "" },
+                  { label: t.delivery.governorate, value: delivery.governorate },
+                  { label: t.delivery.city, value: delivery.city },
+                  { label: t.delivery.address, value: delivery.address },
+                  { label: t.delivery.postal, value: delivery.postal },
+                ].filter((r) => r.value?.trim()).map((r) => (
+                  <div key={r.label} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
+                    <dt className="text-sm text-ink-muted">{r.label.replace(/ \(.*\)$/, "")}</dt>
+                    <dd dir={r.dir} className="font-medium">{r.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
 
             <fieldset>
               <legend className="mb-2 text-sm font-medium">{t.review.method}</legend>
