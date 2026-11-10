@@ -5,8 +5,9 @@ export const API_URL =
 
 export const SUPPORT_EMAIL = "Hello@inzerv.com";
 export const SUPPORT_PHONE_MOBILE = "01070608705";
+export const SUPPORT_PHONE_MOBILE_2 = "01270917700";
 export const SUPPORT_PHONE_LANDLINE = "034234388";
 
 // Legal pages are drafts until reviewed. Flip to false once approved.
-export const LEGAL_IS_DRAFT = true;
+export const LEGAL_IS_DRAFT = false;
 export const LEGAL_UPDATED = "2026-10-15";

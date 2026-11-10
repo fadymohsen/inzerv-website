@@ -42,6 +42,18 @@ function isPhoneField(key: string) {
   return k.includes("phone") || k.includes("mobile") || k === "tel" || k.includes("_tel");
 }
 
+function isOtherPartyName(key: string) {
+  const k = key.toLowerCase();
+  return k.includes("other") || k.includes("spouse") || k.includes("party");
+}
+
+/** Validates a full name: at least `minParts` words, each at least 2 characters. */
+function isValidFullName(value: string, minParts = 4): boolean {
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  if (parts.length < minParts) return false;
+  return parts.every((p) => p.length >= 2);
+}
+
 const STEPS = ["details", "documents", "delivery", "review"] as const;
 type StepKey = (typeof STEPS)[number];
 type Errors = Record<string, string>;
@@ -189,14 +201,27 @@ export function CheckoutFlow({
         if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
         else if (isNationalIdField(f.keyName) && val && !isValidNationalId(val))
           next[`f_${f.keyName}`] = t.errors.nationalId;
-        else if (isNameField(f.keyName) && val && val.split(/\s+/).filter(Boolean).length < 4)
-          next[`f_${f.keyName}`] = t.errors.fullName;
+        else if (isNameField(f.keyName) && val) {
+          // Allow 3-part names for "other party" / spouse fields (per spec page 7)
+          const minParts = isOtherPartyName(f.keyName) ? 3 : 4;
+          if (!isValidFullName(val, minParts)) next[`f_${f.keyName}`] = minParts === 3 ? t.errors.fullName3 : t.errors.fullName;
+        }
         else if (isPhoneField(f.keyName) && val && !isPhoneLengthValid(val, fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY))
           next[`f_${f.keyName}`] = t.errors.phoneInvalid;
         else if (f.fieldType === "date" && val) {
           const d = new Date(val + "T00:00:00");
           const today = new Date(); today.setHours(0, 0, 0, 0);
-          if (d >= today) next[`f_${f.keyName}`] = t.errors.futureDate;
+          if (d > today) next[`f_${f.keyName}`] = t.errors.futureDate;
+        }
+      }
+      // Cross-field: divorce date must not be before marriage date
+      const marriageField = visibleFields.find((f) => f.fieldType === "date" && /marriage.*date/i.test(f.keyName));
+      const divorceField = visibleFields.find((f) => f.fieldType === "date" && /divorce.*date/i.test(f.keyName));
+      if (marriageField && divorceField) {
+        const mVal = values[marriageField.keyName]?.trim();
+        const dVal = values[divorceField.keyName]?.trim();
+        if (mVal && dVal && dVal < mVal && !next[`f_${divorceField.keyName}`]) {
+          next[`f_${divorceField.keyName}`] = t.errors.divorceBeforeMarriage;
         }
       }
     }
@@ -208,14 +233,14 @@ export function CheckoutFlow({
     }
     if (key === "delivery") {
       if (!delivery.destinationId) next.destinationId = t.errors.select;
-      const nameParts = delivery.recipientName.trim().split(/\s+/).filter(Boolean);
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
-      else if (nameParts.length < 4) next.recipientName = t.errors.fullName;
+      else if (!isValidFullName(delivery.recipientName, 4)) next.recipientName = t.errors.fullName;
       if (!delivery.recipientPhone.trim()) next.recipientPhone = t.errors.required;
       else if (!isPhoneLengthValid(delivery.recipientPhone, recipientPhoneCountry)) next.recipientPhone = t.errors.phoneInvalid;
       if (!delivery.city.trim()) next.city = t.errors.required;
       if (!delivery.governorate.trim()) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
+      else if (delivery.address.trim().length < 5) next.address = t.errors.addressShort;
       if (delivery.postal.trim()) {
         const p = delivery.postal.trim();
         if (!/^\d+$/.test(p)) next.postal = t.errors.postal;
@@ -475,6 +500,10 @@ export function CheckoutFlow({
                   setValues({});
                   setFiles({});
                   setFileErrors({});
+                  setFieldPhoneCountries({});
+                  setRequestFor("myself");
+                  setCopies(1);
+                  setErrors({});
                 }}
                 aria-invalid={!!errors.service}
                 aria-describedby={describedBy("d-service", !!errors.service, false)}
@@ -599,7 +628,7 @@ export function CheckoutFlow({
                           type={f.fieldType === "date" ? "date" : f.fieldType === "number" ? "number" : "text"}
                           inputMode={f.fieldType === "number" || isNationalIdField(f.keyName) ? "numeric" : undefined}
                           maxLength={isNationalIdField(f.keyName) ? 14 : undefined}
-                          max={f.fieldType === "date" ? (() => { const y = new Date(); y.setDate(y.getDate() - 1); return y.toISOString().slice(0, 10); })() : undefined}
+                          max={f.fieldType === "date" ? new Date().toISOString().slice(0, 10) : undefined}
                           dir={isNationalIdField(f.keyName) ? "ltr" : undefined}
                           onChange={(e) => {
                             const v = isNationalIdField(f.keyName) ? e.target.value.replace(/\D/g, "").slice(0, 14) : e.target.value;
@@ -718,7 +747,7 @@ export function CheckoutFlow({
               />
             </Field>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-6 sm:grid-cols-2">
               <Field id="v-name" label={t.delivery.recipient} error={errors.recipientName} required>
                 <input
                   id="v-name"

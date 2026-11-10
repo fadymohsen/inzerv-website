@@ -43,7 +43,7 @@ export function PhoneField({
   }
 
   return (
-    <div dir="ltr" className="flex gap-2">
+    <div dir="ltr" className="flex min-w-0 gap-2">
       <div className="w-28 shrink-0">
         <Select
           id={`${id}-country`}

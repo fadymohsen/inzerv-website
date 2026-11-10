@@ -155,7 +155,8 @@ function RequestCard({ r, locale, t }: { r: UserRequest; locale: Locale; t: Dict
   const statusLabel = t.status[r.status] ?? r.status;
   const colorClass = STATUS_COLOR[r.status] ?? "bg-gray-100 text-gray-600";
   const amount = Number(r.totalAmount);
-  const date = new Date(r.createdAt).toLocaleDateString(locale === "ar" ? "ar-EG" : "en-GB", {
+  // Always use Western digits (0-9) per Note 16
+  const date = new Date(r.createdAt).toLocaleDateString(locale === "ar" ? "ar-u-nu-latn" : "en-GB", {
     day: "numeric", month: "short", year: "numeric",
   });
   const copies = r.numberOfCopies === 1 ? t.oneCopy : t.copies.replace("{n}", String(r.numberOfCopies));
@@ -176,8 +177,8 @@ function RequestCard({ r, locale, t }: { r: UserRequest; locale: Locale; t: Dict
           <span className="hidden sm:inline">·</span>
           <span>{copies}</span>
           <span className="hidden sm:inline">·</span>
-          <span className="font-semibold text-navy">
-            {amount.toLocaleString(locale === "ar" ? "ar-EG" : "en-EG")} {locale === "ar" ? "ج.م" : "EGP"}
+          <span dir="ltr" className="font-semibold text-navy">
+            {amount.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}
           </span>
           <span className="ms-auto flex items-center gap-1 text-xs font-medium text-turquoise">
             {loading ? (
@@ -268,7 +269,7 @@ function Timeline({ history, locale, statusLabels }: { history: StatusHistoryEnt
         const dotColor = DOT_COLOR[entry.status] ?? "bg-gray-400";
         const label = statusLabels[entry.status] ?? entry.status;
         const note = locale === "ar" ? (entry.noteAr || entry.note) : entry.note;
-        const time = new Date(entry.createdAt).toLocaleDateString(locale === "ar" ? "ar-EG" : "en-GB", {
+        const time = new Date(entry.createdAt).toLocaleDateString(locale === "ar" ? "ar-u-nu-latn" : "en-GB", {
           day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
         });
 
@@ -299,7 +300,7 @@ function InfoRow({ label, value, dir }: { label: string; value: string; dir?: st
 }
 
 function PriceRow({ label, amount, locale, bold }: { label: string; amount: number; locale: Locale; bold?: boolean }) {
-  const formatted = amount.toLocaleString(locale === "ar" ? "ar-EG" : "en-EG");
+  const formatted = amount.toLocaleString("en-EG");
   const currency = locale === "ar" ? "ج.م" : "EGP";
   return (
     <div className={`flex items-center justify-between py-1 text-sm ${bold ? "font-semibold text-navy" : "text-ink-muted"}`}>

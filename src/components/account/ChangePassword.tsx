@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { buttonClass } from "@/components/Button";
 import { Field, describedBy } from "@/components/forms";
@@ -28,6 +28,9 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // Clear success notice on fresh mount (navigating back to the page)
+  useEffect(() => setNotice(null), []);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
 
   const checks = [f.next.length >= 8, /[A-Z]/.test(f.next), /\d/.test(f.next), /[^A-Za-z0-9]/.test(f.next)];

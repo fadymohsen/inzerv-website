@@ -595,11 +595,14 @@ export const en = {
       payFailed: "Payment could not be confirmed. Your request is saved; try again.",
       nationalId: "The National ID must be exactly 14 digits and start with 2 or 3.",
       numericHint: "Use English numerals (0123456789).",
-      fullName: "Enter your full name (4 names).",
+      fullName: "Enter your full name (4 names, each at least 2 characters).",
+      fullName3: "Enter the full name (at least 3 names, each at least 2 characters).",
+      addressShort: "Enter a complete address.",
       phoneInvalid: "Enter a valid phone number for the selected country code.",
       postal: "Postal code must be digits only.",
       postalLength: "The postal code length is not valid for the selected country.",
-      futureDate: "The date must be in the past.",
+      futureDate: "The date cannot be in the future.",
+      divorceBeforeMarriage: "The divorce date cannot be earlier than the marriage date.",
     },
   },
 
@@ -729,7 +732,7 @@ export const en = {
         {
           h: "6 Contact and disputes",
           p: [
-            "For enquiries or disputes, use in-app chat or email hello@inzerv.com, quoting the request reference and the reason for your concern. Do not send your password, a verification code or full card details. Your right to contact the Consumer Protection Agency or the competent regulator or court remains unaffected.",
+            "For enquiries or disputes, use the Contact Us page on the Inzerv website, email hello@inzerv.com, or use in-app chat, quoting the request reference and the reason for your concern. You can track your orders from your account. Do not send your password, a verification code or full card details. Your right to contact the Consumer Protection Agency or the competent regulator or court remains unaffected.",
           ],
         },
       ],
