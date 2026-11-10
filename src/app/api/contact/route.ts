@@ -100,7 +100,7 @@ function layout(body: string, dir: "ltr" | "rtl" = "ltr", lang = "en"): string {
 
         <!-- Header -->
         <tr><td style="background-color:#FFFFFF;padding:28px 40px;border-radius:16px 16px 0 0;border-left:1px solid #E8ECF0;border-right:1px solid #E8ECF0;border-top:1px solid #E8ECF0" align="center">
-          <img src="https://inzerv.com/logo_full_color.jpg" alt="Inzerv" width="160" style="display:block;max-width:160px;height:auto" />
+          <img src="https://inzerv.com/logo_email.png" alt="Inzerv — Designed with purpose. Built on trust. Made for you." width="220" style="display:block;max-width:220px;height:auto" />
         </td></tr>
 
         <!-- Body -->
