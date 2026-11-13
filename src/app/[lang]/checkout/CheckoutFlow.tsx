@@ -432,9 +432,19 @@ export function CheckoutFlow({
               <p className="mt-1 text-xl font-semibold leading-snug tracking-[-0.01em] sm:text-2xl">
                 {serviceName(service, locale)}
               </p>
-              <p className="mt-1 text-sm text-ink-muted">
-                {fmt(t.details.processing, { t: processingTime(service, locale) })}
-              </p>
+              <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1">
+                <p className="text-sm text-ink-muted">
+                  {fmt(t.details.processing, { t: processingTime(service, locale) })}
+                </p>
+                {!locked && (
+                  <Link
+                    href={`/${locale}/request`}
+                    className="text-sm font-medium text-turquoise underline decoration-turquoise/40 underline-offset-4 hover:decoration-turquoise"
+                  >
+                    {t.change}
+                  </Link>
+                )}
+              </div>
             </div>
             <p className="tabular shrink-0 text-xl font-semibold sm:text-2xl">{money(service.servicePrice, locale)}</p>
           </div>
@@ -475,32 +485,6 @@ export function CheckoutFlow({
             <h2 ref={headingRef} tabIndex={-1} className="text-3xl font-semibold outline-none">
               {t.steps.details}
             </h2>
-
-            <Field id="d-service" label={t.details.service} error={errors.service} required>
-              <Select
-                id="d-service"
-                value={serviceType}
-                options={services.map((s) => ({
-                  value: s.type,
-                  label: `${serviceName(s, locale)}, ${money(s.servicePrice, locale)}`,
-                }))}
-                onChange={(v) => {
-                  setServiceType(v);
-                  setValues({});
-                  setFiles({});
-                  setFileErrors({});
-                  setFieldPhoneCountries({});
-                  setRequestFor("myself");
-                  setCopies(1);
-                  setErrors({});
-                }}
-                aria-invalid={!!errors.service}
-                aria-describedby={describedBy("d-service", !!errors.service, false)}
-              />
-              <p className="mt-2 text-sm text-ink-muted">
-                {fmt(t.details.processing, { t: processingTime(service, locale) })}
-              </p>
-            </Field>
 
             <fieldset>
               <legend className="mb-2 text-sm font-medium">{t.details.requestFor}</legend>
