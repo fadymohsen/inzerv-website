@@ -130,7 +130,7 @@ export function CheckoutFlow({
   const destination = destinations.find((d) => d.id === delivery.destinationId);
 
   function setDestination(destinationId: string) {
-    setDelivery((d) => ({ ...d, destinationId, governorate: "", city: "", postal: "" }));
+    setDelivery((d) => ({ ...d, destinationId, governorate: "", city: "", address: "" }));
     const next = destinations.find((d) => d.id === destinationId);
     const normalized = next && normalizePhoneCountry(next.countryCode);
     if (normalized) setRecipientPhoneCountry(normalized);
@@ -240,15 +240,6 @@ export function CheckoutFlow({
       if (!delivery.governorate.trim()) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
       else if (delivery.address.trim().length < 5) next.address = t.errors.addressShort;
-      if (delivery.postal.trim()) {
-        const p = delivery.postal.trim();
-        if (!/^\d+$/.test(p)) next.postal = t.errors.postal;
-        else if (destination?.countryCode === "EG" && p.length !== 5) next.postal = t.errors.postalLength;
-        else if (destination?.countryCode === "SA" && p.length !== 5) next.postal = t.errors.postalLength;
-        else if (destination?.countryCode === "AE" && p.length !== 0 && !/^\d{5,6}$/.test(p)) next.postal = t.errors.postalLength;
-        else if (destination?.countryCode === "QA" && p.length !== 0 && !/^\d{4,6}$/.test(p)) next.postal = t.errors.postalLength;
-        else if (destination?.countryCode === "KW" && p.length !== 5) next.postal = t.errors.postalLength;
-      }
     }
     if (key === "review" && !agree) next.agree = t.errors.agree;
     return fail(next);
@@ -328,7 +319,6 @@ export function CheckoutFlow({
           deliveryCity: delivery.city.trim(),
           deliveryAddress: delivery.address.trim(),
           deliveryGovernorate: delivery.governorate.trim() || undefined,
-          deliveryPostalCode: delivery.postal.trim() || undefined,
         });
         created.current = { id: res.id, ref: res.referenceNumber };
         setLocked(true);
@@ -828,19 +818,6 @@ export function CheckoutFlow({
               />
             </Field>
 
-            <Field id="v-postal" label={t.delivery.postal} error={errors.postal}>
-              <input
-                id="v-postal"
-                autoComplete="postal-code"
-                dir="ltr"
-                value={delivery.postal}
-                inputMode="numeric"
-                onChange={(e) => setDelivery({ ...delivery, postal: e.target.value.replace(/\D/g, "") })}
-                aria-invalid={!!errors.postal}
-                aria-describedby={describedBy("v-postal", !!errors.postal, false)}
-                className={`${inputClass} max-w-48 text-start`}
-              />
-            </Field>
           </div>
         )}
 
@@ -901,7 +878,6 @@ export function CheckoutFlow({
                   { label: t.delivery.governorate, value: delivery.governorate },
                   { label: t.delivery.city, value: delivery.city },
                   { label: t.delivery.address, value: delivery.address },
-                  { label: t.delivery.postal, value: delivery.postal },
                 ].filter((r) => r.value?.trim()).map((r) => (
                   <div key={r.label} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
                     <dt className="text-sm text-ink-muted">{r.label.replace(/ \(.*\)$/, "")}</dt>
