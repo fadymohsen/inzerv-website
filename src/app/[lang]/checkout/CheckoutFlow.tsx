@@ -219,8 +219,7 @@ export function CheckoutFlow({
           next[`f_${f.keyName}`] = t.errors.nationalId;
         else if (isNameField(f.keyName) && val) {
           // Allow 3-part names for "other party" / spouse fields (per spec page 7)
-          const minParts = isOtherPartyName(f.keyName) ? 3 : 4;
-          if (!isValidFullName(val, minParts)) next[`f_${f.keyName}`] = minParts === 3 ? t.errors.fullName3 : t.errors.fullName;
+          if (!isValidFullName(val, 2)) next[`f_${f.keyName}`] = t.errors.fullName;
         }
         else if (isPhoneField(f.keyName) && val && !isPhoneLengthValid(val, fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY))
           next[`f_${f.keyName}`] = t.errors.phoneInvalid;
@@ -250,7 +249,7 @@ export function CheckoutFlow({
     if (key === "delivery") {
       if (!delivery.destinationId) next.destinationId = t.errors.select;
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
-      else if (!isValidFullName(delivery.recipientName, 4)) next.recipientName = t.errors.fullName;
+      else if (!isValidFullName(delivery.recipientName, 2)) next.recipientName = t.errors.fullName;
       if (!delivery.recipientPhone.trim()) next.recipientPhone = t.errors.required;
       else if (!isPhoneLengthValid(delivery.recipientPhone, recipientPhoneCountry)) next.recipientPhone = t.errors.phoneInvalid;
       if (!delivery.city.trim()) next.city = t.errors.required;
