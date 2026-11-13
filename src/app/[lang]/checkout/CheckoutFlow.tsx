@@ -108,7 +108,6 @@ export function CheckoutFlow({
     city: "",
     governorate: "",
     address: "",
-    postal: "",
   });
   const [recipientPhoneCountry, setRecipientPhoneCountry] = useState<CountryCode>(DEFAULT_PHONE_COUNTRY);
 
