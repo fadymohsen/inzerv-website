@@ -91,6 +91,23 @@ export function CheckoutFlow({
   const [serviceType, setServiceType] = useState(
     services.find((s) => s.type === initialType)?.type ?? services[0]?.type ?? "",
   );
+
+  // Sync with URL when user returns from /request with a different service
+  useEffect(() => {
+    const fromUrl = search.get("service");
+    if (fromUrl && services.some((s) => s.type === fromUrl) && fromUrl !== serviceType && !locked) {
+      setServiceType(fromUrl);
+      setValues({});
+      setFiles({});
+      setFileErrors({});
+      setFieldPhoneCountries({});
+      setRequestFor("myself");
+      setCopies(1);
+      setErrors({});
+      setStep(0);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialType]);
   const [requestFor, setRequestFor] = useState<"myself" | "another_person">("myself");
   const [copies, setCopies] = useState(1);
   const [values, setValues] = useState<Record<string, string>>({});
