@@ -584,7 +584,7 @@ export function CheckoutFlow({
                   };
                   const set = (v: string) => setValues((prev) => ({ ...prev, [f.keyName]: v }));
                   return (
-                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr)} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : undefined}>
+                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "")} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : undefined}>
                       {isPhoneField(f.keyName) && f.fieldType !== "select" ? (
                         <PhoneField
                           id={id}
@@ -766,17 +766,6 @@ export function CheckoutFlow({
             </div>
 
             <div className="grid gap-6 sm:grid-cols-2">
-              <Field id="v-city" label={t.delivery.city} error={errors.city} required>
-                <input
-                  id="v-city"
-                  autoComplete="address-level2"
-                  value={delivery.city}
-                  onChange={(e) => setDelivery({ ...delivery, city: e.target.value })}
-                  aria-invalid={!!errors.city}
-                  aria-describedby={describedBy("v-city", !!errors.city, false)}
-                  className={inputClass}
-                />
-              </Field>
               <Field id="v-gov" label={t.delivery.governorate} error={errors.governorate} required>
                 {destination && getRegions(destination.countryCode).length > 0 ? (
                   <Select
@@ -803,6 +792,17 @@ export function CheckoutFlow({
                     className={inputClass}
                   />
                 )}
+              </Field>
+              <Field id="v-city" label={t.delivery.city} error={errors.city} required>
+                <input
+                  id="v-city"
+                  autoComplete="address-level2"
+                  value={delivery.city}
+                  onChange={(e) => setDelivery({ ...delivery, city: e.target.value })}
+                  aria-invalid={!!errors.city}
+                  aria-describedby={describedBy("v-city", !!errors.city, false)}
+                  className={inputClass}
+                />
               </Field>
             </div>
 
