@@ -760,7 +760,6 @@ export function CheckoutFlow({
                   onChange={(v) => setDelivery({ ...delivery, recipientPhone: v })}
                   invalid={!!errors.recipientPhone}
                   describedBy={describedBy("v-phone", !!errors.recipientPhone, false)}
-                  placeholder={t.delivery.phonePlaceholder}
                 />
               </Field>
             </div>

@@ -5,6 +5,12 @@ import { Select } from "./Select";
 import { maxNationalDigits, phoneCountryOptions, type CountryCode } from "@/lib/phone";
 import type { Locale } from "@/lib/i18n";
 
+/** Display dial code — shows "+2" for Egypt instead of the full "+20". */
+function displayDialCode(dialCode: string, code: CountryCode): string {
+  if (code === "EG") return "2";
+  return dialCode;
+}
+
 export function PhoneField({
   id,
   locale,
@@ -17,7 +23,6 @@ export function PhoneField({
   invalid,
   describedBy,
   autoComplete = "tel",
-  placeholder,
 }: {
   id: string;
   locale: Locale;
@@ -30,7 +35,6 @@ export function PhoneField({
   invalid: boolean;
   describedBy?: string;
   autoComplete?: string;
-  placeholder?: string;
 }) {
   const options = phoneCountryOptions(locale);
   const maxDigits = maxNationalDigits(country);
@@ -50,8 +54,8 @@ export function PhoneField({
           value={country}
           options={options.map((o) => ({
             value: o.code,
-            label: `${o.flag} +${o.dialCode} ${o.name}`,
-            shortLabel: `${o.flag} +${o.dialCode}`,
+            label: `${o.flag} +${displayDialCode(o.dialCode, o.code)} ${o.name}`,
+            shortLabel: `${o.flag} +${displayDialCode(o.dialCode, o.code)}`,
           }))}
           onChange={(v) => onCountryChange(v as CountryCode)}
           searchable
@@ -67,7 +71,7 @@ export function PhoneField({
         autoComplete={autoComplete}
         value={value}
         maxLength={maxDigits}
-        placeholder={placeholder}
+        placeholder={locale === "ar" ? `${maxDigits} أرقام` : `${maxDigits} digits`}
         onChange={(e) => handleChange(e.target.value)}
         aria-invalid={invalid}
         aria-describedby={describedBy}
