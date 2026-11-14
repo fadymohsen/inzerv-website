@@ -68,6 +68,15 @@ function isOtherOption(value: string) {
   return v === "other" || v === "أخرى" || v === "others";
 }
 
+/** Services where "for myself" doesn't apply — always "for another person". */
+const ALWAYS_ANOTHER = new Set(["death_certificate"]);
+
+/** Today's date as YYYY-MM-DD in local timezone. */
+function todayLocal() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function isWifeField(key: string) {
   return key.toLowerCase().includes("wife");
 }
@@ -143,7 +152,13 @@ export function CheckoutFlow({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialType]);
-  const [requestFor, setRequestFor] = useState<"myself" | "another_person">("myself");
+  const [requestFor, setRequestFor] = useState<"myself" | "another_person">(
+    ALWAYS_ANOTHER.has(services.find((s) => s.type === initialType)?.type ?? "") ? "another_person" : "myself",
+  );
+  // Force "another_person" when switching to a service that requires it
+  useEffect(() => {
+    if (ALWAYS_ANOTHER.has(serviceType)) setRequestFor("another_person");
+  }, [serviceType]);
   const [copies, setCopies] = useState(1);
   const [values, setValues] = useState<Record<string, string>>({});
   const [otherText, setOtherText] = useState<Record<string, string>>({});
@@ -595,7 +610,7 @@ export function CheckoutFlow({
               {t.steps.details}
             </h2>
 
-            <fieldset>
+            {!ALWAYS_ANOTHER.has(serviceType) && <fieldset>
               <legend className="mb-2 text-sm font-medium">{t.details.requestFor}</legend>
               <div className="grid gap-3 sm:grid-cols-2">
                 {(["myself", "another_person"] as const).map((v) => (
@@ -631,7 +646,7 @@ export function CheckoutFlow({
                   </label>
                 ))}
               </div>
-            </fieldset>
+            </fieldset>}
 
             <Field id="d-copies" label={t.details.copies} error={errors.copies} required>
               <div className="flex items-center gap-0 max-w-36">
@@ -677,7 +692,7 @@ export function CheckoutFlow({
                   };
                   const set = (v: string) => setValues((prev) => ({ ...prev, [f.keyName]: v }));
                   return (
-                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "")} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : (isNameField(f.keyName) && isForeignNameField(f.keyName)) ? t.details.foreignNameHint : undefined}>
+                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "")} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : (isNameField(f.keyName) && (isForeignNameField(f.keyName) || (serviceType === "overseas_foreign_marriage" && isOtherPartyField(f.keyName)))) ? t.details.foreignNameHint : undefined}>
                       {isPhoneField(f.keyName) && f.fieldType !== "select" ? (
                         <PhoneField
                           id={id}
@@ -725,7 +740,7 @@ export function CheckoutFlow({
                           type={f.fieldType === "date" ? "date" : f.fieldType === "number" ? "number" : "text"}
                           inputMode={f.fieldType === "number" || isNationalIdField(f.keyName) ? "numeric" : undefined}
                           maxLength={isNationalIdField(f.keyName) ? 14 : undefined}
-                          max={f.fieldType === "date" ? new Date().toISOString().slice(0, 10) : undefined}
+                          max={f.fieldType === "date" ? todayLocal() : undefined}
                           dir={isNationalIdField(f.keyName) ? "ltr" : undefined}
                           onChange={(e) => {
                             const v = isNationalIdField(f.keyName) ? e.target.value.replace(/\D/g, "").slice(0, 14) : e.target.value;
