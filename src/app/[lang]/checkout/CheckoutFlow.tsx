@@ -190,6 +190,25 @@ export function CheckoutFlow({
     [service, requestFor],
   );
 
+  // Auto-fill primary name fields from profile when "for myself"
+  const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
+  useEffect(() => {
+    if (requestFor !== "myself" || !fullName) return;
+    setValues((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      for (const f of visibleFields) {
+        if (isNameField(f.keyName) && !isOtherPartyName(f.keyName) && !next[f.keyName]) {
+          next[f.keyName] = fullName;
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+    // Also pre-fill recipient name in delivery if empty
+    setDelivery((d) => d.recipientName ? d : { ...d, recipientName: fullName });
+  }, [requestFor, fullName, visibleFields]);
+
   const serviceFee = (service?.servicePrice ?? 0) * copies;
   const deliveryFee = destination?.deliveryFee ?? 0;
   const total = serviceFee + deliveryFee;
