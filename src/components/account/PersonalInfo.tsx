@@ -13,9 +13,23 @@ import type { Dict } from "@/dictionaries/en";
 import { account, ApiError, type Profile } from "@/lib/api-client";
 import type { Locale } from "@/lib/i18n";
 import { DEFAULT_PHONE_COUNTRY, isPhoneLengthValid, splitPhone, toE164, type CountryCode } from "@/lib/phone";
+import { Select } from "@/components/Select";
 import { AccountGate } from "./AccountGate";
 import { Avatar } from "./Avatar";
 import { useProfile } from "./useAccount";
+
+const COUNTRY_CODES = [
+  "EG","SA","AE","QA","KW","BH","OM","JO","LB","IQ","SY","PS","LY","TN","DZ","MA","SD",
+  "US","GB","CA","AU","DE","FR","IT","ES","NL","SE","NO","DK","FI","AT","CH","BE","PT","IE","PL","CZ","GR","TR",
+  "IN","PK","BD","CN","JP","KR","MY","SG","TH","PH","ID","VN","BR","MX","AR","CO","ZA","NG","KE","GH",
+];
+
+function countryOptions(locale: string) {
+  const names = new Intl.DisplayNames([locale], { type: "region" });
+  return COUNTRY_CODES
+    .map((code) => ({ value: code, label: names.of(code) ?? code }))
+    .sort((a, b) => a.label.localeCompare(b.label, locale));
+}
 
 export function PersonalInfo({ locale, t }: { locale: Locale; t: Dict }) {
   return (
@@ -209,9 +223,20 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
                 </Field>
                 <Field id="pi-country" label={i.country}>
                   {draft ? (
-                    <input id="pi-country" value={draft.countryOfResidence} onChange={(e) => set("countryOfResidence")(e.target.value)} autoComplete="country-name" className={inputClass} />
+                    <Select
+                      id="pi-country"
+                      value={draft.countryOfResidence}
+                      placeholder={i.country}
+                      options={countryOptions(locale)}
+                      onChange={set("countryOfResidence")}
+                      searchable
+                    />
                   ) : (
-                    <p className={readValue}>{profile.countryOfResidence || "—"}</p>
+                    <p className={readValue}>
+                      {profile.countryOfResidence
+                        ? (new Intl.DisplayNames([locale], { type: "region" }).of(profile.countryOfResidence) ?? profile.countryOfResidence)
+                        : "—"}
+                    </p>
                   )}
                 </Field>
 

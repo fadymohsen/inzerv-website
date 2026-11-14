@@ -123,6 +123,8 @@ export const orders = {
   pay: (requestId: string, paymentMethod: "card" | "wallet", lang: "en" | "ar") =>
     post<PaymentView>("/api/backend/payments", { requestId, paymentMethod, lang }),
 
+  cancel: (requestId: string) => post<{ ok: true }>(`/api/backend/requests/${requestId}/cancel`, {}),
+
   /** Files go straight to the backend (they can exceed the serverless body limit). */
   upload: async (requestId: string, key: string, file: File) => {
     const { token } = await call<{ token: string }>("/api/auth/token");

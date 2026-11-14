@@ -133,15 +133,24 @@ export function LegalPage({
             {/* Contact */}
             <div className="mt-6 rounded-card bg-bg-light p-7 sm:p-10">
               <p className="text-xl font-semibold">{t.questions}</p>
-              <a
-                href={`mailto:${SUPPORT_EMAIL}`}
-                dir="ltr"
-                className="group/btn mt-3 inline-flex min-h-11 items-center gap-3 text-lg font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
-              >
-                <MailIcon size={22} />
-                {SUPPORT_EMAIL}
-                <ArrowIcon size={18} />
-              </a>
+              <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <a
+                  href={`mailto:${SUPPORT_EMAIL}`}
+                  dir="ltr"
+                  className="group/btn inline-flex min-h-11 items-center gap-3 text-lg font-medium text-navy underline decoration-turquoise decoration-2 underline-offset-8"
+                >
+                  <MailIcon size={22} />
+                  {SUPPORT_EMAIL}
+                  <ArrowIcon size={18} />
+                </a>
+                <Link
+                  href={`/${locale}/contact`}
+                  className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-turquoise underline decoration-turquoise/40 decoration-2 underline-offset-4 hover:decoration-turquoise"
+                >
+                  {t.contactPage}
+                  <ArrowIcon size={16} />
+                </Link>
+              </div>
               <div className="mt-8 border-t border-line pt-5">
                 <a href="#" className="inline-flex min-h-11 items-center text-sm font-medium text-ink-muted hover:text-navy">
                   ↑ {t.top}

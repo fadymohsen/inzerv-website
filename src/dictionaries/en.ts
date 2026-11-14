@@ -412,6 +412,21 @@ export const en = {
         deliveryFee: "Delivery fee",
         total: "Total",
         actionRequired: "Action needed",
+        actionButton: "Respond to this request",
+        cancelButton: "Cancel request",
+        cancelConfirm: "Are you sure you want to cancel this request?",
+        cancelConfirmText: "This action cannot be undone.",
+        cancelYes: "Yes, cancel",
+        cancelNo: "Keep request",
+        cancelling: "Cancelling…",
+        cancelFailed: "Cancellation failed. Please try again.",
+        refund: "Refund",
+        refundStatus: "Refund status",
+        refundAmount: "Refund amount",
+        refundMethod: "Method",
+        refundPending: "Pending",
+        refundProcessed: "Processed",
+        refundTimeline: "Expected within 5–14 business days",
         collapse: "Hide details",
       },
     },
@@ -617,10 +632,11 @@ export const en = {
     toc: "On this page",
     top: "Back to top",
     questions: "Questions about this page? Write to",
+    contactPage: "Contact Us",
     terms: {
       title: "Terms and Conditions",
       intro:
-        "These terms govern use of the Inzerv website and app and the ordering of services through them. Inzerv refers to the platform operated by INSERVE Group for Digital Marketing and Brokerage. Please read these terms, the Cancellation and Refund Policy and the Privacy Policy before confirming your request. A copy of the terms and details applicable to your request is made available for your reference.",
+        "These terms govern use of the Inzerv website and app and the ordering of services through them. Inzerv refers to the platform operated by Inzerv Group for Digital Marketing and Brokerage. Please read these terms, the Cancellation and Refund Policy and the Privacy Policy before confirming your request. A copy of the terms and details applicable to your request is made available for your reference.",
       sections: [
         {
           h: "1 Our services and Inzerv's responsibility",
@@ -675,7 +691,7 @@ export const en = {
           h: "7 Cancellation and complaints",
           p: [
             "The published Cancellation and Refund Policy supplied with the request applies. Voluntary cancellation of document services ends before In Progress; limousine cancellation depends on whether the vehicle has departed to carry out the booking. No term excludes responsibility for errors by Inzerv or its partners or removes a mandatory right to a remedy, refund or compensation.",
-            "Inzerv handles enquiries and complaints through its official channels. Support is available in Arabic and English around the clock through chat and the published hotline once activated. An automated assistant may respond first, with access to a staff member or a direct call. Do not use chat to send passwords or secret verification codes.",
+            "Inzerv handles enquiries and complaints through its official channels. Support is available in Arabic and English around the clock through in-app chat, the Contact Us page on the website (inzerv.co/contact) and the published hotline once activated. An automated assistant may respond first, with access to a staff member or a direct call. Do not use chat to send passwords or secret verification codes.",
           ],
         },
         {
@@ -743,7 +759,7 @@ export const en = {
     privacy: {
       title: "Privacy Policy",
       intro:
-        "This policy explains how Inzerv, operated by INSERVE Group for Digital Marketing and Brokerage, handles information about website and app users, document service applicants, document holders and passengers. Inzerv is responsible for the purposes and means of the personal data processing it manages for the platform. Accepting the terms does not constitute unrestricted consent to every use of your information.",
+        "This policy explains how Inzerv, operated by Inzerv Group for Digital Marketing and Brokerage, handles information about website and app users, document service applicants, document holders and passengers. Inzerv is responsible for the purposes and means of the personal data processing it manages for the platform. Accepting the terms does not constitute unrestricted consent to every use of your information.",
       sections: [
         {
           h: "1 Information we need",

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { buttonClass } from "@/components/Button";
 import { ChevronDownIcon, DocumentIcon } from "@/components/Icons";
+import { Modal } from "@/components/Modal";
 import type { Dict } from "@/dictionaries/en";
 import { orders, type RequestDetail, type StatusHistoryEntry, type UserRequest } from "@/lib/api-client";
 import type { Locale } from "@/lib/i18n";
@@ -127,7 +128,7 @@ export function RequestsList({ locale, t }: { locale: Locale; t: Dict["account"]
       ) : (
         <ul className="mt-4 flex flex-col gap-3">
           {visible.map((r) => (
-            <RequestCard key={r.id} r={r} locale={locale} t={t} />
+            <RequestCard key={r.id} r={r} locale={locale} t={t} onReload={load} />
           ))}
         </ul>
       )}
@@ -137,7 +138,7 @@ export function RequestsList({ locale, t }: { locale: Locale; t: Dict["account"]
 
 /* ── Card ──────────────────────────────────────────────────── */
 
-function RequestCard({ r, locale, t }: { r: UserRequest; locale: Locale; t: Dict["account"]["requests"] }) {
+function RequestCard({ r, locale, t, onReload }: { r: UserRequest; locale: Locale; t: Dict["account"]["requests"]; onReload: () => void }) {
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(false);
@@ -192,7 +193,7 @@ function RequestCard({ r, locale, t }: { r: UserRequest; locale: Locale; t: Dict
 
       {open && detail && (
         <div className="border-t border-line bg-bg-light px-4 pb-5 pt-4 sm:px-5">
-          <DetailPanel detail={detail} locale={locale} t={t} />
+          <DetailPanel detail={detail} locale={locale} t={t} onStatusChange={onReload} />
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -208,11 +209,34 @@ function RequestCard({ r, locale, t }: { r: UserRequest; locale: Locale; t: Dict
 
 /* ── Detail panel ──────────────────────────────────────────── */
 
-function DetailPanel({ detail, locale, t }: { detail: RequestDetail; locale: Locale; t: Dict["account"]["requests"] }) {
+const CANCELLABLE = new Set(["received", "under_review", "action_required"]);
+
+function DetailPanel({ detail, locale, t, onStatusChange }: { detail: RequestDetail; locale: Locale; t: Dict["account"]["requests"]; onStatusChange?: () => void }) {
   const d = t.detail;
   const history = [...(detail.statusHistory ?? [])].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
+
+  const [showCancel, setShowCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+
+  async function handleCancel() {
+    setCancelling(true);
+    setCancelError("");
+    try {
+      await orders.cancel(detail.id);
+      setShowCancel(false);
+      onStatusChange?.();
+    } catch {
+      setCancelError(d.cancelFailed);
+    }
+    setCancelling(false);
+  }
+
+  const canCancel = CANCELLABLE.has(detail.status);
+  const isCancelled = detail.status === "cancelled";
+  const totalAmount = Number(detail.totalAmount);
 
   return (
     <div className="flex flex-col gap-5">
@@ -221,6 +245,12 @@ function DetailPanel({ detail, locale, t }: { detail: RequestDetail; locale: Loc
         <div className="rounded-btn border border-orange-300 bg-orange-50 px-4 py-3">
           <p className="text-xs font-semibold text-orange-800">{d.actionRequired}</p>
           <p className="mt-1 text-sm text-orange-700">{detail.actionRequiredMessage}</p>
+          <Link
+            href={`/${locale}/contact?topic=${encodeURIComponent(locale === "ar" ? "بخصوص طلب قائم" : "Regarding an Existing Order")}&ref=${encodeURIComponent(detail.referenceNumber)}`}
+            className={buttonClass("primary", "mt-3 text-sm")}
+          >
+            {d.actionButton}
+          </Link>
         </div>
       )}
 
@@ -249,15 +279,84 @@ function DetailPanel({ detail, locale, t }: { detail: RequestDetail; locale: Loc
           <PriceRow label={d.serviceFee} amount={Number(detail.servicePrice)} locale={locale} />
           <PriceRow label={d.deliveryFee} amount={Number(detail.deliveryFee)} locale={locale} />
           <div className="mt-2 border-t border-line pt-2">
-            <PriceRow label={d.total} amount={Number(detail.totalAmount)} locale={locale} bold />
+            <PriceRow label={d.total} amount={totalAmount} locale={locale} bold />
           </div>
         </div>
       </div>
+
+      {/* Refund info for cancelled requests */}
+      {isCancelled && totalAmount > 0 && (
+        <div className="rounded-btn border border-line bg-white p-4">
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{d.refund}</h4>
+          <InfoRow label={d.refundAmount} value={`${totalAmount.toLocaleString("en-EG")} ${locale === "ar" ? "ج.م" : "EGP"}`} />
+          <InfoRow label={d.refundMethod} value={locale === "ar" ? "نفس وسيلة الدفع" : "Original payment method"} />
+          <InfoRow label={d.refundStatus} value={d.refundPending} />
+          <p className="mt-1 text-xs text-ink-muted">{d.refundTimeline}</p>
+        </div>
+      )}
+
+      {/* Cancel button */}
+      {canCancel && (
+        <button
+          type="button"
+          onClick={() => setShowCancel(true)}
+          className="self-start text-sm font-medium text-error underline underline-offset-4 hover:no-underline"
+        >
+          {d.cancelButton}
+        </button>
+      )}
+
+      <Modal open={showCancel} onClose={() => !cancelling && setShowCancel(false)} label={d.cancelConfirm}>
+        <h2 className="text-xl font-semibold">{d.cancelConfirm}</h2>
+        <p className="mt-3 text-ink-muted">{d.cancelConfirmText}</p>
+        {totalAmount > 0 && (
+          <p className="mt-3 text-sm text-navy">
+            {d.refundAmount}: <strong>{totalAmount.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</strong>
+          </p>
+        )}
+        {cancelError && <p className="mt-3 text-sm text-error">{cancelError}</p>}
+        <div className="mt-6 flex flex-col gap-3">
+          <button type="button" disabled={cancelling} onClick={handleCancel} className={buttonClass("primary", "bg-error hover:bg-error/90")}>
+            {cancelling ? d.cancelling : d.cancelYes}
+          </button>
+          <button type="button" disabled={cancelling} onClick={() => setShowCancel(false)} className="min-h-12 rounded-btn px-5 font-medium text-navy">
+            {d.cancelNo}
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
 
 /* ── Timeline ──────────────────────────────────────────────── */
+
+/** Client-side Arabic translations for common automated messages that arrive in English. */
+const AUTO_NOTE_AR: Record<string, string> = {
+  "Payment confirmed": "تم تأكيد الدفع",
+  "Payment received": "تم استلام الدفع",
+  "Your request has been received": "استلمنا طلبك",
+  "Request received": "استلمنا طلبك",
+  "Under review by our team": "قيد المراجعة من فريقنا",
+  "Your request is under review": "طلبك قيد المراجعة",
+  "Action required": "مطلوب إجراء",
+  "Please re-upload the document": "يرجى إعادة رفع المستند",
+  "Document re-upload required": "مطلوب إعادة رفع المستند",
+  "Your request is in progress": "طلبك قيد التنفيذ",
+  "Work has started on your request": "بدأ العمل على طلبك",
+  "Your request is under delivery": "طلبك قيد التوصيل",
+  "Your request has been completed": "تم إكمال طلبك",
+  "Your request has been cancelled": "تم إلغاء طلبك",
+  "Cancellation requested": "تم طلب الإلغاء",
+  "Cancelled by customer": "ملغي بواسطة العميل",
+  "Cancelled by admin": "ملغي بواسطة الإدارة",
+};
+
+function localizeNote(note: string | null, noteAr: string | null, locale: Locale): string | null {
+  if (locale !== "ar") return note;
+  if (noteAr) return noteAr;
+  if (note && AUTO_NOTE_AR[note]) return AUTO_NOTE_AR[note];
+  return note;
+}
 
 function Timeline({ history, locale, statusLabels }: { history: StatusHistoryEntry[]; locale: Locale; statusLabels: Record<string, string> }) {
   if (history.length === 0) return null;
@@ -268,7 +367,7 @@ function Timeline({ history, locale, statusLabels }: { history: StatusHistoryEnt
         const isLast = i === history.length - 1;
         const dotColor = DOT_COLOR[entry.status] ?? "bg-gray-400";
         const label = statusLabels[entry.status] ?? entry.status;
-        const note = locale === "ar" ? (entry.noteAr || entry.note) : entry.note;
+        const note = localizeNote(entry.note, entry.noteAr, locale);
         const time = new Date(entry.createdAt).toLocaleDateString(locale === "ar" ? "ar-u-nu-latn" : "en-GB", {
           day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
         });

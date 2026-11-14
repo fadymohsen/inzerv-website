@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { PasswordInput } from "@/components/auth/PasswordInput";
 import { buttonClass } from "@/components/Button";
 import { Field, describedBy } from "@/components/forms";
@@ -29,8 +29,15 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
   const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Clear success notice on fresh mount (navigating back to the page)
-  useEffect(() => setNotice(null), []);
+  // Clear success notice whenever the page becomes visible again (tab switch, navigation)
+  const clearNotice = useCallback(() => {
+    if (document.visibilityState === "visible") setNotice(null);
+  }, []);
+  useEffect(() => {
+    setNotice(null);
+    document.addEventListener("visibilitychange", clearNotice);
+    return () => document.removeEventListener("visibilitychange", clearNotice);
+  }, [clearNotice]);
   const set = (k: keyof typeof f) => (v: string) => setF((s) => ({ ...s, [k]: v }));
 
   const checks = [f.next.length >= 8, /[A-Z]/.test(f.next), /\d/.test(f.next), /[^A-Za-z0-9]/.test(f.next)];
