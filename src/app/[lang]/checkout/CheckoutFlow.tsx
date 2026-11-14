@@ -50,16 +50,22 @@ function isOtherPartyField(key: string) {
     || k.includes("wife") || k.includes("second");
 }
 
-/** Validates a full name: at least `minParts` words, each at least 2 characters. */
+/** Validates a full name: at least `minParts` words, each at least 2 characters.
+ *  Hyphenated parts (e.g. "Jean-Pierre") count as one part. */
 function isValidFullName(value: string, minParts = 4): boolean {
   const parts = value.trim().split(/\s+/).filter(Boolean);
   if (parts.length < minParts) return false;
-  return parts.every((p) => p.length >= 2);
+  return parts.every((p) => p.replace(/[-'ʼ'']/g, "").length >= 2);
 }
 
 function isForeignNameField(key: string) {
   const k = key.toLowerCase();
   return k.includes("foreign") || k.includes("english") || k.includes("_en");
+}
+
+function isOtherOption(value: string) {
+  const v = value.toLowerCase().trim();
+  return v === "other" || v === "أخرى" || v === "others";
 }
 
 function isWifeField(key: string) {
@@ -140,6 +146,7 @@ export function CheckoutFlow({
   const [requestFor, setRequestFor] = useState<"myself" | "another_person">("myself");
   const [copies, setCopies] = useState(1);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [otherText, setOtherText] = useState<Record<string, string>>({});
   const [fieldPhoneCountries, setFieldPhoneCountries] = useState<Record<string, CountryCode>>({});
 
   // documents
@@ -297,6 +304,7 @@ export function CheckoutFlow({
       for (const f of visibleFields) {
         const val = values[f.keyName]?.trim() ?? "";
         if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
+        else if (f.fieldType === "select" && isOtherOption(val) && !(otherText[f.keyName]?.trim())) next[`f_${f.keyName}`] = t.errors.required;
         else if (isNationalIdField(f.keyName) && val && !isValidNationalId(val))
           next[`f_${f.keyName}`] = t.errors.nationalId;
         else if (isNameField(f.keyName) && val) {
@@ -406,12 +414,13 @@ export function CheckoutFlow({
           requestFor,
           fieldValues: visibleFields
             .filter((f) => values[f.keyName]?.trim())
-            .map((f) => ({
-              fieldKey: f.keyName,
-              value: isPhoneField(f.keyName)
-                ? (toE164(values[f.keyName], fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY) ?? values[f.keyName].trim())
-                : values[f.keyName].trim(),
-            })),
+            .map((f) => {
+              const raw = values[f.keyName].trim();
+              let value = raw;
+              if (isPhoneField(f.keyName)) value = toE164(raw, fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY) ?? raw;
+              else if (f.fieldType === "select" && isOtherOption(raw) && otherText[f.keyName]?.trim()) value = otherText[f.keyName].trim();
+              return { fieldKey: f.keyName, value };
+            }),
           numberOfCopies: copies,
           deliveryDestinationId: delivery.destinationId,
           recipientName: delivery.recipientName.trim(),
@@ -668,7 +677,7 @@ export function CheckoutFlow({
                   };
                   const set = (v: string) => setValues((prev) => ({ ...prev, [f.keyName]: v }));
                   return (
-                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "")} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : undefined}>
+                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "")} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : (isNameField(f.keyName) && isForeignNameField(f.keyName)) ? t.details.foreignNameHint : undefined}>
                       {isPhoneField(f.keyName) && f.fieldType !== "select" ? (
                         <PhoneField
                           id={id}
@@ -683,18 +692,33 @@ export function CheckoutFlow({
                           describedBy={describedBy(id, !!err, false)}
                         />
                       ) : f.fieldType === "select" ? (
-                        <Select
-                          id={id}
-                          value={values[f.keyName] ?? ""}
-                          placeholder={t.details.choose}
-                          options={(f.options ?? []).map((o) => ({
-                            value: o.value,
-                            label: pick(o.labelEn, o.labelAr),
-                          }))}
-                          onChange={set}
-                          aria-invalid={!!err}
-                          aria-describedby={describedBy(id, !!err, false)}
-                        />
+                        <>
+                          <Select
+                            id={id}
+                            value={values[f.keyName] ?? ""}
+                            placeholder={t.details.choose}
+                            options={(f.options ?? []).map((o) => ({
+                              value: o.value,
+                              label: pick(o.labelEn, o.labelAr),
+                            }))}
+                            onChange={(v) => {
+                              set(v);
+                              if (!isOtherOption(v)) setOtherText((prev) => { const n = { ...prev }; delete n[f.keyName]; return n; });
+                            }}
+                            aria-invalid={!!err}
+                            aria-describedby={describedBy(id, !!err, false)}
+                          />
+                          {isOtherOption(values[f.keyName] ?? "") && (
+                            <input
+                              id={`${id}-other`}
+                              value={otherText[f.keyName] ?? ""}
+                              placeholder={t.details.otherSpecify}
+                              onChange={(e) => setOtherText((prev) => ({ ...prev, [f.keyName]: e.target.value }))}
+                              aria-invalid={!!err}
+                              className={`${inputClass} mt-2`}
+                            />
+                          )}
+                        </>
                       ) : (
                         <input
                           {...common}
@@ -957,10 +981,12 @@ export function CheckoutFlow({
                   const raw = values[f.keyName];
                   const shown =
                     f.fieldType === "select"
-                      ? pick(
-                          f.options?.find((o) => o.value === raw)?.labelEn ?? raw,
-                          f.options?.find((o) => o.value === raw)?.labelAr ?? raw,
-                        )
+                      ? (isOtherOption(raw) && otherText[f.keyName]?.trim()
+                          ? otherText[f.keyName].trim()
+                          : pick(
+                              f.options?.find((o) => o.value === raw)?.labelEn ?? raw,
+                              f.options?.find((o) => o.value === raw)?.labelAr ?? raw,
+                            ))
                       : raw;
                   return (
                     <div key={f.id} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">

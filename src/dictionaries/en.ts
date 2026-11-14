@@ -520,6 +520,8 @@ export const en = {
       copies: "Number of copies",
       holder: "Document holder",
       choose: "Choose",
+      otherSpecify: "Please specify",
+      foreignNameHint: "Write the full name exactly as it appears on the passport.",
       processing: "Processing: {t}",
     },
     documents: {

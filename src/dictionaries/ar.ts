@@ -519,6 +519,8 @@ export const ar: Dict = {
       copies: "عدد النسخ",
       holder: "صاحب الوثيقة",
       choose: "اختر",
+      otherSpecify: "يرجى التحديد",
+      foreignNameHint: "يُكتب الاسم بالكامل كما هو بجواز السفر.",
       processing: "مدة التنفيذ: {t}",
     },
     documents: {
