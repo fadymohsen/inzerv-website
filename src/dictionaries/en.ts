@@ -615,6 +615,7 @@ export const en = {
       numericHint: "Use English numerals (0123456789).",
       fullName: "Enter at least first and last name (each at least 2 characters).",
       fullName3: "Enter the full name (at least 3 names, each at least 2 characters).",
+      fullName4: "Enter the full name (at least 4 names, each at least 2 characters).",
       addressShort: "Enter a complete address.",
       phoneInvalid: "Enter a valid phone number for the selected country code.",
       postal: "Postal code must be digits only.",

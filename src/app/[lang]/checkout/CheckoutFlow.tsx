@@ -57,6 +57,32 @@ function isValidFullName(value: string, minParts = 4): boolean {
   return parts.every((p) => p.length >= 2);
 }
 
+function isForeignNameField(key: string) {
+  const k = key.toLowerCase();
+  return k.includes("foreign") || k.includes("english") || k.includes("_en");
+}
+
+function isWifeField(key: string) {
+  return key.toLowerCase().includes("wife");
+}
+
+/** Minimum name parts required for a field based on service type and field key. */
+function minNamesFor(serviceType: string, fieldKey: string): number {
+  // overseas_foreign_marriage: foreign name = 2, Egyptian name = 4
+  if (serviceType === "overseas_foreign_marriage" && isForeignNameField(fieldKey)) return 2;
+  // divorce_certificate: wife name = 3
+  if (serviceType === "divorce_certificate" && isWifeField(fieldKey)) return 3;
+  // Default: 4 names
+  return 4;
+}
+
+/** Error message key for the given minNames requirement. */
+function nameErrorKey(minNames: number): "fullName" | "fullName3" | "fullName4" {
+  if (minNames <= 2) return "fullName";
+  if (minNames === 3) return "fullName3";
+  return "fullName4";
+}
+
 const STEPS = ["details", "documents", "delivery", "review"] as const;
 type StepKey = (typeof STEPS)[number];
 type Errors = Record<string, string>;
@@ -274,8 +300,8 @@ export function CheckoutFlow({
         else if (isNationalIdField(f.keyName) && val && !isValidNationalId(val))
           next[`f_${f.keyName}`] = t.errors.nationalId;
         else if (isNameField(f.keyName) && val) {
-          // Allow 3-part names for "other party" / spouse fields (per spec page 7)
-          if (!isValidFullName(val, 2)) next[`f_${f.keyName}`] = t.errors.fullName;
+          const min = minNamesFor(serviceType, f.keyName);
+          if (!isValidFullName(val, min)) next[`f_${f.keyName}`] = t.errors[nameErrorKey(min)];
         }
         else if (isPhoneField(f.keyName) && val && !isPhoneLengthValid(val, fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY))
           next[`f_${f.keyName}`] = t.errors.phoneInvalid;
