@@ -21,8 +21,10 @@ import {
   type CountryCode,
 } from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
+import { useProfile } from "@/components/account/useAccount";
 import type { DeliveryDestination, GovService } from "@/lib/types";
 import { getRegions, getCities } from "@/lib/governorates";
+import { splitPhone } from "@/lib/phone";
 
 const NATIONAL_ID_RE = /^[23]\d{13}$/;
 const NATIONAL_ID_KEYS = ["national_id", "nationalid", "nid"];
@@ -42,9 +44,10 @@ function isPhoneField(key: string) {
   return k.includes("phone") || k.includes("mobile") || k === "tel" || k.includes("_tel");
 }
 
-function isOtherPartyName(key: string) {
+function isOtherPartyField(key: string) {
   const k = key.toLowerCase();
-  return k.includes("other") || k.includes("spouse") || k.includes("party");
+  return k.includes("other") || k.includes("spouse") || k.includes("party")
+    || k.includes("wife") || k.includes("second");
 }
 
 /** Validates a full name: at least `minParts` words, each at least 2 characters. */
@@ -190,24 +193,55 @@ export function CheckoutFlow({
     [service, requestFor],
   );
 
-  // Auto-fill primary name fields from profile when "for myself"
+  // Load full profile for auto-fill (phone, etc.)
+  const { profile } = useProfile(status === "authenticated");
   const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
+  const profilePhone = profile ? splitPhone(profile.phone, DEFAULT_PHONE_COUNTRY) : null;
+
+  // Auto-fill applicant fields from profile when "for myself"
   useEffect(() => {
-    if (requestFor !== "myself" || !fullName) return;
+    if (requestFor !== "myself") return;
     setValues((prev) => {
       const next = { ...prev };
       let changed = false;
       for (const f of visibleFields) {
-        if (isNameField(f.keyName) && !isOtherPartyName(f.keyName) && !next[f.keyName]) {
+        if (next[f.keyName]) continue; // don't overwrite user input
+        const isOther = isOtherPartyField(f.keyName);
+        if (isNameField(f.keyName) && !isOther && fullName) {
           next[f.keyName] = fullName;
+          changed = true;
+        } else if (isPhoneField(f.keyName) && !isOther && profilePhone) {
+          next[f.keyName] = profilePhone.national;
           changed = true;
         }
       }
       return changed ? next : prev;
     });
-    // Also pre-fill recipient name in delivery if empty
-    setDelivery((d) => d.recipientName ? d : { ...d, recipientName: fullName });
-  }, [requestFor, fullName, visibleFields]);
+    // Set phone country for applicant phone fields
+    if (profilePhone) {
+      setFieldPhoneCountries((prev) => {
+        const next = { ...prev };
+        let changed = false;
+        for (const f of visibleFields) {
+          if (isPhoneField(f.keyName) && !isOtherPartyField(f.keyName) && !next[f.keyName]) {
+            next[f.keyName] = profilePhone.country;
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }
+    // Pre-fill delivery recipient
+    setDelivery((d) => {
+      const updates: Partial<typeof d> = {};
+      if (!d.recipientName && fullName) updates.recipientName = fullName;
+      if (!d.recipientPhone && profilePhone) updates.recipientPhone = profilePhone.national;
+      return Object.keys(updates).length ? { ...d, ...updates } : d;
+    });
+    if (profilePhone) {
+      setRecipientPhoneCountry((prev) => prev === DEFAULT_PHONE_COUNTRY ? profilePhone.country : prev);
+    }
+  }, [requestFor, fullName, profilePhone?.national, profilePhone?.country, visibleFields]);
 
   const serviceFee = (service?.servicePrice ?? 0) * copies;
   const deliveryFee = destination?.deliveryFee ?? 0;
