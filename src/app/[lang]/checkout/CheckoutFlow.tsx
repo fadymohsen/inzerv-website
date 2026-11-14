@@ -22,7 +22,7 @@ import {
 } from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
 import type { DeliveryDestination, GovService } from "@/lib/types";
-import { getRegions } from "@/lib/governorates";
+import { getRegions, getCities } from "@/lib/governorates";
 
 const NATIONAL_ID_RE = /^[23]\d{13}$/;
 const NATIONAL_ID_KEYS = ["national_id", "nationalid", "nid"];
@@ -127,6 +127,7 @@ export function CheckoutFlow({
     address: "",
   });
   const [recipientPhoneCountry, setRecipientPhoneCountry] = useState<CountryCode>(DEFAULT_PHONE_COUNTRY);
+  const [customCity, setCustomCity] = useState("");
 
   // review
   const [method, setMethod] = useState<"card" | "wallet">("card");
@@ -148,6 +149,7 @@ export function CheckoutFlow({
 
   function setDestination(destinationId: string) {
     setDelivery((d) => ({ ...d, destinationId, governorate: "", city: "", address: "" }));
+    setCustomCity("");
     const next = destinations.find((d) => d.id === destinationId);
     const normalized = next && normalizePhoneCountry(next.countryCode);
     if (normalized) setRecipientPhoneCountry(normalized);
@@ -155,6 +157,7 @@ export function CheckoutFlow({
 
   function setGovernorate(governorate: string) {
     setDelivery((d) => ({ ...d, governorate, city: "" }));
+    setCustomCity("");
   }
 
   const signInUrl = `/${locale}/signin?next=${encodeURIComponent(`${pathname}${search.toString() ? `?${search.toString()}` : ""}`)}`;
@@ -252,7 +255,9 @@ export function CheckoutFlow({
       else if (!isValidFullName(delivery.recipientName, 2)) next.recipientName = t.errors.fullName;
       if (!delivery.recipientPhone.trim()) next.recipientPhone = t.errors.required;
       else if (!isPhoneLengthValid(delivery.recipientPhone, recipientPhoneCountry)) next.recipientPhone = t.errors.phoneInvalid;
-      if (!delivery.city.trim()) next.city = t.errors.required;
+      if (delivery.city === "__other__") {
+        if (!customCity.trim()) next.city = t.errors.required;
+      } else if (!delivery.city.trim()) next.city = t.errors.required;
       if (!delivery.governorate.trim()) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
       else if (delivery.address.trim().length < 5) next.address = t.errors.addressShort;
@@ -332,7 +337,7 @@ export function CheckoutFlow({
           deliveryDestinationId: delivery.destinationId,
           recipientName: delivery.recipientName.trim(),
           recipientPhone: toE164(delivery.recipientPhone, recipientPhoneCountry) ?? delivery.recipientPhone.trim(),
-          deliveryCity: delivery.city.trim(),
+          deliveryCity: (delivery.city === "__other__" ? customCity : delivery.city).trim(),
           deliveryAddress: delivery.address.trim(),
           deliveryGovernorate: delivery.governorate.trim() || undefined,
         });
@@ -793,15 +798,54 @@ export function CheckoutFlow({
                 )}
               </Field>
               <Field id="v-city" label={t.delivery.city} error={errors.city} required>
-                <input
-                  id="v-city"
-                  autoComplete="address-level2"
-                  value={delivery.city}
-                  onChange={(e) => setDelivery({ ...delivery, city: e.target.value })}
-                  aria-invalid={!!errors.city}
-                  aria-describedby={describedBy("v-city", !!errors.city, false)}
-                  className={inputClass}
-                />
+                {destination && delivery.governorate && getCities(destination.countryCode, delivery.governorate).length > 0 ? (
+                  <>
+                    <Select
+                      id="v-city"
+                      value={delivery.city === "__other__" ? "__other__" : delivery.city}
+                      placeholder={t.delivery.selectCity}
+                      options={[
+                        ...getCities(destination.countryCode, delivery.governorate).map((c) => ({
+                          value: c.en,
+                          label: locale === "ar" ? c.ar : c.en,
+                        })),
+                        { value: "__other__", label: t.delivery.otherCity },
+                      ]}
+                      onChange={(v) => {
+                        if (v === "__other__") {
+                          setDelivery((d) => ({ ...d, city: "__other__" }));
+                          setCustomCity("");
+                        } else {
+                          setDelivery((d) => ({ ...d, city: v }));
+                          setCustomCity("");
+                        }
+                      }}
+                      aria-invalid={!!errors.city}
+                      aria-describedby={describedBy("v-city", !!errors.city, false)}
+                    />
+                    {delivery.city === "__other__" && (
+                      <input
+                        id="v-city-custom"
+                        autoComplete="address-level2"
+                        value={customCity}
+                        placeholder={t.delivery.cityName}
+                        onChange={(e) => setCustomCity(e.target.value)}
+                        aria-invalid={!!errors.city}
+                        className={`${inputClass} mt-2`}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <input
+                    id="v-city"
+                    autoComplete="address-level2"
+                    value={delivery.city}
+                    onChange={(e) => setDelivery({ ...delivery, city: e.target.value })}
+                    aria-invalid={!!errors.city}
+                    aria-describedby={describedBy("v-city", !!errors.city, false)}
+                    className={inputClass}
+                  />
+                )}
               </Field>
             </div>
 
@@ -875,7 +919,7 @@ export function CheckoutFlow({
                   { label: t.delivery.recipientPhone, value: delivery.recipientPhone, dir: "ltr" },
                   { label: t.delivery.destination, value: destination ? countryName(destination.countryCode, destination.country, locale) : "" },
                   { label: t.delivery.governorate, value: delivery.governorate },
-                  { label: t.delivery.city, value: delivery.city },
+                  { label: t.delivery.city, value: delivery.city === "__other__" ? customCity : delivery.city },
                   { label: t.delivery.address, value: delivery.address },
                 ].filter((r) => r.value?.trim()).map((r) => (
                   <div key={r.label} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
