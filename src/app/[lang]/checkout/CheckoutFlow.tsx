@@ -72,7 +72,7 @@ function isRelationshipField(key: string) {
   return key.toLowerCase() === "relationship";
 }
 
-const MYSELF_RELATIONSHIPS = new Set(["spouse"]);
+const MYSELF_RELATIONSHIPS = new Set(["spouse", "husband", "wife"]);
 const ANOTHER_RELATIONSHIPS = new Set([
   "father", "mother", "son", "daughter", "brother", "sister",
   "uncle_paternal", "uncle_maternal", "grandfather", "grandmother",
