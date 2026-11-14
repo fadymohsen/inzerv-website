@@ -522,6 +522,10 @@ export const en = {
       choose: "Choose",
       otherSpecify: "Please specify",
       foreignNameHint: "Write the full name exactly as it appears on the passport.",
+      relationshipMyself: "Your role in the marriage contract",
+      relationshipAnother: "Your relationship to the document holder",
+      cityMin: "Enter a valid city name.",
+      recipientNameMin: "Enter at least first and last name.",
       processing: "Processing: {t}",
     },
     documents: {

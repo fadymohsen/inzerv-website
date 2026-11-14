@@ -339,7 +339,9 @@ export function CheckoutFlow({
       else if (!isPhoneLengthValid(delivery.recipientPhone, recipientPhoneCountry)) next.recipientPhone = t.errors.phoneInvalid;
       if (delivery.city === "__other__") {
         if (!customCity.trim()) next.city = t.errors.required;
+        else if (customCity.trim().length < 2) next.city = t.details.cityMin;
       } else if (!delivery.city.trim()) next.city = t.errors.required;
+      else if (delivery.city.trim().length < 2) next.city = t.details.cityMin;
       if (!delivery.governorate.trim()) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
       else if (delivery.address.trim().length < 5) next.address = t.errors.addressShort;
@@ -679,8 +681,11 @@ export function CheckoutFlow({
                     className: inputClass,
                   };
                   const set = (v: string) => setValues((prev) => ({ ...prev, [f.keyName]: v }));
+                  const fieldLabel = isRelationshipField(f.keyName) && serviceType === "marriage_certificate"
+                    ? (requestFor === "myself" ? t.details.relationshipMyself : t.details.relationshipAnother)
+                    : pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "");
                   return (
-                    <Field key={f.id} id={id} label={pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "")} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : (isNameField(f.keyName) && (isForeignNameField(f.keyName) || (serviceType === "overseas_foreign_marriage" && isOtherPartyField(f.keyName)))) ? t.details.foreignNameHint : undefined}>
+                    <Field key={f.id} id={id} label={fieldLabel} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : (isNameField(f.keyName) && (isForeignNameField(f.keyName) || (serviceType === "overseas_foreign_marriage" && isOtherPartyField(f.keyName)))) ? t.details.foreignNameHint : undefined}>
                       {isPhoneField(f.keyName) && f.fieldType !== "select" ? (
                         <PhoneField
                           id={id}

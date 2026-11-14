@@ -521,6 +521,10 @@ export const ar: Dict = {
       choose: "اختر",
       otherSpecify: "يرجى التحديد",
       foreignNameHint: "يُكتب الاسم بالكامل كما هو بجواز السفر.",
+      relationshipMyself: "صفتك في عقد الزواج",
+      relationshipAnother: "صلة قرابتك بصاحب الوثيقة",
+      cityMin: "أدخل اسم مدينة صحيحًا.",
+      recipientNameMin: "أدخل الاسم الأول والأخير على الأقل.",
       processing: "مدة التنفيذ: {t}",
     },
     documents: {
