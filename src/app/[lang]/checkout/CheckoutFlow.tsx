@@ -741,7 +741,7 @@ export function CheckoutFlow({
               />
             </Field>
 
-            <div className="grid min-w-0 gap-6 sm:grid-cols-2">
+            <div className="flex min-w-0 flex-col gap-6">
               <Field id="v-name" label={t.delivery.recipient} error={errors.recipientName} required>
                 <input
                   id="v-name"
