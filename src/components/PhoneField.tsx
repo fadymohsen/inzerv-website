@@ -71,7 +71,7 @@ export function PhoneField({
         autoComplete={autoComplete}
         value={value}
         maxLength={maxDigits}
-        placeholder={locale === "ar" ? `${maxDigits} أرقام` : `${maxDigits} digits`}
+        placeholder={locale === "ar" ? `${country === "EG" ? 11 : maxDigits} أرقام` : `${country === "EG" ? 11 : maxDigits} digits`}
         onChange={(e) => handleChange(e.target.value)}
         aria-invalid={invalid}
         aria-describedby={describedBy}
