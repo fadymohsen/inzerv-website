@@ -68,6 +68,17 @@ function isOtherOption(value: string) {
   return v === "other" || v === "أخرى" || v === "others";
 }
 
+function isRelationshipField(key: string) {
+  return key.toLowerCase() === "relationship";
+}
+
+const MYSELF_RELATIONSHIPS = new Set(["spouse"]);
+const ANOTHER_RELATIONSHIPS = new Set([
+  "father", "mother", "son", "daughter", "brother", "sister",
+  "uncle_paternal", "uncle_maternal", "grandfather", "grandmother",
+  "cousin_paternal", "cousin_maternal",
+]);
+
 /** Services where "for myself" doesn't apply — always "for another person". */
 const ALWAYS_ANOTHER = new Set(["death_certificate"]);
 
@@ -229,7 +240,7 @@ export function CheckoutFlow({
   const visibleFields = useMemo(
     () =>
       (service?.fields ?? [])
-        .filter((f) => requestFor === "another_person" || !f.showForAnotherPerson)
+        .filter((f) => requestFor === "another_person" || !f.showForAnotherPerson || isRelationshipField(f.keyName))
         .sort((a, b) => a.sortOrder - b.sortOrder),
     [service, requestFor],
   );
@@ -626,6 +637,14 @@ export function CheckoutFlow({
                       checked={requestFor === v}
                       onChange={() => {
                         setRequestFor(v);
+                        // Clear relationship value since options differ between myself/another
+                        setValues((prev) => {
+                          const next = { ...prev };
+                          for (const f of service?.fields ?? []) {
+                            if (isRelationshipField(f.keyName)) delete next[f.keyName];
+                          }
+                          return next;
+                        });
                         // Keep files whose document key still exists for the new requestFor value
                         const nextDocs = (service?.requiredDocuments ?? [])
                           .filter((d) => v === "another_person" || !d.showForAnotherPerson)
@@ -712,10 +731,16 @@ export function CheckoutFlow({
                             id={id}
                             value={values[f.keyName] ?? ""}
                             placeholder={t.details.choose}
-                            options={(f.options ?? []).map((o) => ({
-                              value: o.value,
-                              label: pick(o.labelEn, o.labelAr),
-                            }))}
+                            options={(f.options ?? [])
+                              .filter((o) => {
+                                if (!isRelationshipField(f.keyName)) return true;
+                                const allowed = requestFor === "myself" ? MYSELF_RELATIONSHIPS : ANOTHER_RELATIONSHIPS;
+                                return allowed.has(o.value);
+                              })
+                              .map((o) => ({
+                                value: o.value,
+                                label: pick(o.labelEn, o.labelAr),
+                              }))}
                             onChange={(v) => {
                               set(v);
                               if (!isOtherOption(v)) setOtherText((prev) => { const n = { ...prev }; delete n[f.keyName]; return n; });
