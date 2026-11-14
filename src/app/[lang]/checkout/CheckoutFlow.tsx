@@ -252,45 +252,14 @@ export function CheckoutFlow({
     [service, requestFor],
   );
 
-  // Load full profile for auto-fill (phone, etc.)
+  // Load full profile for auto-fill (phone, delivery)
   const { profile } = useProfile(status === "authenticated");
   const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
   const profilePhone = profile ? splitPhone(profile.phone, DEFAULT_PHONE_COUNTRY) : null;
 
-  // Auto-fill applicant fields from profile when "for myself"
+  // Auto-fill delivery recipient from profile
   useEffect(() => {
     if (requestFor !== "myself") return;
-    setValues((prev) => {
-      const next = { ...prev };
-      let changed = false;
-      for (const f of visibleFields) {
-        if (next[f.keyName]) continue; // don't overwrite user input
-        const isOther = isOtherPartyField(f.keyName);
-        if (isNameField(f.keyName) && !isOther && fullName) {
-          next[f.keyName] = fullName;
-          changed = true;
-        } else if (isPhoneField(f.keyName) && !isOther && profilePhone) {
-          next[f.keyName] = profilePhone.national;
-          changed = true;
-        }
-      }
-      return changed ? next : prev;
-    });
-    // Set phone country for applicant phone fields
-    if (profilePhone) {
-      setFieldPhoneCountries((prev) => {
-        const next = { ...prev };
-        let changed = false;
-        for (const f of visibleFields) {
-          if (isPhoneField(f.keyName) && !isOtherPartyField(f.keyName) && !next[f.keyName]) {
-            next[f.keyName] = profilePhone.country;
-            changed = true;
-          }
-        }
-        return changed ? next : prev;
-      });
-    }
-    // Pre-fill delivery recipient
     setDelivery((d) => {
       const updates: Partial<typeof d> = {};
       if (!d.recipientName && fullName) updates.recipientName = fullName;
@@ -300,7 +269,7 @@ export function CheckoutFlow({
     if (profilePhone) {
       setRecipientPhoneCountry((prev) => prev === DEFAULT_PHONE_COUNTRY ? profilePhone.country : prev);
     }
-  }, [requestFor, fullName, profilePhone?.national, profilePhone?.country, visibleFields]);
+  }, [requestFor, fullName, profilePhone?.national, profilePhone?.country]);
 
   const serviceFee = (service?.servicePrice ?? 0) * copies;
   const deliveryFee = destination?.deliveryFee ?? 0;
