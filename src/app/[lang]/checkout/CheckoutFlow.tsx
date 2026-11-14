@@ -70,8 +70,8 @@ function isWifeField(key: string) {
 function minNamesFor(serviceType: string, fieldKey: string): number {
   // overseas_foreign_marriage: foreign name = 2, Egyptian name = 4
   if (serviceType === "overseas_foreign_marriage" && isForeignNameField(fieldKey)) return 2;
-  // divorce_certificate: wife name = 3
-  if (serviceType === "divorce_certificate" && isWifeField(fieldKey)) return 3;
+  // divorce_certificate: other party (wife/spouse/other) = 3
+  if (serviceType === "divorce_certificate" && isOtherPartyField(fieldKey)) return 3;
   // Default: 4 names
   return 4;
 }
