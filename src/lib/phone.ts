@@ -62,6 +62,11 @@ export function maxNationalDigits(country: CountryCode): number {
 export function isPhoneLengthValid(nationalNumber: string, country: CountryCode): boolean {
   const trimmed = nationalNumber.trim();
   if (!trimmed) return false;
+  // EG: require exactly 11 digits starting with 0 (since we display +2 not +20)
+  if (country === "EG") {
+    const digits = trimmed.replace(/\D/g, "");
+    return digits.length === 11 && digits.startsWith("0");
+  }
   return isValidPhoneNumber(trimmed, country);
 }
 
