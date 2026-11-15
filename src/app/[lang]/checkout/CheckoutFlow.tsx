@@ -250,7 +250,7 @@ export function CheckoutFlow({
     () =>
       (service?.requiredDocuments ?? [])
         .filter((d) => requestFor === "another_person" || !d.showForAnotherPerson)
-        .filter((d) => !(serviceType === "marriage_certificate" && /birth_cert/i.test(d.keyName) && !d.isRequired) || isCousinSelected)
+        .filter((d) => !(serviceType === "marriage_certificate" && /birth_cert/i.test(d.keyName)) || isCousinSelected)
         .sort((a, b) => a.sortOrder - b.sortOrder),
     [service, serviceType, requestFor, isCousinSelected],
   );
@@ -330,7 +330,7 @@ export function CheckoutFlow({
     }
     if (key === "documents") {
       for (const d of visibleDocs) {
-        const dynamicallyRequired = !d.isRequired && serviceType === "marriage_certificate" && isCousinSelected && /birth_cert/i.test(d.keyName);
+        const dynamicallyRequired = serviceType === "marriage_certificate" && isCousinSelected && /birth_cert/i.test(d.keyName);
         if ((d.isRequired || dynamicallyRequired) && !files[d.keyName]) next[`d_${d.keyName}`] = t.errors.required;
       }
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
