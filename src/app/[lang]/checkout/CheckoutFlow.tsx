@@ -326,8 +326,11 @@ export function CheckoutFlow({
       }
     }
     if (key === "documents") {
+      const rel = values["relationship"] ?? "";
+      const isCousin = rel === "cousin_paternal" || rel === "cousin_maternal";
       for (const d of visibleDocs) {
-        if (d.isRequired && !files[d.keyName]) next[`d_${d.keyName}`] = t.errors.required;
+        const dynamicallyRequired = !d.isRequired && isCousin && /birth_cert/i.test(d.keyName);
+        if ((d.isRequired || dynamicallyRequired) && !files[d.keyName]) next[`d_${d.keyName}`] = t.errors.required;
       }
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
     }
@@ -772,11 +775,14 @@ export function CheckoutFlow({
               const err = errors[`d_${d.keyName}`] ?? fileErrors[`d_${d.keyName}`];
               const file = files[d.keyName];
               const limit = d.maxSizeMb ?? 10;
+              const rel = values["relationship"] ?? "";
+              const isCousin = rel === "cousin_paternal" || rel === "cousin_maternal";
+              const effectiveRequired = d.isRequired || (isCousin && /birth_cert/i.test(d.keyName));
               return (
                 <div key={d.id} className="rounded-card border border-line p-5">
                   <p className="font-medium">
                     {pick(d.labelEn, d.labelAr)}
-                    {d.isRequired && (
+                    {effectiveRequired && (
                       <span aria-hidden="true" className="ms-1 text-error">
                         *
                       </span>
