@@ -37,12 +37,14 @@ export function PhoneField({
   autoComplete?: string;
 }) {
   const options = phoneCountryOptions(locale);
-  const maxDigits = maxNationalDigits(country);
+  const baseMax = maxNationalDigits(country);
+  // EG: allow 11 digits (with leading zero) since we display +2 not +20
+  const maxDigits = country === "EG" ? 11 : baseMax;
 
   function handleChange(raw: string) {
     let cleaned = raw.replace(/\D/g, "");
-    // Auto-strip leading zero (trunk prefix) for countries that use one
-    if (cleaned.startsWith("0") && cleaned.length > 1) cleaned = cleaned.slice(1);
+    // Auto-strip leading zero for countries other than EG (EG uses +2 so user types full 11 digits)
+    if (country !== "EG" && cleaned.startsWith("0") && cleaned.length > 1) cleaned = cleaned.slice(1);
     onChange(cleaned.slice(0, maxDigits));
   }
 
