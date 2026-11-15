@@ -244,12 +244,15 @@ export function CheckoutFlow({
         .sort((a, b) => a.sortOrder - b.sortOrder),
     [service, requestFor],
   );
+  const relationshipValue = values["relationship"] ?? "";
+  const isCousinSelected = relationshipValue === "cousin_paternal" || relationshipValue === "cousin_maternal";
   const visibleDocs = useMemo(
     () =>
       (service?.requiredDocuments ?? [])
         .filter((d) => requestFor === "another_person" || !d.showForAnotherPerson)
+        .filter((d) => !(/birth_cert/i.test(d.keyName) && !d.isRequired) || isCousinSelected)
         .sort((a, b) => a.sortOrder - b.sortOrder),
-    [service, requestFor],
+    [service, requestFor, isCousinSelected],
   );
 
   // Load full profile for auto-fill (phone, delivery)
@@ -326,10 +329,8 @@ export function CheckoutFlow({
       }
     }
     if (key === "documents") {
-      const rel = values["relationship"] ?? "";
-      const isCousin = rel === "cousin_paternal" || rel === "cousin_maternal";
       for (const d of visibleDocs) {
-        const dynamicallyRequired = !d.isRequired && isCousin && /birth_cert/i.test(d.keyName);
+        const dynamicallyRequired = !d.isRequired && isCousinSelected && /birth_cert/i.test(d.keyName);
         if ((d.isRequired || dynamicallyRequired) && !files[d.keyName]) next[`d_${d.keyName}`] = t.errors.required;
       }
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
@@ -775,9 +776,7 @@ export function CheckoutFlow({
               const err = errors[`d_${d.keyName}`] ?? fileErrors[`d_${d.keyName}`];
               const file = files[d.keyName];
               const limit = d.maxSizeMb ?? 10;
-              const rel = values["relationship"] ?? "";
-              const isCousin = rel === "cousin_paternal" || rel === "cousin_maternal";
-              const effectiveRequired = d.isRequired || (isCousin && /birth_cert/i.test(d.keyName));
+              const effectiveRequired = d.isRequired || (isCousinSelected && /birth_cert/i.test(d.keyName));
               return (
                 <div key={d.id} className="rounded-card border border-line p-5">
                   <p className="font-medium">
