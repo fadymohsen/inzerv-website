@@ -104,6 +104,7 @@ export function PaymentResult({ locale, t }: { locale: Locale; t: Dict["checkout
   if (!view) return <p className="text-center text-ink-muted" role="status">{r.checking}</p>;
 
   if (view.status === "success") {
+    try { sessionStorage.removeItem("inzerv_pending_request"); } catch { /* ignore */ }
     return (
       <div className="text-center">
         <span className="mx-auto flex size-16 items-center justify-center rounded-full bg-turquoise text-navy">
