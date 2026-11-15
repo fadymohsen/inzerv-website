@@ -282,7 +282,12 @@ export function CheckoutFlow({
 
   const serviceFee = (service?.servicePrice ?? 0) * copies;
   const deliveryFee = destination?.deliveryFee ?? 0;
-  const total = serviceFee + deliveryFee;
+  const authFee = extraAuth ? t.details.authenticationPrice : 0;
+  const translationFee = extraTranslation && translationLang
+    ? (t.details.languages.find((l) => l.value === translationLang)?.price ?? 0)
+    : 0;
+  const extrasFee = authFee + translationFee;
+  const total = serviceFee + deliveryFee + extrasFee;
 
   function fail(next: Errors) {
     setErrors(next);
@@ -685,9 +690,12 @@ export function CheckoutFlow({
             {/* Extras */}
             <fieldset className="flex flex-col gap-4 border-t border-line pt-7">
               <legend className="mb-1 text-lg font-semibold">{t.details.extras}</legend>
-              <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraAuth ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
-                <input type="checkbox" checked={extraAuth} onChange={(e) => setExtraAuth(e.target.checked)} className="size-4 accent-navy" />
-                {t.details.authentication}
+              <label className={`flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraAuth ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
+                <span className="flex items-center gap-3">
+                  <input type="checkbox" checked={extraAuth} onChange={(e) => setExtraAuth(e.target.checked)} className="size-4 accent-navy" />
+                  {t.details.authentication}
+                </span>
+                <span dir="ltr" className="text-sm font-semibold text-navy">{t.details.authenticationPrice.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</span>
               </label>
               <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraTranslation ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
                 <input type="checkbox" checked={extraTranslation} onChange={(e) => { setExtraTranslation(e.target.checked); if (!e.target.checked) setTranslationLang(""); }} className="size-4 accent-navy" />
@@ -699,7 +707,10 @@ export function CheckoutFlow({
                     id="d-lang"
                     value={translationLang}
                     placeholder={t.details.selectLanguage}
-                    options={t.details.languages}
+                    options={t.details.languages.map((l) => ({
+                      value: l.value,
+                      label: `${l.label} — ${l.price.toLocaleString("en-EG")} ${locale === "ar" ? "ج.م" : "EGP"}`,
+                    }))}
                     onChange={setTranslationLang}
                     searchable
                     aria-invalid={!!errors.translationLang}
@@ -1206,6 +1217,18 @@ export function CheckoutFlow({
                 <dt className="text-ink-muted">{t.review.deliveryFee}</dt>
                 <dd className="tabular font-medium">{destination ? money(deliveryFee, locale) : "-"}</dd>
               </div>
+              {extraAuth && (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-muted">{t.details.authentication}</dt>
+                  <dd className="tabular font-medium">{money(authFee, locale)}</dd>
+                </div>
+              )}
+              {extraTranslation && translationLang && (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-ink-muted">{t.details.translation} ({t.details.languages.find((l) => l.value === translationLang)?.label})</dt>
+                  <dd className="tabular font-medium">{money(translationFee, locale)}</dd>
+                </div>
+              )}
               <div className="mt-2 flex justify-between gap-4 border-t border-line pt-4 text-base">
                 <dt className="font-semibold">{t.review.total}</dt>
                 <dd className="tabular text-xl font-semibold">{money(total, locale)}</dd>
