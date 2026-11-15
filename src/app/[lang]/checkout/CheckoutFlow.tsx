@@ -137,19 +137,6 @@ export function CheckoutFlow({
   const { status, user } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-
-  // Resume pending payment: if the user pressed back from the gateway, redirect to result page
-  useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem("inzerv_pending_request");
-      if (!raw) return;
-      const pending = JSON.parse(raw) as { id: string; ref: string };
-      if (pending.id && pending.ref) {
-        router.replace(`/${locale}/checkout/result?ref=${encodeURIComponent(pending.ref)}&rid=${encodeURIComponent(pending.id)}`);
-      }
-    } catch { /* ignore */ }
-  }, [locale, router]);
-
   const [step, setStep] = useState(0);
   const [errors, setErrors] = useState<Errors>({});
   const [focusTick, setFocusTick] = useState(0);
@@ -464,7 +451,6 @@ export function CheckoutFlow({
             // real gateway: the customer pays on the hosted page and returns to /checkout/result
             if (!payment.checkoutUrl || !isSafePaymentUrl(payment.checkoutUrl)) throw new Error("No payment page");
             setStage("redirecting");
-            try { sessionStorage.setItem("inzerv_pending_request", JSON.stringify(created.current)); } catch { /* ignore */ }
             window.location.assign(payment.checkoutUrl);
             return;
           }
@@ -480,7 +466,6 @@ export function CheckoutFlow({
 
       setReference(created.current.ref);
       setStage("done");
-      try { sessionStorage.removeItem("inzerv_pending_request"); } catch { /* ignore */ }
     } catch (err) {
       setStage("idle");
       if (err instanceof ApiError && err.status === 401) {
