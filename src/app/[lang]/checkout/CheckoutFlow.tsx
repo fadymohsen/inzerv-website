@@ -250,9 +250,9 @@ export function CheckoutFlow({
     () =>
       (service?.requiredDocuments ?? [])
         .filter((d) => requestFor === "another_person" || !d.showForAnotherPerson)
-        .filter((d) => !(/birth_cert/i.test(d.keyName) && !d.isRequired) || isCousinSelected)
+        .filter((d) => !(serviceType === "marriage_certificate" && /birth_cert/i.test(d.keyName) && !d.isRequired) || isCousinSelected)
         .sort((a, b) => a.sortOrder - b.sortOrder),
-    [service, requestFor, isCousinSelected],
+    [service, serviceType, requestFor, isCousinSelected],
   );
 
   // Load full profile for auto-fill (phone, delivery)
@@ -330,7 +330,7 @@ export function CheckoutFlow({
     }
     if (key === "documents") {
       for (const d of visibleDocs) {
-        const dynamicallyRequired = !d.isRequired && isCousinSelected && /birth_cert/i.test(d.keyName);
+        const dynamicallyRequired = !d.isRequired && serviceType === "marriage_certificate" && isCousinSelected && /birth_cert/i.test(d.keyName);
         if ((d.isRequired || dynamicallyRequired) && !files[d.keyName]) next[`d_${d.keyName}`] = t.errors.required;
       }
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
@@ -776,7 +776,7 @@ export function CheckoutFlow({
               const err = errors[`d_${d.keyName}`] ?? fileErrors[`d_${d.keyName}`];
               const file = files[d.keyName];
               const limit = d.maxSizeMb ?? 10;
-              const effectiveRequired = d.isRequired || (isCousinSelected && /birth_cert/i.test(d.keyName));
+              const effectiveRequired = d.isRequired || (serviceType === "marriage_certificate" && isCousinSelected && /birth_cert/i.test(d.keyName));
               return (
                 <div key={d.id} className="rounded-card border border-line p-5">
                   <p className="font-medium">
