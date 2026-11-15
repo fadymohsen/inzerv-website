@@ -80,7 +80,7 @@ const ANOTHER_RELATIONSHIPS = new Set([
 ]);
 
 /** Services where "for myself" doesn't apply — always "for another person". */
-const ALWAYS_ANOTHER = new Set(["death_certificate"]);
+const ALWAYS_ANOTHER = new Set(["death_certificate", "overseas_death_registration"]);
 
 /** Today's date as YYYY-MM-DD in local timezone. */
 function todayLocal() {
