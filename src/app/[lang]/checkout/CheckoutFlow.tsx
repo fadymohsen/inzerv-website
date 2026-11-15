@@ -158,6 +158,9 @@ export function CheckoutFlow({
       setFieldPhoneCountries({});
       setRequestFor("myself");
       setCopies(1);
+      setExtraAuth(false);
+      setExtraTranslation(false);
+      setTranslationLang("");
       setErrors({});
       setStep(0);
     }
@@ -171,6 +174,9 @@ export function CheckoutFlow({
     if (ALWAYS_ANOTHER.has(serviceType)) setRequestFor("another_person");
   }, [serviceType]);
   const [copies, setCopies] = useState(1);
+  const [extraAuth, setExtraAuth] = useState(false);
+  const [extraTranslation, setExtraTranslation] = useState(false);
+  const [translationLang, setTranslationLang] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
   const [otherText, setOtherText] = useState<Record<string, string>>({});
   const [fieldPhoneCountries, setFieldPhoneCountries] = useState<Record<string, CountryCode>>({});
@@ -299,6 +305,7 @@ export function CheckoutFlow({
     if (key === "details") {
       if (!service) next.service = t.errors.select;
       if (!Number.isInteger(copies) || copies < 1 || copies > 19) next.copies = t.errors.required;
+      if (extraTranslation && !translationLang) next.translationLang = t.errors.select;
       for (const f of visibleFields) {
         const val = values[f.keyName]?.trim() ?? "";
         if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
@@ -413,15 +420,19 @@ export function CheckoutFlow({
         const res = await orders.create({
           serviceId: service.id,
           requestFor,
-          fieldValues: visibleFields
-            .filter((f) => values[f.keyName]?.trim())
-            .map((f) => {
-              const raw = values[f.keyName].trim();
-              let value = raw;
-              if (isPhoneField(f.keyName)) value = toE164(raw, fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY) ?? raw;
-              else if (f.fieldType === "select" && isOtherOption(raw) && otherText[f.keyName]?.trim()) value = otherText[f.keyName].trim();
-              return { fieldKey: f.keyName, value };
-            }),
+          fieldValues: [
+            ...visibleFields
+              .filter((f) => values[f.keyName]?.trim())
+              .map((f) => {
+                const raw = values[f.keyName].trim();
+                let value = raw;
+                if (isPhoneField(f.keyName)) value = toE164(raw, fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY) ?? raw;
+                else if (f.fieldType === "select" && isOtherOption(raw) && otherText[f.keyName]?.trim()) value = otherText[f.keyName].trim();
+                return { fieldKey: f.keyName, value };
+              }),
+            ...(extraAuth ? [{ fieldKey: "extra_authentication", value: "yes" }] : []),
+            ...(extraTranslation && translationLang ? [{ fieldKey: "extra_translation", value: translationLang }] : []),
+          ],
           numberOfCopies: copies,
           deliveryDestinationId: delivery.destinationId,
           recipientName: delivery.recipientName.trim(),
@@ -670,6 +681,33 @@ export function CheckoutFlow({
                 >+</button>
               </div>
             </Field>
+
+            {/* Extras */}
+            <fieldset className="flex flex-col gap-4 border-t border-line pt-7">
+              <legend className="mb-1 text-lg font-semibold">{t.details.extras}</legend>
+              <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraAuth ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
+                <input type="checkbox" checked={extraAuth} onChange={(e) => setExtraAuth(e.target.checked)} className="size-4 accent-navy" />
+                {t.details.authentication}
+              </label>
+              <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraTranslation ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
+                <input type="checkbox" checked={extraTranslation} onChange={(e) => { setExtraTranslation(e.target.checked); if (!e.target.checked) setTranslationLang(""); }} className="size-4 accent-navy" />
+                {t.details.translation}
+              </label>
+              {extraTranslation && (
+                <Field id="d-lang" label={t.details.selectLanguage} error={errors.translationLang} required>
+                  <Select
+                    id="d-lang"
+                    value={translationLang}
+                    placeholder={t.details.selectLanguage}
+                    options={t.details.languages}
+                    onChange={setTranslationLang}
+                    searchable
+                    aria-invalid={!!errors.translationLang}
+                    aria-describedby={describedBy("d-lang", !!errors.translationLang, false)}
+                  />
+                </Field>
+              )}
+            </fieldset>
 
             {visibleFields.length > 0 && (
               <fieldset className="flex flex-col gap-6 border-t border-line pt-7">
@@ -1014,6 +1052,17 @@ export function CheckoutFlow({
                     </div>
                   );
                 })}
+              {(extraAuth || extraTranslation) && (
+                <div className="border-t border-line px-5 py-3">
+                  <dt className="text-sm text-ink-muted">{t.details.extras}</dt>
+                  <dd className="mt-1 flex flex-col gap-1 font-medium">
+                    {extraAuth && <span>{t.details.authentication}</span>}
+                    {extraTranslation && translationLang && (
+                      <span>{t.details.translation}: {t.details.languages.find((l) => l.value === translationLang)?.label}</span>
+                    )}
+                  </dd>
+                </div>
+              )}
               {visibleDocs.filter((d) => files[d.keyName]).map((d) => (
                 <div key={d.id} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
                   <dt className="text-sm text-ink-muted">{pick(d.labelEn, d.labelAr)}</dt>
