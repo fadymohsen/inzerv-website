@@ -687,8 +687,8 @@ export function CheckoutFlow({
               </div>
             </Field>
 
-            {/* Extras */}
-            <fieldset className="flex flex-col gap-4 border-t border-line pt-7">
+            {/* Extras — hidden for services that don't support them */}
+            {serviceType !== "passport" && <fieldset className="flex flex-col gap-4 border-t border-line pt-7">
               <legend className="mb-1 text-lg font-semibold">{t.details.extras}</legend>
               <label className={`flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraAuth ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
                 <span className="flex items-center gap-3">
@@ -718,7 +718,7 @@ export function CheckoutFlow({
                   />
                 </Field>
               )}
-            </fieldset>
+            </fieldset>}
 
             {visibleFields.length > 0 && (
               <fieldset className="flex flex-col gap-6 border-t border-line pt-7">
