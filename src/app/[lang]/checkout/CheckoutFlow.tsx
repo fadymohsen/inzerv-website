@@ -1306,6 +1306,18 @@ export function CheckoutFlow({
               </dl>
             </div>
 
+            {service.type === "criminal_record_abroad" && (
+              <section aria-labelledby="fp-title" className="rounded-card border border-line bg-bg-light px-5 py-4">
+                <h3 id="fp-title" className="font-semibold">{t.review.fingerprintTitle}</h3>
+                <p className="mt-2 text-sm leading-relaxed">{t.review.fingerprintText}</p>
+                <p className="mt-3 text-sm">
+                  <span className="font-medium">{t.review.fingerprintAddress}: </span>
+                  {t.review.fingerprintAddressValue}
+                </p>
+                <p className="mt-3 text-sm text-ink-muted">{t.review.fingerprintNote}</p>
+              </section>
+            )}
+
             <fieldset>
               <legend className="mb-2 text-sm font-medium">{t.review.method}</legend>
               <div className="grid gap-3 sm:grid-cols-2">

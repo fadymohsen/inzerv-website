@@ -617,6 +617,13 @@ export const en = {
       card: "Credit or debit card",
       wallet: "Digital wallet",
       paymentNote: "No card number is collected on this page.",
+      fingerprintTitle: "Send the original fingerprint form",
+      fingerprintText:
+        "To complete the criminal record, send the original fingerprint form certified by the Egyptian embassy or consulate to the address below, and write your order number inside the envelope. You can post it or have an authorised relative hand it in. After sending, please give us the courier name and tracking number.",
+      fingerprintAddress: "Address",
+      fingerprintAddressValue: "No. 5, Ground Floor, Tower No. 8, Green Towers, Sidi Gaber",
+      fingerprintNote:
+        "Processing time starts once the original arrives and is reviewed and accepted, and all other documents and payment are complete. Uploading a photo of the form does not replace sending the original.",
       agree: "I confirm the information is correct and I agree to the {terms}, {refund} and {privacy}.",
       place: "Place order and pay {amount}",
       holderHeading: "Details you entered",
