@@ -7,6 +7,7 @@ import { getCatalog } from "@/lib/catalog";
 import { getDictionary, money } from "@/lib/dictionaries";
 import { firstSentence, pad2, processingTime, serviceDescription, serviceName } from "@/lib/format";
 import { hasLocale } from "@/lib/i18n";
+import { serviceNotices } from "@/lib/service-rules";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/request">): Promise<Metadata> {
   const { lang } = await params;
@@ -41,14 +42,22 @@ export default async function RequestPage({ params }: PageProps<"/[lang]/request
         <AnonStrip lang={lang} text={t.request.anonText} signIn={t.nav.signIn} create={t.nav.createAccount} />
 
         <ul className="mt-12 grid gap-5 sm:grid-cols-2 lg:mt-14 lg:grid-cols-3 lg:gap-6">
-          {services.map((s, i) => (
-            <li key={s.type} className="flex">
-              <Link
-                href={`/${lang}/checkout?service=${s.type}`}
-                className="group/btn flex w-full flex-col rounded-card border border-line bg-white p-6 transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-navy hover:shadow-[0_12px_32px_-12px_rgba(6,37,68,0.25)] lg:p-7"
-              >
-                <span className="tabular flex size-10 items-center justify-center rounded-full bg-navy text-sm font-semibold text-white">
-                  {pad2(i + 1, lang)}
+          {services.map((s, i) => {
+            const notices = serviceNotices(s, lang, t.checkout.rules);
+            const blocked = !!s.isBlocked;
+            const cardClass =
+              "flex w-full flex-col rounded-card border border-line bg-white p-6 lg:p-7";
+            const body = (
+              <>
+                <span className="flex items-center justify-between gap-3">
+                  <span className="tabular flex size-10 items-center justify-center rounded-full bg-navy text-sm font-semibold text-white">
+                    {pad2(i + 1, lang)}
+                  </span>
+                  {blocked && (
+                    <span className="rounded-full bg-error/10 px-3 py-1 text-xs font-semibold text-error">
+                      {t.checkout.rules.blocked}
+                    </span>
+                  )}
                 </span>
                 <span className="mt-6 block text-2xl font-semibold leading-tight tracking-[-0.02em] rtl:leading-snug">
                   {serviceName(s, lang)}
@@ -56,6 +65,13 @@ export default async function RequestPage({ params }: PageProps<"/[lang]/request
                 <span className="mt-3 line-clamp-3 block leading-relaxed text-ink-muted">
                   {firstSentence(serviceDescription(s, lang))}
                 </span>
+                {notices.length > 0 && (
+                  <span className="mt-4 flex flex-col gap-1.5 rounded-btn bg-bg-light px-4 py-3 text-sm leading-relaxed text-navy">
+                    {notices.map((n) => (
+                      <span key={n} className="block">{n}</span>
+                    ))}
+                  </span>
+                )}
 
                 <span className="mt-auto block pt-7">
                   <span className="flex items-end justify-between gap-4 border-t border-line pt-5">
@@ -70,14 +86,34 @@ export default async function RequestPage({ params }: PageProps<"/[lang]/request
                       </span>
                     </span>
                   </span>
-                  <span className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-btn bg-turquoise px-6 text-[0.9375rem] font-medium text-navy transition-colors duration-150 group-hover/btn:bg-navy group-hover/btn:text-white">
-                    {t.request.select}
-                    <ArrowIcon size={18} />
-                  </span>
+                  {blocked ? (
+                    <span className="mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-btn border border-line px-6 text-[0.9375rem] font-medium text-ink-muted">
+                      {t.checkout.rules.blocked}
+                    </span>
+                  ) : (
+                    <span className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-btn bg-turquoise px-6 text-[0.9375rem] font-medium text-navy transition-colors duration-150 group-hover/btn:bg-navy group-hover/btn:text-white">
+                      {t.request.select}
+                      <ArrowIcon size={18} />
+                    </span>
+                  )}
                 </span>
-              </Link>
-            </li>
-          ))}
+              </>
+            );
+            return (
+              <li key={s.type} className="flex">
+                {blocked ? (
+                  <div className={`${cardClass} opacity-80`}>{body}</div>
+                ) : (
+                  <Link
+                    href={`/${lang}/checkout?service=${s.type}`}
+                    className={`group/btn ${cardClass} transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-navy hover:shadow-[0_12px_32px_-12px_rgba(6,37,68,0.25)]`}
+                  >
+                    {body}
+                  </Link>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
     </section>

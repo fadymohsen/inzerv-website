@@ -23,6 +23,8 @@ import {
 import { useSession } from "@/components/SessionProvider";
 import { useProfile } from "@/components/account/useAccount";
 import type { DeliveryDestination, GovService } from "@/lib/types";
+import { canOrderMyself, canOrderOther, serviceNotices } from "@/lib/service-rules";
+import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
 import { getRegions, getCities } from "@/lib/governorates";
 import { splitPhone } from "@/lib/phone";
 
@@ -72,15 +74,10 @@ function isRelationshipField(key: string) {
   return key.toLowerCase() === "relationship";
 }
 
+/** Roles a party to the marriage can pick when ordering for themselves. */
 const MYSELF_RELATIONSHIPS = new Set(["spouse", "husband", "wife"]);
-const ANOTHER_RELATIONSHIPS = new Set([
-  "father", "mother", "son", "daughter", "brother", "sister",
-  "uncle_paternal", "uncle_maternal", "grandfather", "grandmother",
-  "cousin_paternal", "cousin_maternal",
-]);
-
-/** Services where "for myself" doesn't apply — always "for another person". */
-const ALWAYS_ANOTHER = new Set(["death_certificate", "overseas_death_registration"]);
+/** Party-only roles never apply to a relative ordering for someone else. */
+const PARTY_ONLY = new Set(["husband", "wife"]);
 
 /** Today's date as YYYY-MM-DD in local timezone. */
 function todayLocal() {
@@ -157,6 +154,7 @@ export function CheckoutFlow({
       setFileErrors({});
       setFieldPhoneCountries({});
       setRequestFor("myself");
+      setResidence({ country: "", city: "" });
       setCopies(1);
       setExtraAuth(false);
       setExtraTranslation(false);
@@ -166,13 +164,16 @@ export function CheckoutFlow({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialType]);
-  const [requestFor, setRequestFor] = useState<"myself" | "another_person">(
-    ALWAYS_ANOTHER.has(services.find((s) => s.type === initialType)?.type ?? "") ? "another_person" : "myself",
+  const [requestFor, setRequestFor] = useState<"myself" | "another_person">(() =>
+    canOrderMyself(services.find((s) => s.type === initialType) ?? services[0]) ? "myself" : "another_person",
   );
-  // Force "another_person" when switching to a service that requires it
+  const [residence, setResidence] = useState({ country: "", city: "" });
+  // The admin console can switch "for myself" / "for someone else" off per service.
   useEffect(() => {
-    if (ALWAYS_ANOTHER.has(serviceType)) setRequestFor("another_person");
-  }, [serviceType]);
+    const sv = services.find((x) => x.type === serviceType);
+    if (!canOrderMyself(sv)) setRequestFor("another_person");
+    else if (!canOrderOther(sv)) setRequestFor("myself");
+  }, [serviceType, services]);
   const [copies, setCopies] = useState(1);
   const [extraAuth, setExtraAuth] = useState(false);
   const [extraTranslation, setExtraTranslation] = useState(false);
@@ -206,6 +207,7 @@ export function CheckoutFlow({
   const created = useRef<{ id: string; ref: string } | null>(null);
   const uploaded = useRef(new Set<string>());
   const paid = useRef(false);
+  const payStarted = useRef(false);
   const [locked, setLocked] = useState(false);
   const [reference, setReference] = useState("");
 
@@ -247,19 +249,41 @@ export function CheckoutFlow({
     () =>
       (service?.fields ?? [])
         .filter((f) => requestFor === "another_person" || !f.showForAnotherPerson || isRelationshipField(f.keyName))
+        // Ordering for someone else: the relationship question sits right under the choice.
+        // Ordering for yourself: only the marriage certificate asks for your role.
+        .filter((f) => !isRelationshipField(f.keyName) || requestFor === "another_person" || serviceType === "marriage_certificate")
         .sort((a, b) => a.sortOrder - b.sortOrder),
-    [service, requestFor],
+    [service, serviceType, requestFor],
   );
-  const relationshipValue = values["relationship"] ?? "";
-  const isCousinSelected = relationshipValue === "cousin_paternal" || relationshipValue === "cousin_maternal";
+  const relationshipField = visibleFields.find((f) => isRelationshipField(f.keyName));
+  const otherFields = visibleFields.filter((f) => !isRelationshipField(f.keyName));
   const visibleDocs = useMemo(
     () =>
       (service?.requiredDocuments ?? [])
         .filter((d) => requestFor === "another_person" || !d.showForAnotherPerson)
-        .filter((d) => !(serviceType === "marriage_certificate" && /birth_cert/i.test(d.keyName)) || isCousinSelected)
         .sort((a, b) => a.sortOrder - b.sortOrder),
-    [service, serviceType, requestFor, isCousinSelected],
+    [service, requestFor],
   );
+
+  // Where this service may be used / delivered (admin console)
+  const residenceRule = service?.residenceRule?.length ? service.residenceRule : null;
+  const residenceEntry = residenceRule?.find((r) => r.code === residence.country);
+  const deliveryRule = service?.deliveryRule?.length ? service.deliveryRule : null;
+  const allowedDestinations = deliveryRule
+    ? destinations.filter((d) => deliveryRule.some((r) => r.code.toUpperCase() === d.countryCode.toUpperCase()))
+    : destinations;
+  const deliveryCities = deliveryRule && destination
+    ? (deliveryRule.find((r) => r.code.toUpperCase() === destination.countryCode.toUpperCase())?.cities ?? null)
+    : null;
+  const notices = service ? serviceNotices(service, locale, t.rules) : [];
+  // A country with a governorate list (Egypt) is restricted by governorate; any other by city.
+  const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+  const allowedRegions =
+    deliveryCities && destination
+      ? getRegions(destination.countryCode).filter((r) => deliveryCities.some((c) => sameName(c.en, r.en) || sameName(c.ar, r.ar)))
+      : [];
+  const restrictByRegion = allowedRegions.length > 0;
+  const restrictByCity = !!deliveryCities && !restrictByRegion;
 
   // Load full profile for auto-fill (phone, delivery)
   const { profile } = useProfile(status === "authenticated");
@@ -311,6 +335,12 @@ export function CheckoutFlow({
       if (!service) next.service = t.errors.select;
       if (!Number.isInteger(copies) || copies < 1 || copies > 19) next.copies = t.errors.required;
       if (extraTranslation && !translationLang) next.translationLang = t.errors.select;
+      if (residenceRule) {
+        if (!residenceEntry) next.residenceCountry = t.errors.select;
+        else if (residenceEntry.cities === null) {
+          if (!residence.city.trim()) next.residenceCity = t.errors.required;
+        } else if (!residenceEntry.cities.some((c) => c.en === residence.city)) next.residenceCity = t.errors.select;
+      }
       for (const f of visibleFields) {
         const val = values[f.keyName]?.trim() ?? "";
         if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
@@ -342,18 +372,21 @@ export function CheckoutFlow({
     }
     if (key === "documents") {
       for (const d of visibleDocs) {
-        const dynamicallyRequired = serviceType === "marriage_certificate" && isCousinSelected && /birth_cert/i.test(d.keyName);
-        if ((d.isRequired || dynamicallyRequired) && !files[d.keyName]) next[`d_${d.keyName}`] = t.errors.required;
+        // a document already sent for the order (resumed checkout) does not need picking again
+        if (d.isRequired && !files[d.keyName] && !uploaded.current.has(d.keyName)) next[`d_${d.keyName}`] = t.errors.required;
       }
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
     }
     if (key === "delivery") {
       if (!delivery.destinationId) next.destinationId = t.errors.select;
+      if (restrictByCity && !deliveryCities!.some((c) => c.en === delivery.city)) next.city = t.errors.select;
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
       else if (!isValidFullName(delivery.recipientName, 2)) next.recipientName = t.errors.fullName;
       if (!delivery.recipientPhone.trim()) next.recipientPhone = t.errors.required;
       else if (!isPhoneLengthValid(delivery.recipientPhone, recipientPhoneCountry)) next.recipientPhone = t.errors.phoneInvalid;
-      if (delivery.city === "__other__") {
+      if (restrictByCity) {
+        /* city already checked against the allowed list */
+      } else if (delivery.city === "__other__") {
         if (!customCity.trim()) next.city = t.errors.required;
         else if (customCity.trim().length < 2) next.city = t.details.cityMin;
       } else if (!delivery.city.trim()) next.city = t.errors.required;
@@ -425,6 +458,9 @@ export function CheckoutFlow({
         const res = await orders.create({
           serviceId: service.id,
           requestFor,
+          ...(residenceRule && residenceEntry
+            ? { residenceCountry: residenceEntry.code, residenceCity: residence.city.trim() }
+            : {}),
           fieldValues: [
             ...visibleFields
               .filter((f) => values[f.keyName]?.trim())
@@ -471,6 +507,7 @@ export function CheckoutFlow({
             // real gateway: the customer pays on the hosted page and returns to /checkout/result
             if (!payment.checkoutUrl || !isSafePaymentUrl(payment.checkoutUrl)) throw new Error("No payment page");
             setStage("redirecting");
+            payStarted.current = true;
             window.location.assign(payment.checkoutUrl);
             return;
           }
@@ -503,9 +540,11 @@ export function CheckoutFlow({
   }
 
   function reset() {
+    clearCheckoutDraft();
     created.current = null;
     uploaded.current = new Set();
     paid.current = false;
+    payStarted.current = false;
     setLocked(false);
     setFiles({});
     setValues({});
@@ -514,6 +553,159 @@ export function CheckoutFlow({
     setSubmitError("");
     setStage("idle");
     setStep(0);
+  }
+
+  /* ---------- keep the checkout across a language switch or reload ---------- */
+
+  const restored = useRef(false);
+  const userId = user?.id ?? "";
+
+  useEffect(() => {
+    if (restored.current || status !== "authenticated" || !userId) return;
+    restored.current = true;
+    const d = loadDraft();
+    if (!d || d.userId !== userId) return;
+    const fromUrl = search.get("service");
+    if (fromUrl && fromUrl !== d.serviceType) return; // started a different service: do not resume the old one
+    if (!services.some((x) => x.type === d.serviceType)) return;
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setServiceType(d.serviceType);
+    setRequestFor(d.requestFor);
+    setCopies(d.copies);
+    setExtraAuth(d.extraAuth);
+    setExtraTranslation(d.extraTranslation);
+    setTranslationLang(d.translationLang);
+    setValues(d.values);
+    setOtherText(d.otherText);
+    setFieldPhoneCountries(d.fieldPhoneCountries as Record<string, CountryCode>);
+    setDelivery(d.delivery);
+    setRecipientPhoneCountry(d.recipientPhoneCountry as CountryCode);
+    setCustomCity(d.customCity);
+    setResidence(d.residence);
+    setMethod(d.method);
+    setFiles(takeFiles(`${userId}:${d.serviceType}`));
+    if (d.created) {
+      created.current = d.created;
+      uploaded.current = new Set(d.uploaded);
+      paid.current = d.paid;
+      payStarted.current = !!d.payStarted;
+      setLocked(true);
+      // Came back (browser Back) from the payment page: show the same order awaiting payment.
+      if (d.payStarted && !d.paid) {
+        router.replace(`/${locale}/checkout/result?ref=${encodeURIComponent(d.created.ref)}&rid=${d.created.id}&outcome=back`);
+      }
+    }
+    setStep(Math.min(Math.max(d.step, d.created ? STEPS.indexOf("documents") : 0), STEPS.length - 1));
+    /* eslint-enable react-hooks/set-state-in-effect */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, userId]);
+
+  useEffect(() => {
+    if (!restored.current || !userId || !serviceType) return;
+    if (stage === "done") {
+      clearCheckoutDraft();
+      return;
+    }
+    holdFiles(`${userId}:${serviceType}`, files);
+    saveDraft({
+      userId,
+      serviceType,
+      requestFor,
+      copies,
+      extraAuth,
+      extraTranslation,
+      translationLang,
+      values,
+      otherText,
+      fieldPhoneCountries,
+      delivery,
+      recipientPhoneCountry,
+      customCity,
+      residence,
+      method,
+      step,
+      created: created.current,
+      uploaded: [...uploaded.current],
+      paid: paid.current,
+      payStarted: payStarted.current,
+    });
+  });
+
+  function renderField(f: GovService["fields"][number]) {
+    const id = `f-${f.keyName}`;
+    const err = errors[`f_${f.keyName}`];
+    const common = {
+      id,
+      value: values[f.keyName] ?? "",
+      "aria-invalid": !!err,
+      "aria-describedby": describedBy(id, !!err, false),
+      className: inputClass,
+    };
+    const set = (v: string) => setValues((prev) => ({ ...prev, [f.keyName]: v }));
+    const fieldLabel = isRelationshipField(f.keyName) && serviceType === "marriage_certificate"
+      ? (requestFor === "myself" ? t.details.relationshipMyself : t.details.relationshipAnother)
+      : pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "");
+    return (
+      <Field key={f.id} id={id} label={fieldLabel} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : (isNameField(f.keyName) && (isForeignNameField(f.keyName) || (serviceType === "overseas_foreign_marriage" && isOtherPartyField(f.keyName)))) ? t.details.foreignNameHint : undefined}>
+        {isPhoneField(f.keyName) && f.fieldType !== "select" ? (
+          <PhoneField
+            id={id}
+            locale={locale}
+            countryLabel={phoneCountryLabel}
+            searchPlaceholder={searchCountryLabel}
+            country={fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY}
+            onCountryChange={(c) => setFieldPhoneCountries((prev) => ({ ...prev, [f.keyName]: c }))}
+            value={values[f.keyName] ?? ""}
+            onChange={set}
+            invalid={!!err}
+            describedBy={describedBy(id, !!err, false)}
+          />
+        ) : f.fieldType === "select" ? (
+          <>
+            <Select
+              id={id}
+              value={values[f.keyName] ?? ""}
+              placeholder={t.details.choose}
+              options={(f.options ?? [])
+                .filter((o) => (!isRelationshipField(f.keyName) ? true : requestFor === "myself" ? MYSELF_RELATIONSHIPS.has(o.value) : !PARTY_ONLY.has(o.value)))
+                .map((o) => ({
+                  value: o.value,
+                  label: pick(o.labelEn, o.labelAr),
+                }))}
+              onChange={(v) => {
+                set(v);
+                if (!isOtherOption(v)) setOtherText((prev) => { const n = { ...prev }; delete n[f.keyName]; return n; });
+              }}
+              aria-invalid={!!err}
+              aria-describedby={describedBy(id, !!err, false)}
+            />
+            {isOtherOption(values[f.keyName] ?? "") && (
+              <input
+                id={`${id}-other`}
+                value={otherText[f.keyName] ?? ""}
+                placeholder={t.details.otherSpecify}
+                onChange={(e) => setOtherText((prev) => ({ ...prev, [f.keyName]: e.target.value }))}
+                aria-invalid={!!err}
+                className={`${inputClass} mt-2`}
+              />
+            )}
+          </>
+        ) : (
+          <input
+            {...common}
+            type={f.fieldType === "date" ? "date" : f.fieldType === "number" ? "number" : "text"}
+            inputMode={f.fieldType === "number" || isNationalIdField(f.keyName) ? "numeric" : undefined}
+            maxLength={isNationalIdField(f.keyName) ? 14 : undefined}
+            max={f.fieldType === "date" ? todayLocal() : undefined}
+            dir={isNationalIdField(f.keyName) ? "ltr" : undefined}
+            onChange={(e) => {
+              const v = isNationalIdField(f.keyName) ? e.target.value.replace(/\D/g, "").slice(0, 14) : e.target.value;
+              set(v);
+            }}
+          />
+        )}
+      </Field>
+    );
   }
 
   /* ---------- render ---------- */
@@ -576,6 +768,19 @@ export function CheckoutFlow({
           </div>
         )}
 
+        {service && (notices.length > 0 || service.isBlocked) && (
+          <ul
+            role={service.isBlocked ? "alert" : undefined}
+            className={`-mt-6 mb-10 flex flex-col gap-2 rounded-card border px-5 py-4 text-sm leading-relaxed ${
+              service.isBlocked ? "border-error/40 text-error" : "border-line bg-bg-light text-navy"
+            }`}
+          >
+            {notices.map((n) => (
+              <li key={n}>{n}</li>
+            ))}
+          </ul>
+        )}
+
         {/* Stepper */}
         <ol className="mb-10 flex items-center gap-2" aria-label={t.title}>
           {numberedSteps.map((k) => {
@@ -612,7 +817,7 @@ export function CheckoutFlow({
               {t.steps.details}
             </h2>
 
-            {!ALWAYS_ANOTHER.has(serviceType) && <fieldset>
+            {canOrderMyself(service) && canOrderOther(service) && <fieldset>
               <legend className="mb-2 text-sm font-medium">{t.details.requestFor}</legend>
               <div className="grid gap-3 sm:grid-cols-2">
                 {(["myself", "another_person"] as const).map((v) => (
@@ -657,6 +862,56 @@ export function CheckoutFlow({
                 ))}
               </div>
             </fieldset>}
+
+            {relationshipField && (
+              <div className="flex flex-col gap-2">
+                {renderField(relationshipField)}
+                {requestFor === "another_person" && <p className="text-sm text-ink-muted">{t.rules.kinshipHint}</p>}
+              </div>
+            )}
+
+            {residenceRule && (
+              <fieldset className="flex flex-col gap-5 border-t border-line pt-7">
+                <legend className="mb-1 text-lg font-semibold">{t.rules.residenceTitle}</legend>
+                <p className="-mt-2 text-sm text-ink-muted">{t.rules.residenceSub}</p>
+                <div className="grid gap-6 sm:grid-cols-2">
+                  <Field id="r-country" label={t.rules.residenceCountry} error={errors.residenceCountry} required>
+                    <Select
+                      id="r-country"
+                      value={residence.country}
+                      placeholder={t.rules.chooseCountry}
+                      options={residenceRule.map((r) => ({ value: r.code, label: countryName(r.code, r.code, locale) }))}
+                      onChange={(v) => setResidence({ country: v, city: "" })}
+                      aria-invalid={!!errors.residenceCountry}
+                      aria-describedby={describedBy("r-country", !!errors.residenceCountry, false)}
+                    />
+                  </Field>
+                  <Field id="r-city" label={t.rules.residenceCity} error={errors.residenceCity} required>
+                    {residenceEntry?.cities ? (
+                      <Select
+                        id="r-city"
+                        value={residence.city}
+                        placeholder={t.rules.chooseCity}
+                        options={residenceEntry.cities.map((c) => ({ value: c.en, label: locale === "ar" ? c.ar : c.en }))}
+                        onChange={(v) => setResidence((r) => ({ ...r, city: v }))}
+                        aria-invalid={!!errors.residenceCity}
+                        aria-describedby={describedBy("r-city", !!errors.residenceCity, false)}
+                      />
+                    ) : (
+                      <input
+                        id="r-city"
+                        value={residence.city}
+                        disabled={!residenceEntry}
+                        onChange={(e) => setResidence((r) => ({ ...r, city: e.target.value }))}
+                        aria-invalid={!!errors.residenceCity}
+                        aria-describedby={describedBy("r-city", !!errors.residenceCity, false)}
+                        className={inputClass}
+                      />
+                    )}
+                  </Field>
+                </div>
+              </fieldset>
+            )}
 
             <Field id="d-copies" label={t.details.copies} error={errors.copies} required>
               <div className="flex items-center gap-0 max-w-36">
@@ -720,89 +975,10 @@ export function CheckoutFlow({
               )}
             </fieldset>}
 
-            {visibleFields.length > 0 && (
+            {otherFields.length > 0 && (
               <fieldset className="flex flex-col gap-6 border-t border-line pt-7">
                 <legend className="mb-1 text-lg font-semibold">{t.details.holder}</legend>
-                {visibleFields.map((f) => {
-                  const id = `f-${f.keyName}`;
-                  const err = errors[`f_${f.keyName}`];
-                  const common = {
-                    id,
-                    value: values[f.keyName] ?? "",
-                    "aria-invalid": !!err,
-                    "aria-describedby": describedBy(id, !!err, false),
-                    className: inputClass,
-                  };
-                  const set = (v: string) => setValues((prev) => ({ ...prev, [f.keyName]: v }));
-                  const fieldLabel = isRelationshipField(f.keyName) && serviceType === "marriage_certificate"
-                    ? (requestFor === "myself" ? t.details.relationshipMyself : t.details.relationshipAnother)
-                    : pick(f.labelEn, f.labelAr).replace(/ \(.*\)$/, "");
-                  return (
-                    <Field key={f.id} id={id} label={fieldLabel} error={err} required={f.isRequired} hint={isNationalIdField(f.keyName) ? t.errors.numericHint : (isNameField(f.keyName) && (isForeignNameField(f.keyName) || (serviceType === "overseas_foreign_marriage" && isOtherPartyField(f.keyName)))) ? t.details.foreignNameHint : undefined}>
-                      {isPhoneField(f.keyName) && f.fieldType !== "select" ? (
-                        <PhoneField
-                          id={id}
-                          locale={locale}
-                          countryLabel={phoneCountryLabel}
-                          searchPlaceholder={searchCountryLabel}
-                          country={fieldPhoneCountries[f.keyName] ?? DEFAULT_PHONE_COUNTRY}
-                          onCountryChange={(c) => setFieldPhoneCountries((prev) => ({ ...prev, [f.keyName]: c }))}
-                          value={values[f.keyName] ?? ""}
-                          onChange={set}
-                          invalid={!!err}
-                          describedBy={describedBy(id, !!err, false)}
-                        />
-                      ) : f.fieldType === "select" ? (
-                        <>
-                          <Select
-                            id={id}
-                            value={values[f.keyName] ?? ""}
-                            placeholder={t.details.choose}
-                            options={(f.options ?? [])
-                              .filter((o) => {
-                                if (!isRelationshipField(f.keyName)) return true;
-                                const allowed = requestFor === "myself" ? MYSELF_RELATIONSHIPS : ANOTHER_RELATIONSHIPS;
-                                return allowed.has(o.value);
-                              })
-                              .map((o) => ({
-                                value: o.value,
-                                label: pick(o.labelEn, o.labelAr),
-                              }))}
-                            onChange={(v) => {
-                              set(v);
-                              if (!isOtherOption(v)) setOtherText((prev) => { const n = { ...prev }; delete n[f.keyName]; return n; });
-                            }}
-                            aria-invalid={!!err}
-                            aria-describedby={describedBy(id, !!err, false)}
-                          />
-                          {isOtherOption(values[f.keyName] ?? "") && (
-                            <input
-                              id={`${id}-other`}
-                              value={otherText[f.keyName] ?? ""}
-                              placeholder={t.details.otherSpecify}
-                              onChange={(e) => setOtherText((prev) => ({ ...prev, [f.keyName]: e.target.value }))}
-                              aria-invalid={!!err}
-                              className={`${inputClass} mt-2`}
-                            />
-                          )}
-                        </>
-                      ) : (
-                        <input
-                          {...common}
-                          type={f.fieldType === "date" ? "date" : f.fieldType === "number" ? "number" : "text"}
-                          inputMode={f.fieldType === "number" || isNationalIdField(f.keyName) ? "numeric" : undefined}
-                          maxLength={isNationalIdField(f.keyName) ? 14 : undefined}
-                          max={f.fieldType === "date" ? todayLocal() : undefined}
-                          dir={isNationalIdField(f.keyName) ? "ltr" : undefined}
-                          onChange={(e) => {
-                            const v = isNationalIdField(f.keyName) ? e.target.value.replace(/\D/g, "").slice(0, 14) : e.target.value;
-                            set(v);
-                          }}
-                        />
-                      )}
-                    </Field>
-                  );
-                })}
+                {otherFields.map((f) => renderField(f))}
               </fieldset>
             )}
           </div>
@@ -825,7 +1001,7 @@ export function CheckoutFlow({
               const err = errors[`d_${d.keyName}`] ?? fileErrors[`d_${d.keyName}`];
               const file = files[d.keyName];
               const limit = d.maxSizeMb ?? 10;
-              const effectiveRequired = d.isRequired || (serviceType === "marriage_certificate" && isCousinSelected && /birth_cert/i.test(d.keyName));
+              const effectiveRequired = d.isRequired;
               return (
                 <div key={d.id} className="rounded-card border border-line p-5">
                   <p className="font-medium">
@@ -897,12 +1073,15 @@ export function CheckoutFlow({
               {t.delivery.title}
             </h2>
 
+            {allowedDestinations.length === 0 && (
+              <p role="alert" className="rounded-btn border border-error/40 px-4 py-3 text-sm text-error">{t.rules.noDestinations}</p>
+            )}
             <Field id="v-dest" label={t.delivery.destination} error={errors.destinationId} required>
               <Select
                 id="v-dest"
                 value={delivery.destinationId}
                 placeholder={t.delivery.select}
-                options={destinations.map((d) => ({
+                options={allowedDestinations.map((d) => ({
                   value: d.id,
                   label: `${countryName(d.countryCode, d.country, locale)}, ${money(d.deliveryFee, locale)}`,
                 }))}
@@ -947,7 +1126,7 @@ export function CheckoutFlow({
                     id="v-gov"
                     value={delivery.governorate}
                     placeholder={t.delivery.selectGovernorate}
-                    options={getRegions(destination.countryCode).map((r) => ({
+                    options={(restrictByRegion ? allowedRegions : getRegions(destination.countryCode)).map((r) => ({
                       value: r.en,
                       label: locale === "ar" ? r.ar : r.en,
                     }))}
@@ -969,7 +1148,20 @@ export function CheckoutFlow({
                 )}
               </Field>
               <Field id="v-city" label={t.delivery.city} error={errors.city} required>
-                {destination && delivery.governorate && getCities(destination.countryCode, delivery.governorate).length > 0 ? (
+                {restrictByCity && deliveryCities ? (
+                  <>
+                    <Select
+                      id="v-city"
+                      value={delivery.city}
+                      placeholder={t.delivery.selectCity}
+                      options={deliveryCities.map((c) => ({ value: c.en, label: locale === "ar" ? c.ar : c.en }))}
+                      onChange={(v) => setDelivery((d) => ({ ...d, city: v }))}
+                      aria-invalid={!!errors.city}
+                      aria-describedby={describedBy("v-city", !!errors.city, false)}
+                    />
+                    <p className="mt-2 text-sm text-ink-muted">{t.rules.deliveryCityRestricted}</p>
+                  </>
+                ) : destination && delivery.governorate && getCities(destination.countryCode, delivery.governorate).length > 0 ? (
                   <>
                     <Select
                       id="v-city"
@@ -1190,11 +1382,11 @@ export function CheckoutFlow({
             </button>
           )}
           {current === "review" ? (
-            <button type="button" onClick={placeOrder} disabled={working} className={buttonClass("primary", "grow sm:grow-0")}>
+            <button type="button" onClick={placeOrder} disabled={working || !!service?.isBlocked} className={buttonClass("primary", "grow sm:grow-0")}>
               {working ? "…" : fmt(t.review.place, { amount: money(total, locale) })}
             </button>
           ) : (
-            <button type="button" onClick={goNext} className={buttonClass("primary", "grow sm:grow-0")}>
+            <button type="button" onClick={goNext} disabled={!!service?.isBlocked} className={buttonClass("primary", "grow sm:grow-0")}>
               {t.next}
             </button>
           )}

@@ -117,6 +117,8 @@ export const orders = {
     deliveryAddress: string;
     deliveryGovernorate?: string;
     deliveryPostalCode?: string;
+    residenceCountry?: string;
+    residenceCity?: string;
   }) => post<{ id: string; referenceNumber: string; totalAmount: number | string }>("/api/backend/requests", body),
 
   /** With a real gateway this returns a pending payment and the hosted page to send the customer to. */

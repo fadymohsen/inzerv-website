@@ -8,6 +8,7 @@ import { CheckIcon } from "@/components/Icons";
 import { useSession } from "@/components/SessionProvider";
 import type { Dict } from "@/dictionaries/en";
 import { ApiError, isSafePaymentUrl, orders, payments, type PaymentView } from "@/lib/api-client";
+import { clearCheckoutDraft } from "@/lib/checkout-draft";
 import type { Locale } from "@/lib/i18n";
 
 const POLL_MS = 3000;
@@ -22,6 +23,7 @@ export function PaymentResult({ locale, t }: { locale: Locale; t: Dict["checkout
   const search = useSearchParams();
   const ref = search.get("ref") ?? "";
   const rid = search.get("rid") ?? "";
+  const cameBack = search.get("outcome") === "back";
   const { status } = useSession();
 
   const [view, setView] = useState<PaymentView | null>(null);
@@ -48,6 +50,10 @@ export function PaymentResult({ locale, t }: { locale: Locale; t: Dict["checkout
   useEffect(() => {
     again_.current = () => void check();
   }, [check]);
+
+  useEffect(() => {
+    if (view?.status === "success") clearCheckoutDraft();
+  }, [view?.status]);
 
   useEffect(() => {
     if (status !== "authenticated" || !rid) return;
@@ -120,6 +126,27 @@ export function PaymentResult({ locale, t }: { locale: Locale; t: Dict["checkout
         <Link href={`/${locale}`} className={buttonClass("outline", "mt-10")}>
           {r.home}
         </Link>
+      </div>
+    );
+  }
+
+  // Left the payment page with its Back button: the same order, still waiting for payment.
+  if (cameBack && view.status === "pending") {
+    return (
+      <div className="text-center">
+        <h1 className="text-4xl font-semibold tracking-[-0.02em] rtl:leading-snug">{r.awaitingTitle}</h1>
+        {ref && (
+          <p dir="ltr" className="tabular mt-6 text-2xl font-semibold">{ref}</p>
+        )}
+        <p className="mx-auto mt-6 max-w-[48ch] leading-relaxed text-ink-muted">{r.awaitingText}</p>
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
+          <button type="button" disabled={busy} onClick={retryPayment} className={buttonClass("primary")}>
+            {busy ? "…" : r.continuePay}
+          </button>
+          <Link href={`/${locale}/account/requests`} className={buttonClass("outline")}>
+            {r.myRequests}
+          </Link>
+        </div>
       </div>
     );
   }

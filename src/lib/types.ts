@@ -22,6 +22,8 @@ export type ServiceDocument = {
   sortOrder: number;
 };
 
+export type GeoRule = { code: string; cities: { en: string; ar: string }[] | null }[];
+
 export type GovService = {
   id: string;
   type: string;
@@ -36,6 +38,13 @@ export type GovService = {
   subtitleAr?: string | null;
   iconKey?: string | null;
   accentColor?: string | null;
+  /** Policy set in the admin console. Missing on older backends: treat as permissive. */
+  allowMyself?: boolean;
+  allowOther?: boolean;
+  isBlocked?: boolean;
+  relationshipRule?: "first" | "both";
+  residenceRule?: GeoRule | null;
+  deliveryRule?: GeoRule | null;
   fields: ServiceField[];
   requiredDocuments: ServiceDocument[];
 };

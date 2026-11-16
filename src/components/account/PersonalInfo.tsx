@@ -12,6 +12,7 @@ import { useSession } from "@/components/SessionProvider";
 import type { Dict } from "@/dictionaries/en";
 import { account, ApiError, type Profile } from "@/lib/api-client";
 import type { Locale } from "@/lib/i18n";
+import { regionName, toCountryCode } from "@/lib/country";
 import { DEFAULT_PHONE_COUNTRY, isPhoneLengthValid, splitPhone, toE164, type CountryCode } from "@/lib/phone";
 import { Select } from "@/components/Select";
 import { AccountGate } from "./AccountGate";
@@ -53,7 +54,7 @@ const toForm = (p: Profile): Form => {
     lastName: p.lastName,
     phone: national,
     phoneCountry: country,
-    countryOfResidence: p.countryOfResidence,
+    countryOfResidence: toCountryCode(p.countryOfResidence, COUNTRY_CODES),
   };
 };
 
@@ -233,9 +234,7 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
                     />
                   ) : (
                     <p className={readValue}>
-                      {profile.countryOfResidence
-                        ? (new Intl.DisplayNames([locale], { type: "region" }).of(profile.countryOfResidence) ?? profile.countryOfResidence)
-                        : "—"}
+                      {profile.countryOfResidence ? regionName(profile.countryOfResidence, locale) : "—"}
                     </p>
                   )}
                 </Field>

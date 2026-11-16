@@ -5,6 +5,7 @@ import { PageHero } from "@/components/PageHero";
 import { ArrowIcon, CarIcon, DocumentIcon, HeartIcon, HomeIcon, TagIcon } from "@/components/Icons";
 import { getCatalog } from "@/lib/catalog";
 import { getDictionary, money } from "@/lib/dictionaries";
+import { serviceNotices } from "@/lib/service-rules";
 import { countryName, processingTime, serviceDescription, serviceName } from "@/lib/format";
 import { hasLocale } from "@/lib/i18n";
 import type { GovService } from "@/lib/types";
@@ -114,10 +115,23 @@ export default async function ServicesPage({ params }: PageProps<"/[lang]/servic
                           <dd className="mt-1 text-xl font-semibold">{processingTime(s, lang)}</dd>
                         </div>
                       </dl>
-                      <ButtonLink href={`/${lang}/checkout?service=${s.type}`} className="mt-7">
-                        {t.common.orderThis}
-                        <ArrowIcon size={20} />
-                      </ButtonLink>
+                      {serviceNotices(s, lang, t.checkout.rules).length > 0 && (
+                        <ul className="mt-6 flex flex-col gap-2 rounded-btn bg-bg-light px-4 py-3 text-sm leading-relaxed text-navy">
+                          {serviceNotices(s, lang, t.checkout.rules).map((n) => (
+                            <li key={n}>{n}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {s.isBlocked ? (
+                        <p className="mt-7 inline-flex min-h-12 items-center rounded-btn border border-line px-6 font-medium text-ink-muted">
+                          {t.checkout.rules.blocked}
+                        </p>
+                      ) : (
+                        <ButtonLink href={`/${lang}/checkout?service=${s.type}`} className="mt-7">
+                          {t.common.orderThis}
+                          <ArrowIcon size={20} />
+                        </ButtonLink>
+                      )}
                     </div>
                     <div className="flex flex-col gap-7">
                       <ListBlock title={t.services.requiredDocs} items={docs} />

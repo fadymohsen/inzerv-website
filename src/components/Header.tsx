@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dict } from "@/dictionaries/en";
 import { SUPPORT_EMAIL } from "@/lib/config";
@@ -17,6 +17,7 @@ const vars = (d: number) => ({ ["--d" as string]: `${d}ms` }) as React.CSSProper
 
 export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; footer: Dict["footer"] }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { status, user, signOut } = useSession();
   const [state, setState] = useState<"closed" | "open" | "closing">("closed");
   const overlay = useRef<HTMLDivElement>(null);
@@ -88,6 +89,14 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
 
   const swap = (l: Locale) => pathname.replace(/^\/(en|ar)(?=\/|$)/, `/${l}`) || `/${l}`;
   const switchHref = swap(otherLocale(locale));
+  // Switching language must land on the same page in progress, so keep ?query and #hash.
+  const keepPlace = (href: string) => (e: React.MouseEvent) => {
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    const rest = `${window.location.search}${window.location.hash}`;
+    if (!rest) return;
+    e.preventDefault();
+    router.push(`${href}${rest}`);
+  };
 
   const desktopLink = (href: string) =>
     `inline-flex min-h-10 items-center rounded-lg px-3 text-sm font-medium transition-colors duration-150 ${
@@ -118,6 +127,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
         <div className="hidden items-center gap-3 lg:flex">
           <Link
             href={switchHref}
+            onClick={keepPlace(switchHref)}
             hrefLang={otherLocale(locale)}
             aria-label={t.languageLabel}
             className="rounded-lg px-3 py-2 text-xl transition-opacity duration-150 hover:opacity-80"
@@ -244,6 +254,7 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
                   <Link
                     key={l}
                     href={swap(l)}
+                    onClick={keepPlace(swap(l))}
                     hrefLang={l}
                     lang={l}
                     aria-current={l === locale ? "true" : undefined}
