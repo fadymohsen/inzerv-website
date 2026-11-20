@@ -114,19 +114,6 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
         </div>
       </section>
 
-      {/* Statement */}
-      <section className="layer bg-turquoise/10">
-        <div className="mx-auto max-w-7xl px-5 pb-16 pt-20 lg:px-8 lg:pb-32 lg:pt-40">
-          <p className="max-w-[22ch] text-[clamp(1.75rem,4vw,3.5rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-navy rtl:leading-[1.35]">
-            <ScrollWords text={t.home.statement.text} />
-          </p>
-          <div className="reveal mt-12 flex max-w-[52ch] gap-4 sm:gap-5">
-            <span aria-hidden className="mt-2 h-1.5 w-10 shrink-0 sm:w-14 rounded-full bg-turquoise" />
-            <p className="text-xl leading-snug text-ink-muted sm:text-2xl">{t.home.statement.sub}</p>
-          </div>
-        </div>
-      </section>
-
       {/* Story rows */}
       <section className="mt-12 bg-white lg:mt-20">
         <div className="mx-auto max-w-7xl px-5 pb-12 lg:px-8">
