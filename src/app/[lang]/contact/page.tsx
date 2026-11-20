@@ -72,8 +72,7 @@ export default async function ContactPage({ params }: PageProps<"/[lang]/contact
               </dd>
             </div>
             <div className="border-t border-line pt-6">
-              <dt className="text-sm font-medium text-ink-muted">{t.phoneLabel}</dt>
-              <dd className="mt-2 flex flex-col gap-2">
+              <dd className="flex flex-col gap-2">
                 <a
                   href={`https://wa.me/20${SUPPORT_PHONE_MOBILE.replace(/^0/, "")}`}
                   target="_blank"
