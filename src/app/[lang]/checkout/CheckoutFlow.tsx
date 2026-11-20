@@ -82,6 +82,12 @@ function isCivilStatusField(keyName: string) {
   return keyName.toLowerCase() === "civil_status";
 }
 
+/** Docs that accept multiple files (one per child / per event). */
+function isMultiUploadDoc(keyName: string) {
+  const k = keyName.toLowerCase();
+  return k === "children_birth_certificates" || k === "death_certificates" || k === "divorce_certificate";
+}
+
 const NATIONAL_ID_RE = /^[23]\d{13}$/;
 const NATIONAL_ID_KEYS = ["national_id", "nationalid", "nid"];
 function isNationalIdField(key: string) {
@@ -240,6 +246,7 @@ export function CheckoutFlow({
 
   // documents
   const [files, setFiles] = useState<Record<string, File>>({});
+  const [multiFiles, setMultiFiles] = useState<Record<string, File[]>>({});
   const [fileErrors, setFileErrors] = useState<Errors>({});
 
   // delivery
@@ -368,6 +375,10 @@ export function CheckoutFlow({
       const filtered = Object.fromEntries(Object.entries(prev).filter(([k]) => docKeys.has(k)));
       return Object.keys(filtered).length === Object.keys(prev).length ? prev : filtered;
     });
+    setMultiFiles((prev) => {
+      const filtered = Object.fromEntries(Object.entries(prev).filter(([k]) => docKeys.has(k)));
+      return Object.keys(filtered).length === Object.keys(prev).length ? prev : filtered;
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveDocs]);
 
@@ -489,7 +500,14 @@ export function CheckoutFlow({
     if (key === "documents") {
       for (const d of effectiveDocs) {
         // a document already sent for the order (resumed checkout) does not need picking again
-        if (d.isRequired && !files[d.keyName] && !uploaded.current.has(d.keyName)) next[`d_${d.keyName}`] = t.errors.required;
+        if (uploaded.current.has(d.keyName)) continue;
+        if (d.isRequired) {
+          if (isMultiUploadDoc(d.keyName)) {
+            if (!(multiFiles[d.keyName]?.length)) next[`d_${d.keyName}`] = t.errors.required;
+          } else {
+            if (!files[d.keyName]) next[`d_${d.keyName}`] = t.errors.required;
+          }
+        }
       }
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
     }
@@ -563,6 +581,32 @@ export function CheckoutFlow({
     });
   }
 
+  function onAddMultiFile(key: string, maxMb: number | null, allowed: string[] | null, file: File | undefined) {
+    if (!file) return;
+    const limit = maxMb ?? 10;
+    let error = "";
+    if (file.size > limit * 1024 * 1024) error = fmt(t.documents.tooLarge, { n: digits(String(limit), locale) });
+    else if (allowed?.length && !allowed.includes(file.type)) error = t.documents.badType;
+
+    if (error) {
+      setFileErrors((prev) => ({ ...prev, [`d_${key}`]: error }));
+      return;
+    }
+    setFileErrors((prev) => { const c = { ...prev }; delete c[`d_${key}`]; return c; });
+    setErrors((prev) => { const c = { ...prev }; delete c[`d_${key}`]; return c; });
+    setMultiFiles((prev) => ({ ...prev, [key]: [...(prev[key] ?? []), file] }));
+  }
+
+  function removeMultiFile(key: string, index: number) {
+    setMultiFiles((prev) => {
+      const updated = (prev[key] ?? []).filter((_, i) => i !== index);
+      if (updated.length === 0) {
+        const c = { ...prev }; delete c[key]; return c;
+      }
+      return { ...prev, [key]: updated };
+    });
+  }
+
   /* ---------- place order ---------- */
 
   async function placeOrder() {
@@ -602,18 +646,32 @@ export function CheckoutFlow({
         setLocked(true);
       }
 
-      const pending = effectiveDocs.filter((d) => files[d.keyName] && !uploaded.current.has(d.keyName));
-      for (let i = 0; i < pending.length; i++) {
+      // Build flat list of {docKeyName, uploadKey, file} for all docs
+      type UploadItem = { docKeyName: string; uploadKey: string; file: File };
+      const allPending: UploadItem[] = [];
+      for (const d of effectiveDocs) {
+        if (uploaded.current.has(d.keyName)) continue;
+        if (isMultiUploadDoc(d.keyName)) {
+          (multiFiles[d.keyName] ?? []).forEach((file, i) => {
+            allPending.push({ docKeyName: d.keyName, uploadKey: i === 0 ? d.keyName : `${d.keyName}__${i + 1}`, file });
+          });
+        } else if (files[d.keyName]) {
+          allPending.push({ docKeyName: d.keyName, uploadKey: d.keyName, file: files[d.keyName] });
+        }
+      }
+      const uploadedDocKeys = new Set<string>();
+      for (let i = 0; i < allPending.length; i++) {
         setStage("uploading");
-        setProgress({ i: i + 1, n: pending.length });
+        setProgress({ i: i + 1, n: allPending.length });
         try {
-          await orders.upload(created.current.id, pending[i].keyName, files[pending[i].keyName]);
+          await orders.upload(created.current.id, allPending[i].uploadKey, allPending[i].file);
         } catch (err) {
           if (err instanceof ApiError && err.status === 401) throw err;
           throw new UploadError(err);
         }
-        uploaded.current.add(pending[i].keyName);
+        uploadedDocKeys.add(allPending[i].docKeyName);
       }
+      uploadedDocKeys.forEach((k) => uploaded.current.add(k));
 
       if (!paid.current) {
         setStage("paying");
@@ -1115,66 +1173,100 @@ export function CheckoutFlow({
             {effectiveDocs.map((d) => {
               const id = `doc-${d.keyName}`;
               const err = errors[`d_${d.keyName}`] ?? fileErrors[`d_${d.keyName}`];
-              const file = files[d.keyName];
               const limit = d.maxSizeMb ?? 10;
-              const effectiveRequired = d.isRequired;
+              const multi = isMultiUploadDoc(d.keyName);
+              const multiList = multiFiles[d.keyName] ?? [];
+              const singleFile = files[d.keyName];
               return (
                 <div key={d.id} className="rounded-card border border-line p-5">
                   <p className="font-medium">
                     {pick(d.labelEn, d.labelAr)}
-                    {effectiveRequired && (
-                      <span aria-hidden="true" className="ms-1 text-error">
-                        *
-                      </span>
+                    {d.isRequired && (
+                      <span aria-hidden="true" className="ms-1 text-error">*</span>
                     )}
                   </p>
                   <p className="mt-1 text-sm text-ink-muted">
                     {fmt(t.documents.allowed, { n: digits(String(limit), locale) })}
                   </p>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-3">
-                    <input
-                      id={id}
-                      type="file"
-                      accept={d.allowedTypes?.join(",") ?? "image/jpeg,image/png,application/pdf"}
-                      aria-invalid={!!err}
-                      aria-describedby={err ? `${id}-err` : undefined}
-                      onChange={(e) => {
-                        onPickFile(d.keyName, d.maxSizeMb, d.allowedTypes, e.target.files?.[0]);
-                        e.target.value = "";
-                      }}
-                      className="sr-only"
-                    />
-                    <label htmlFor={id} className={buttonClass("outline", "min-h-11 cursor-pointer text-sm")}>
-                      <UploadIcon size={18} />
-                      {file ? t.documents.replace : t.documents.choose}
-                    </label>
-                    {file && (
-                      <>
-                        <span className="min-w-0 max-w-full truncate text-sm" dir="ltr">
-                          {file.name}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => window.open(URL.createObjectURL(file), "_blank")}
-                          className="text-sm font-medium text-turquoise underline underline-offset-4"
-                        >
-                          {t.review.preview}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeFile(d.keyName)}
-                          className="text-sm font-medium text-navy underline underline-offset-4"
-                        >
-                          {t.documents.remove}
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  {multi ? (
+                    <>
+                      {multiList.length > 0 && (
+                        <ul className="mt-3 flex flex-col gap-2">
+                          {multiList.map((f, i) => (
+                            <li key={i} className="flex flex-wrap items-center gap-3 text-sm" dir="ltr">
+                              <span className="min-w-0 max-w-[28ch] truncate">{f.name}</span>
+                              <button
+                                type="button"
+                                onClick={() => window.open(URL.createObjectURL(f), "_blank")}
+                                className="font-medium text-turquoise underline underline-offset-4"
+                              >{t.review.preview}</button>
+                              <button
+                                type="button"
+                                onClick={() => removeMultiFile(d.keyName, i)}
+                                className="font-medium text-navy underline underline-offset-4"
+                              >{t.documents.remove}</button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <div className="mt-4">
+                        <input
+                          id={id}
+                          type="file"
+                          accept={d.allowedTypes?.join(",") ?? "image/jpeg,image/png,application/pdf"}
+                          aria-invalid={!!err}
+                          aria-describedby={err ? `${id}-err` : undefined}
+                          onChange={(e) => {
+                            onAddMultiFile(d.keyName, d.maxSizeMb, d.allowedTypes, e.target.files?.[0]);
+                            e.target.value = "";
+                          }}
+                          className="sr-only"
+                        />
+                        <label htmlFor={id} className={buttonClass("outline", "min-h-11 cursor-pointer text-sm")}>
+                          <UploadIcon size={18} />
+                          {multiList.length > 0 ? t.documents.choose : t.documents.choose}
+                        </label>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
+                      <input
+                        id={id}
+                        type="file"
+                        accept={d.allowedTypes?.join(",") ?? "image/jpeg,image/png,application/pdf"}
+                        aria-invalid={!!err}
+                        aria-describedby={err ? `${id}-err` : undefined}
+                        onChange={(e) => {
+                          onPickFile(d.keyName, d.maxSizeMb, d.allowedTypes, e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                        className="sr-only"
+                      />
+                      <label htmlFor={id} className={buttonClass("outline", "min-h-11 cursor-pointer text-sm")}>
+                        <UploadIcon size={18} />
+                        {singleFile ? t.documents.replace : t.documents.choose}
+                      </label>
+                      {singleFile && (
+                        <>
+                          <span className="min-w-0 max-w-full truncate text-sm" dir="ltr">{singleFile.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => window.open(URL.createObjectURL(singleFile), "_blank")}
+                            className="text-sm font-medium text-turquoise underline underline-offset-4"
+                          >{t.review.preview}</button>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(d.keyName)}
+                            className="text-sm font-medium text-navy underline underline-offset-4"
+                          >{t.documents.remove}</button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
                   {err && (
-                    <p id={`${id}-err`} role="alert" className="mt-3 text-sm text-error">
-                      {err}
-                    </p>
+                    <p id={`${id}-err`} role="alert" className="mt-3 text-sm text-error">{err}</p>
                   )}
                 </div>
               );
@@ -1382,24 +1474,31 @@ export function CheckoutFlow({
                   </dd>
                 </div>
               )}
-              {effectiveDocs.filter((d) => files[d.keyName]).map((d) => (
-                <div key={d.id} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
-                  <dt className="text-sm text-ink-muted">{pick(d.labelEn, d.labelAr)}</dt>
-                  <dd dir="ltr" className="flex items-center gap-2 font-medium">
-                    <span className="truncate max-w-[20ch]">{files[d.keyName].name}</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = URL.createObjectURL(files[d.keyName]);
-                        window.open(url, "_blank");
-                      }}
-                      className="shrink-0 text-xs font-semibold text-turquoise underline underline-offset-2"
-                    >
-                      {t.review.preview}
-                    </button>
-                  </dd>
-                </div>
-              ))}
+              {effectiveDocs.flatMap((d) => {
+                if (isMultiUploadDoc(d.keyName)) {
+                  const list = multiFiles[d.keyName] ?? [];
+                  if (!list.length) return [];
+                  return list.map((f, i) => (
+                    <div key={`${d.id}-${i}`} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
+                      <dt className="text-sm text-ink-muted">{pick(d.labelEn, d.labelAr)}{list.length > 1 ? ` (${i + 1})` : ""}</dt>
+                      <dd dir="ltr" className="flex items-center gap-2 font-medium">
+                        <span className="truncate max-w-[20ch]">{f.name}</span>
+                        <button type="button" onClick={() => window.open(URL.createObjectURL(f), "_blank")} className="shrink-0 text-xs font-semibold text-turquoise underline underline-offset-2">{t.review.preview}</button>
+                      </dd>
+                    </div>
+                  ));
+                }
+                if (!files[d.keyName]) return [];
+                return [(
+                  <div key={d.id} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
+                    <dt className="text-sm text-ink-muted">{pick(d.labelEn, d.labelAr)}</dt>
+                    <dd dir="ltr" className="flex items-center gap-2 font-medium">
+                      <span className="truncate max-w-[20ch]">{files[d.keyName].name}</span>
+                      <button type="button" onClick={() => window.open(URL.createObjectURL(files[d.keyName]), "_blank")} className="shrink-0 text-xs font-semibold text-turquoise underline underline-offset-2">{t.review.preview}</button>
+                    </dd>
+                  </div>
+                )];
+              })}
             </dl>
 
             {/* Delivery summary */}
