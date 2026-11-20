@@ -76,14 +76,14 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
               <MailIcon size={15} className="shrink-0 text-white/50" />
               <span dir="ltr">{SUPPORT_EMAIL}</span>
             </a>
-            {/* 010 — WhatsApp */}
-            <a href={waHref(SUPPORT_PHONE_MOBILE)} target="_blank" rel="noopener" className={`${link} gap-2`} dir={locale === "ar" ? undefined : "ltr"}>
-              <WaIcon />
+            {/* 010 — Call */}
+            <a href={telHref(SUPPORT_PHONE_MOBILE)} className={`${link} gap-2`} dir={locale === "ar" ? undefined : "ltr"}>
+              <PhoneIcon size={15} className="shrink-0 text-white/50" />
               <span dir="ltr">{SUPPORT_PHONE_MOBILE}</span>
             </a>
-            {/* 012 — Call */}
-            <a href={telHref(SUPPORT_PHONE_MOBILE_2)} className={`${link} gap-2`} dir={locale === "ar" ? undefined : "ltr"}>
-              <PhoneIcon size={15} className="shrink-0 text-white/50" />
+            {/* 012 — WhatsApp */}
+            <a href={waHref(SUPPORT_PHONE_MOBILE_2)} target="_blank" rel="noopener" className={`${link} gap-2`} dir={locale === "ar" ? undefined : "ltr"}>
+              <WaIcon />
               <span dir="ltr">{SUPPORT_PHONE_MOBILE_2}</span>
             </a>
             {/* Landline */}
