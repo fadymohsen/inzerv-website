@@ -47,6 +47,8 @@ export type GovService = {
   deliveryRule?: GeoRule | null;
   paymentNoticeEn?: string | null;
   paymentNoticeAr?: string | null;
+  /** null/undefined = unlimited copies. 1 = hide copies selector, lock to 1. */
+  maxCopies?: number | null;
   fields: ServiceField[];
   requiredDocuments: ServiceDocument[];
 };
