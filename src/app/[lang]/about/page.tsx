@@ -43,21 +43,6 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
     <>
       <PageHero title={t.title} sub={t.lead} shot="track" locale={lang} app={app} />
 
-      {/* Stats bar */}
-      <section className="bg-navy text-white">
-        <div className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
-          <dl className="grid grid-cols-3 gap-6 lg:gap-12">
-            {t.stats.map((s) => (
-              <div key={s.label} className="flex flex-col gap-1.5">
-                <dt className="tabular text-[clamp(2rem,5vw,3.75rem)] font-semibold leading-none tracking-[-0.04em] text-turquoise">
-                  {s.value}
-                </dt>
-                <dd className="text-xs leading-snug text-white/60 sm:text-sm">{s.label}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-      </section>
 
       {/* Mission */}
       <section className="bg-navy text-white">
