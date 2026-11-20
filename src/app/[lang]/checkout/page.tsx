@@ -34,6 +34,7 @@ export default async function CheckoutPage({ params }: PageProps<"/[lang]/checko
               legal={{ terms: t.footer.terms, refund: t.footer.refund, privacy: t.footer.privacy }}
               services={catalog.services}
               destinations={catalog.destinations}
+              extras={catalog.extras}
               phoneCountryLabel={t.common.phoneCountry}
               searchCountryLabel={t.common.searchCountry}
             />

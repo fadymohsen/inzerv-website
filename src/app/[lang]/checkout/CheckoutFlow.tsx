@@ -22,7 +22,7 @@ import {
 } from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
 import { useProfile } from "@/components/account/useAccount";
-import type { DeliveryDestination, GovService } from "@/lib/types";
+import type { DeliveryDestination, ExtrasConfig, GovService } from "@/lib/types";
 import { canOrderMyself, canOrderOther, serviceNotices } from "@/lib/service-rules";
 import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
 import { getRegions, getCities } from "@/lib/governorates";
@@ -117,6 +117,7 @@ export function CheckoutFlow({
   legal,
   services,
   destinations,
+  extras,
   phoneCountryLabel,
   searchCountryLabel,
 }: {
@@ -125,6 +126,7 @@ export function CheckoutFlow({
   legal: { terms: string; refund: string; privacy: string };
   services: GovService[];
   destinations: DeliveryDestination[];
+  extras: ExtrasConfig;
   phoneCountryLabel: string;
   searchCountryLabel: string;
 }) {
@@ -306,10 +308,8 @@ export function CheckoutFlow({
 
   const serviceFee = (service?.servicePrice ?? 0) * copies;
   const deliveryFee = destination?.deliveryFee ?? 0;
-  const authFee = extraAuth ? t.details.authenticationPrice : 0;
-  const translationFee = extraTranslation && translationLang
-    ? (t.details.languages.find((l) => l.value === translationLang)?.price ?? 0)
-    : 0;
+  const authFee = extraAuth ? extras.authPrice : 0;
+  const translationFee = extraTranslation && translationLang ? extras.translationPrice : 0;
   const extrasFee = authFee + translationFee;
   const total = serviceFee + deliveryFee + extrasFee;
 
@@ -950,11 +950,14 @@ export function CheckoutFlow({
                   <input type="checkbox" checked={extraAuth} onChange={(e) => setExtraAuth(e.target.checked)} className="size-4 accent-navy" />
                   {t.details.authentication}
                 </span>
-                <span dir="ltr" className="text-sm font-semibold text-navy">{t.details.authenticationPrice.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</span>
+                <span dir="ltr" className="text-sm font-semibold text-navy">{extras.authPrice.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</span>
               </label>
-              <label className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraTranslation ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
-                <input type="checkbox" checked={extraTranslation} onChange={(e) => { setExtraTranslation(e.target.checked); if (!e.target.checked) setTranslationLang(""); }} className="size-4 accent-navy" />
-                {t.details.translation}
+              <label className={`flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraTranslation ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
+                <span className="flex items-center gap-3">
+                  <input type="checkbox" checked={extraTranslation} onChange={(e) => { setExtraTranslation(e.target.checked); if (!e.target.checked) setTranslationLang(""); }} className="size-4 accent-navy" />
+                  {t.details.translation}
+                </span>
+                <span dir="ltr" className="text-sm font-semibold text-navy">{extras.translationPrice.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</span>
               </label>
               {extraTranslation && (
                 <Field id="d-lang" label={t.details.selectLanguage} error={errors.translationLang} required>
@@ -962,10 +965,7 @@ export function CheckoutFlow({
                     id="d-lang"
                     value={translationLang}
                     placeholder={t.details.selectLanguage}
-                    options={t.details.languages.map((l) => ({
-                      value: l.value,
-                      label: `${l.label} — ${l.price.toLocaleString("en-EG")} ${locale === "ar" ? "ج.م" : "EGP"}`,
-                    }))}
+                    options={extras.languages.map((l) => ({ value: l.value, label: l.label }))}
                     onChange={setTranslationLang}
                     searchable
                     aria-invalid={!!errors.translationLang}
@@ -1261,7 +1261,7 @@ export function CheckoutFlow({
                   <dd className="mt-1 flex flex-col gap-1 font-medium">
                     {extraAuth && <span>{t.details.authentication}</span>}
                     {extraTranslation && translationLang && (
-                      <span>{t.details.translation}: {t.details.languages.find((l) => l.value === translationLang)?.label}</span>
+                      <span>{t.details.translation}: {extras.languages.find((l) => l.value === translationLang)?.label}</span>
                     )}
                   </dd>
                 </div>
@@ -1341,6 +1341,15 @@ export function CheckoutFlow({
               </div>
               <p className="mt-3 text-sm text-ink-muted">{t.review.paymentNote}</p>
             </fieldset>
+
+            {(() => {
+              const notice = locale === "ar" ? service?.paymentNoticeAr : service?.paymentNoticeEn;
+              return notice ? (
+                <div className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink">
+                  {notice}
+                </div>
+              ) : null;
+            })()}
 
             <div>
               <label className="flex cursor-pointer items-start gap-3">
@@ -1429,7 +1438,7 @@ export function CheckoutFlow({
               )}
               {extraTranslation && translationLang && (
                 <div className="flex justify-between gap-4">
-                  <dt className="text-ink-muted">{t.details.translation} ({t.details.languages.find((l) => l.value === translationLang)?.label})</dt>
+                  <dt className="text-ink-muted">{t.details.translation} ({extras.languages.find((l) => l.value === translationLang)?.label})</dt>
                   <dd className="tabular font-medium">{money(translationFee, locale)}</dd>
                 </div>
               )}

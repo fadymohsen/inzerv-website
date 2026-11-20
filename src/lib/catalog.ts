@@ -1,5 +1,5 @@
 import { cacheLife, cacheTag } from "next/cache";
-import type { Catalog, DeliveryDestination, GovService } from "./types";
+import type { Catalog, DeliveryDestination, ExtrasConfig, GovService } from "./types";
 
 import { API_URL } from "./config";
 
@@ -73,22 +73,55 @@ async function getJson<T>(path: string): Promise<T> {
   return res.json() as Promise<T>;
 }
 
+const fallbackExtras: ExtrasConfig = {
+  authPrice: 500,
+  translationPrice: 350,
+  languages: [
+    { value: "en", label: "English" },
+    { value: "fr", label: "French" },
+    { value: "de", label: "German" },
+    { value: "es", label: "Spanish" },
+    { value: "it", label: "Italian" },
+    { value: "ru", label: "Russian" },
+    { value: "zh", label: "Chinese" },
+    { value: "ja", label: "Japanese" },
+    { value: "pt", label: "Portuguese" },
+    { value: "nl", label: "Dutch" },
+    { value: "tr", label: "Turkish" },
+    { value: "el", label: "Greek" },
+    { value: "pl", label: "Polish" },
+    { value: "cs", label: "Czech" },
+    { value: "ko", label: "Korean" },
+    { value: "sv", label: "Swedish" },
+    { value: "da", label: "Danish" },
+    { value: "hu", label: "Hungarian" },
+    { value: "ro", label: "Romanian" },
+    { value: "id", label: "Indonesian" },
+    { value: "th", label: "Thai" },
+    { value: "ur", label: "Urdu" },
+    { value: "sw", label: "Swahili" },
+    { value: "he", label: "Hebrew" },
+  ],
+};
+
 export async function getCatalog(): Promise<Catalog> {
   "use cache";
   cacheLife("minutes");
   cacheTag("catalog");
 
   try {
-    const [services, destinations] = await Promise.all([
+    const [services, destinations, extras] = await Promise.all([
       getJson<GovService[]>("/services"),
       getJson<DeliveryDestination[]>("/delivery/destinations"),
+      getJson<ExtrasConfig>("/services/extras").catch(() => fallbackExtras),
     ]);
     return {
       services: services.map((s) => ({ ...s, servicePrice: Number(s.servicePrice) })),
       destinations: destinations.map((d) => ({ ...d, deliveryFee: Number(d.deliveryFee) })),
+      extras,
       live: true,
     };
   } catch {
-    return { services: fallbackServices, destinations: fallbackDestinations, live: false };
+    return { services: fallbackServices, destinations: fallbackDestinations, extras: fallbackExtras, live: false };
   }
 }

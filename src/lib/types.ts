@@ -45,6 +45,8 @@ export type GovService = {
   relationshipRule?: "first" | "both";
   residenceRule?: GeoRule | null;
   deliveryRule?: GeoRule | null;
+  paymentNoticeEn?: string | null;
+  paymentNoticeAr?: string | null;
   fields: ServiceField[];
   requiredDocuments: ServiceDocument[];
 };
@@ -59,9 +61,16 @@ export type DeliveryDestination = {
   zoneNameAr?: string | null;
 };
 
+export type ExtrasConfig = {
+  authPrice: number;
+  translationPrice: number;
+  languages: { value: string; label: string }[];
+};
+
 export type Catalog = {
   services: GovService[];
   destinations: DeliveryDestination[];
+  extras: ExtrasConfig;
   live: boolean;
 };
 
