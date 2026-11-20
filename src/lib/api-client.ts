@@ -100,6 +100,11 @@ export type RequestDetail = UserRequest & {
   recipientPhone: string | null;
   actionRequiredMessage: string | null;
   statusHistory: StatusHistoryEntry[];
+  /** Refund fields — present when the backend has initiated or completed a refund. */
+  refundStatus?: string | null;
+  refundAmount?: number | string | null;
+  refundFee?: number | string | null;
+  refundMethod?: string | null;
 };
 
 export const orders = {

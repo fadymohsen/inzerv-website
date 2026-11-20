@@ -142,6 +142,9 @@ function RequestCard({ r, locale, t, onReload }: { r: UserRequest; locale: Local
   const [open, setOpen] = useState(false);
   const [detail, setDetail] = useState<RequestDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showCancel, setShowCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
 
   function toggle() {
     if (!open && !detail) {
@@ -152,15 +155,30 @@ function RequestCard({ r, locale, t, onReload }: { r: UserRequest; locale: Local
     }
   }
 
+  async function handleCancel() {
+    setCancelling(true);
+    setCancelError("");
+    try {
+      await orders.cancel(r.id);
+      setShowCancel(false);
+      onReload();
+    } catch {
+      setCancelError(t.detail.cancelFailed);
+    }
+    setCancelling(false);
+  }
+
   const serviceName = locale === "ar" ? r.govService.nameAr : r.govService.nameEn;
   const statusLabel = t.status[r.status] ?? r.status;
   const colorClass = STATUS_COLOR[r.status] ?? "bg-gray-100 text-gray-600";
   const amount = Number(r.totalAmount);
+  const paidAmount = r.status !== "requested" ? amount : 0; // unpaid orders have no refund
   // Always use Western digits (0-9) per Note 16
   const date = new Date(r.createdAt).toLocaleDateString(locale === "ar" ? "ar-u-nu-latn" : "en-GB", {
     day: "numeric", month: "short", year: "numeric",
   });
   const copies = r.numberOfCopies === 1 ? t.oneCopy : t.copies.replace("{n}", String(r.numberOfCopies));
+  const canCancel = CANCELLABLE.has(r.status);
 
   return (
     <li className="overflow-hidden rounded-card border border-line bg-white transition-shadow hover:shadow-md">
@@ -191,9 +209,22 @@ function RequestCard({ r, locale, t, onReload }: { r: UserRequest; locale: Local
         </div>
       </button>
 
+      {/* Item 18: cancel button visible at card level without requiring expansion */}
+      {canCancel && (
+        <div className="border-t border-line px-4 pb-3 pt-2 sm:px-5">
+          <button
+            type="button"
+            onClick={() => setShowCancel(true)}
+            className="text-sm font-medium text-error underline underline-offset-4 hover:no-underline"
+          >
+            {t.detail.cancelButton}
+          </button>
+        </div>
+      )}
+
       {open && detail && (
         <div className="border-t border-line bg-bg-light px-4 pb-5 pt-4 sm:px-5">
-          <DetailPanel detail={detail} locale={locale} t={t} onStatusChange={onReload} />
+          <DetailPanel detail={detail} locale={locale} t={t} />
           <button
             type="button"
             onClick={() => setOpen(false)}
@@ -203,48 +234,56 @@ function RequestCard({ r, locale, t, onReload }: { r: UserRequest; locale: Local
           </button>
         </div>
       )}
+
+      <Modal open={showCancel} onClose={() => !cancelling && setShowCancel(false)} label={t.detail.cancelConfirm}>
+        <h2 className="text-xl font-semibold">{t.detail.cancelConfirm}</h2>
+        <p className="mt-3 text-ink-muted">{t.detail.cancelConfirmText}</p>
+        {paidAmount > 0 && (
+          <p className="mt-3 text-sm text-navy">
+            {t.detail.refundAmount}: <strong>{paidAmount.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</strong>
+          </p>
+        )}
+        {cancelError && <p className="mt-3 text-sm text-error">{cancelError}</p>}
+        <div className="mt-6 flex flex-col gap-3">
+          <button type="button" disabled={cancelling} onClick={handleCancel} className={buttonClass("primary", "bg-error hover:bg-error/90")}>
+            {cancelling ? t.detail.cancelling : t.detail.cancelYes}
+          </button>
+          <button type="button" disabled={cancelling} onClick={() => setShowCancel(false)} className="min-h-12 rounded-btn px-5 font-medium text-navy">
+            {t.detail.cancelNo}
+          </button>
+        </div>
+      </Modal>
     </li>
   );
 }
 
 /* ── Detail panel ──────────────────────────────────────────── */
 
-const CANCELLABLE = new Set(["received", "under_review", "action_required"]);
+// requested = unpaid order (no refund due); received/under_review/action_required = paid, refund may apply
+const CANCELLABLE = new Set(["requested", "received", "under_review", "action_required"]);
 
-function DetailPanel({ detail, locale, t, onStatusChange }: { detail: RequestDetail; locale: Locale; t: Dict["account"]["requests"]; onStatusChange?: () => void }) {
+function DetailPanel({ detail, locale, t }: { detail: RequestDetail; locale: Locale; t: Dict["account"]["requests"] }) {
   const d = t.detail;
   const history = [...(detail.statusHistory ?? [])].sort(
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
   );
 
-  const [showCancel, setShowCancel] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelError, setCancelError] = useState("");
-
-  async function handleCancel() {
-    setCancelling(true);
-    setCancelError("");
-    try {
-      await orders.cancel(detail.id);
-      setShowCancel(false);
-      onStatusChange?.();
-    } catch {
-      setCancelError(d.cancelFailed);
-    }
-    setCancelling(false);
-  }
-
-  const canCancel = CANCELLABLE.has(detail.status);
   const isCancelled = detail.status === "cancelled";
   const totalAmount = Number(detail.totalAmount);
+  const refundAmt = detail.refundAmount != null ? Number(detail.refundAmount) : totalAmount;
+  const refundStatusLabel = detail.refundStatus === "processed" ? d.refundProcessed : d.refundPending;
+  const refundMethodLabel = detail.refundMethod ?? (locale === "ar" ? "نفس وسيلة الدفع" : "Original payment method");
+  const showRefund = isCancelled && (detail.refundStatus != null || refundAmt > 0);
 
   return (
     <div className="flex flex-col gap-5">
-      {/* Action required banner */}
-      {detail.status === "action_required" && detail.actionRequiredMessage && (
+      {/* Item 17: always show action banner + button for action_required, message is optional */}
+      {detail.status === "action_required" && (
         <div className="rounded-btn border border-orange-300 bg-orange-50 px-4 py-3">
           <p className="text-xs font-semibold text-orange-800">{d.actionRequired}</p>
-          <p className="mt-1 text-sm text-orange-700">{detail.actionRequiredMessage}</p>
+          {detail.actionRequiredMessage && (
+            <p className="mt-1 text-sm text-orange-700">{detail.actionRequiredMessage}</p>
+          )}
           <Link
             href={`/${locale}/contact?topic=${encodeURIComponent(locale === "ar" ? "بخصوص طلب قائم" : "Regarding an Existing Order")}&ref=${encodeURIComponent(detail.referenceNumber)}`}
             className={buttonClass("primary", "mt-3 text-sm")}
@@ -284,46 +323,22 @@ function DetailPanel({ detail, locale, t, onStatusChange }: { detail: RequestDet
         </div>
       </div>
 
-      {/* Refund info for cancelled requests */}
-      {isCancelled && totalAmount > 0 && (
+      {/* Item 19: refund section — uses backend fields when available, falls back to totalAmount */}
+      {showRefund && (
         <div className="rounded-btn border border-line bg-white p-4">
           <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">{d.refund}</h4>
-          <InfoRow label={d.refundAmount} value={`${totalAmount.toLocaleString("en-EG")} ${locale === "ar" ? "ج.م" : "EGP"}`} />
-          <InfoRow label={d.refundMethod} value={locale === "ar" ? "نفس وسيلة الدفع" : "Original payment method"} />
-          <InfoRow label={d.refundStatus} value={d.refundPending} />
+          <InfoRow label={d.refundAmount} value={`${refundAmt.toLocaleString("en-EG")} ${locale === "ar" ? "ج.م" : "EGP"}`} />
+          {detail.refundFee != null && Number(detail.refundFee) > 0 && (
+            <InfoRow
+              label={locale === "ar" ? "رسوم المعالجة المخصومة" : "Processing fee deducted"}
+              value={`${Number(detail.refundFee).toLocaleString("en-EG")} ${locale === "ar" ? "ج.م" : "EGP"}`}
+            />
+          )}
+          <InfoRow label={d.refundMethod} value={refundMethodLabel} />
+          <InfoRow label={d.refundStatus} value={refundStatusLabel} />
           <p className="mt-1 text-xs text-ink-muted">{d.refundTimeline}</p>
         </div>
       )}
-
-      {/* Cancel button */}
-      {canCancel && (
-        <button
-          type="button"
-          onClick={() => setShowCancel(true)}
-          className="self-start text-sm font-medium text-error underline underline-offset-4 hover:no-underline"
-        >
-          {d.cancelButton}
-        </button>
-      )}
-
-      <Modal open={showCancel} onClose={() => !cancelling && setShowCancel(false)} label={d.cancelConfirm}>
-        <h2 className="text-xl font-semibold">{d.cancelConfirm}</h2>
-        <p className="mt-3 text-ink-muted">{d.cancelConfirmText}</p>
-        {totalAmount > 0 && (
-          <p className="mt-3 text-sm text-navy">
-            {d.refundAmount}: <strong>{totalAmount.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</strong>
-          </p>
-        )}
-        {cancelError && <p className="mt-3 text-sm text-error">{cancelError}</p>}
-        <div className="mt-6 flex flex-col gap-3">
-          <button type="button" disabled={cancelling} onClick={handleCancel} className={buttonClass("primary", "bg-error hover:bg-error/90")}>
-            {cancelling ? d.cancelling : d.cancelYes}
-          </button>
-          <button type="button" disabled={cancelling} onClick={() => setShowCancel(false)} className="min-h-12 rounded-btn px-5 font-medium text-navy">
-            {d.cancelNo}
-          </button>
-        </div>
-      </Modal>
     </div>
   );
 }
