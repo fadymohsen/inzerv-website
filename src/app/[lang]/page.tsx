@@ -180,7 +180,12 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                   href={`/${lang}/checkout?service=${s.type}`}
                   className="reveal group flex h-full flex-col justify-between gap-5 rounded-2xl border border-navy/10 bg-white p-6 transition-shadow hover:shadow-md"
                 >
-                  <h3 className="text-lg font-semibold leading-snug tracking-[-0.01em]">{serviceName(s, lang)}</h3>
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-lg font-semibold leading-snug tracking-[-0.01em]">{serviceName(s, lang)}</h3>
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy/5 text-navy transition-colors group-hover:bg-navy group-hover:text-white">
+                      <ArrowIcon size={16} />
+                    </span>
+                  </div>
                   <div className="flex items-end justify-between gap-3">
                     <p className="tabular text-2xl font-semibold tracking-tight">
                       {money(s.servicePrice, lang)}
