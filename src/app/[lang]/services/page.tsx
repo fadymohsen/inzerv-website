@@ -102,7 +102,7 @@ export default async function ServicesPage({ params }: PageProps<"/[lang]/servic
                     time={processingTime(s, lang)}
                     checkoutHref={`/${lang}/checkout?service=${s.type}`}
                     orderLabel={t.common.orderThis}
-                    isBlocked={s.isBlocked}
+                    isBlocked={!!s.isBlocked}
                     blockedLabel={t.checkout.rules.blocked}
                     showLabel={t.services.showDetails}
                     hideLabel={t.services.hideDetails}
