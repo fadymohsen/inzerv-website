@@ -128,7 +128,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       </section>
 
       {/* Story rows */}
-      <section className="bg-white">
+      <section className="mt-12 bg-white lg:mt-20">
         <div className="mx-auto max-w-7xl px-5 pb-12 lg:px-8">
           <div className="flex flex-col gap-6 lg:gap-8">
             {t.home.benefits.items.map((b, i) => {
