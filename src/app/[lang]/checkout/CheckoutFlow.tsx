@@ -421,7 +421,19 @@ export function CheckoutFlow({
     }
   }, [requestFor, fullName, profilePhone?.national, profilePhone?.country]);
 
-  const serviceFee = (service?.servicePrice ?? 0) * copies;
+  // If any select field option carries a price override, use it as the unit price
+  const unitPrice = (() => {
+    if (!service) return 0;
+    for (const field of service.fields ?? []) {
+      if (!field.options?.length) continue;
+      const selected = values[field.keyName];
+      if (!selected) continue;
+      const opt = field.options.find((o) => o.value === selected);
+      if (opt?.price != null) return opt.price;
+    }
+    return service.servicePrice ?? 0;
+  })();
+  const serviceFee = unitPrice * copies;
   const deliveryFee = destination?.deliveryFee ?? 0;
   const authFee = extraAuth ? extras.authPrice : 0;
   const translationFee = extraTranslation && translationLang ? extras.translationPrice : 0;

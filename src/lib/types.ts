@@ -6,7 +6,7 @@ export type ServiceField = {
   fieldType: "text" | "date" | "select" | "number";
   isRequired: boolean;
   showForAnotherPerson: boolean;
-  options: { value: string; labelEn: string; labelAr: string }[] | null;
+  options: { value: string; labelEn: string; labelAr: string; price?: number }[] | null;
   sortOrder: number;
 };
 
