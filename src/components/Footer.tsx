@@ -4,6 +4,7 @@ import { SUPPORT_EMAIL, SUPPORT_PHONE_LANDLINE, SUPPORT_PHONE_MOBILE, SUPPORT_PH
 import type { Locale } from "@/lib/i18n";
 import { MailIcon, PhoneIcon, MapPinIcon } from "./Icons";
 import { Logo } from "./Logo";
+import { SocialLinks } from "./SocialLinks";
 
 const MAPS_URL = "https://goo.gl/maps/KcrdKSpnEPFc4rym8?g_st=aw";
 
@@ -38,6 +39,7 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
         <div className="col-span-2 flex flex-col items-start gap-5 lg:col-span-1">
           <Logo locale={locale} height={52} />
           <p className="max-w-xs text-sm leading-relaxed text-white/70">{t.tagline}</p>
+          <SocialLinks variant="dark" />
         </div>
 
         <nav aria-label={t.explore}>
