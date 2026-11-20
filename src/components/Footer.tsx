@@ -5,7 +5,7 @@ import type { Locale } from "@/lib/i18n";
 import { MailIcon, PhoneIcon, MapPinIcon } from "./Icons";
 import { Logo } from "./Logo";
 
-const MAPS_URL = "https://maps.google.com/?q=8+Green+Towers+Compound,+Smouha,+Alexandria,+Egypt";
+const MAPS_URL = "https://goo.gl/maps/KcrdKSpnEPFc4rym8?g_st=aw";
 
 const telHref = (number: string) => `tel:+20${number.replace(/^0/, "")}`;
 const waHref = (number: string) => `https://wa.me/20${number.replace(/^0/, "")}`;
