@@ -45,10 +45,18 @@ const fallbackServices: GovService[] = [
 ];
 
 const fallbackDestinations: DeliveryDestination[] = [
-  ["inside_egypt", "Egypt", "EG", 50],
-  ["outside_egypt", "Saudi Arabia", "SA", 250],
-  ["outside_egypt", "United Arab Emirates", "AE", 250],
-  ["outside_egypt", "Qatar", "QA", 250],
+  // Egypt — one entry per delivery zone (zone id used as countryCode prefix for lookup)
+  ["inside_egypt", "Egypt — Greater Cairo", "EG", 0],
+  ["inside_egypt", "Egypt — Alexandria", "EG", 0],
+  ["inside_egypt", "Egypt — Nile Delta & North Coast", "EG", 0],
+  ["inside_egypt", "Egypt — Canal Cities", "EG", 0],
+  ["inside_egypt", "Egypt — Upper Egypt", "EG", 0],
+  ["inside_egypt", "Egypt — Remote & Border Areas", "EG", 0],
+  // Gulf countries (approved)
+  ["outside_egypt", "Saudi Arabia", "SA", 3790],
+  ["outside_egypt", "United Arab Emirates", "AE", 3790],
+  ["outside_egypt", "Kuwait", "KW", 3790],
+  ["outside_egypt", "Qatar", "QA", 3790],
 ].map(([zone, country, countryCode, deliveryFee]) => ({
   id: "",
   zone: zone as DeliveryDestination["zone"],

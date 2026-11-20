@@ -311,6 +311,14 @@ const data: Record<string, Region[]> = {
     { en: "Umm Salal", ar: "أم صلال" },
     { en: "Al Shahaniya", ar: "الشحانية" },
   ],
+  KW: [
+    { en: "Al Asimah", ar: "العاصمة" },
+    { en: "Hawalli", ar: "حولي" },
+    { en: "Farwaniya", ar: "الفروانية" },
+    { en: "Mubarak Al-Kabeer", ar: "مبارك الكبير" },
+    { en: "Ahmadi", ar: "الأحمدي" },
+    { en: "Jahra", ar: "الجهراء" },
+  ],
 };
 
 export function getRegions(countryCode: string): Region[] {
