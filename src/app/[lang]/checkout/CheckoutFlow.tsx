@@ -954,17 +954,10 @@ export function CheckoutFlow({
           </div>
         )}
 
-        {service && (notices.length > 0 || service.isBlocked) && (
-          <ul
-            role={service.isBlocked ? "alert" : undefined}
-            className={`-mt-6 mb-10 flex flex-col gap-2 rounded-card border px-5 py-4 text-sm leading-relaxed ${
-              service.isBlocked ? "border-error/40 text-error" : "border-line bg-bg-light text-navy"
-            }`}
-          >
-            {notices.map((n) => (
-              <li key={n}>{n}</li>
-            ))}
-          </ul>
+        {service?.isBlocked && (
+          <p role="alert" className="-mt-6 mb-10 rounded-card border border-error/40 px-5 py-4 text-sm leading-relaxed text-error">
+            {t.rules.blockedNote}
+          </p>
         )}
 
         {/* Stepper */}

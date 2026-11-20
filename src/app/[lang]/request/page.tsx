@@ -65,13 +65,6 @@ export default async function RequestPage({ params }: PageProps<"/[lang]/request
                 <span className="mt-3 line-clamp-3 block leading-relaxed text-ink-muted">
                   {firstSentence(serviceDescription(s, lang))}
                 </span>
-                {notices.length > 0 && (
-                  <span className="mt-4 flex flex-col gap-1.5 rounded-btn bg-bg-light px-4 py-3 text-sm leading-relaxed text-navy">
-                    {notices.map((n) => (
-                      <span key={n} className="block">{n}</span>
-                    ))}
-                  </span>
-                )}
 
                 <span className="mt-auto block pt-7">
                   <span className="flex items-end justify-between gap-4 border-t border-line pt-5">

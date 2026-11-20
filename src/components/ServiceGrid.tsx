@@ -45,13 +45,6 @@ function DetailContent({ card }: { card: CardData }) {
   return (
     <div className="flex flex-col gap-5">
       <p className="text-sm leading-relaxed text-ink-muted">{card.description}</p>
-      {card.notices.length > 0 && (
-        <ul className="flex flex-col gap-1.5 rounded-btn bg-bg-light px-4 py-3 text-sm leading-relaxed text-navy">
-          {card.notices.map((n) => (
-            <li key={n}>{n}</li>
-          ))}
-        </ul>
-      )}
       <BulletList title={card.docsLabel} items={card.docs} />
       <BulletList title={card.fieldsLabel} items={card.fields} />
       {card.isBlocked ? (
