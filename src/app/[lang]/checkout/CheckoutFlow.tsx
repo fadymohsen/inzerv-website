@@ -75,9 +75,9 @@ function isRelationshipField(key: string) {
 }
 
 /** Roles a party to the marriage can pick when ordering for themselves. */
-const MYSELF_RELATIONSHIPS = new Set(["spouse", "husband", "wife"]);
+const MYSELF_RELATIONSHIPS = new Set(["husband", "wife"]);
 /** Party-only roles never apply to a relative ordering for someone else. */
-const PARTY_ONLY = new Set(["husband", "wife"]);
+const PARTY_ONLY = new Set(["husband", "wife", "spouse"]);
 
 /** Today's date as YYYY-MM-DD in local timezone. */
 function todayLocal() {
