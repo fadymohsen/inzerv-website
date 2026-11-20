@@ -1083,7 +1083,7 @@ export function CheckoutFlow({
                 placeholder={t.delivery.select}
                 options={allowedDestinations.map((d) => ({
                   value: d.id,
-                  label: `${countryName(d.countryCode, d.country, locale)}, ${money(d.deliveryFee, locale)}`,
+                  label: `${(locale === "ar" ? d.zoneNameAr : d.zoneNameEn) || countryName(d.countryCode, d.country, locale)}, ${money(d.deliveryFee, locale)}`,
                 }))}
                 onChange={setDestination}
                 aria-invalid={!!errors.destinationId}
@@ -1293,7 +1293,7 @@ export function CheckoutFlow({
                 {[
                   { label: t.delivery.recipient, value: delivery.recipientName },
                   { label: t.delivery.recipientPhone, value: delivery.recipientPhone, dir: "ltr" },
-                  { label: t.delivery.destination, value: destination ? countryName(destination.countryCode, destination.country, locale) : "" },
+                  { label: t.delivery.destination, value: destination ? ((locale === "ar" ? destination.zoneNameAr : destination.zoneNameEn) || countryName(destination.countryCode, destination.country, locale)) : "" },
                   { label: t.delivery.governorate, value: delivery.governorate },
                   { label: t.delivery.city, value: delivery.city === "__other__" ? customCity : delivery.city },
                   { label: t.delivery.address, value: delivery.address },

@@ -55,6 +55,8 @@ export type DeliveryDestination = {
   country: string;
   countryCode: string;
   deliveryFee: number;
+  zoneNameEn?: string | null;
+  zoneNameAr?: string | null;
 };
 
 export type Catalog = {
