@@ -40,8 +40,46 @@ const TRANSLATION_PASSPORT_DOC: ServiceDocument = {
   sortOrder: 9999,
 };
 
+const DIVORCE_CERT_DOC: ServiceDocument = {
+  id: "__divorce_cert__",
+  keyName: "__divorce_certificate_copy__",
+  labelEn: "Divorce Certificate Copy",
+  labelAr: "صورة قسيمة الطلاق",
+  isRequired: true,
+  showForAnotherPerson: false,
+  allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
+  maxSizeMb: 10,
+  sortOrder: 9998,
+};
+
+const DEATH_CERT_DOC: ServiceDocument = {
+  id: "__death_cert__",
+  keyName: "__death_certificate_copy__",
+  labelEn: "Deceased Spouse Death Certificate",
+  labelAr: "شهادة وفاة الزوج / الزوجة",
+  isRequired: true,
+  showForAnotherPerson: false,
+  allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
+  maxSizeMb: 10,
+  sortOrder: 9997,
+};
+
 function isPassportDoc(keyName: string) {
   return keyName.toLowerCase().includes("passport");
+}
+
+function isWivesCountField(keyName: string) {
+  const k = keyName.toLowerCase();
+  return k === "number_of_wives" || k === "marriages_count" || k === "num_marriages" || k === "number_of_marriages";
+}
+
+function isMarriageCertDoc(keyName: string) {
+  const k = keyName.toLowerCase();
+  return k.includes("marriage") && (k.includes("cert") || k.includes("certificate") || k.includes("copy") || k.includes("contract"));
+}
+
+function isCivilStatusField(keyName: string) {
+  return keyName.toLowerCase() === "civil_status";
 }
 
 const NATIONAL_ID_RE = /^[23]\d{13}$/;
@@ -283,10 +321,55 @@ export function CheckoutFlow({
     [service, requestFor],
   );
   const effectiveDocs = useMemo(() => {
-    if (!extraTranslation) return visibleDocs;
-    if (visibleDocs.some((d) => isPassportDoc(d.keyName))) return visibleDocs;
-    return [...visibleDocs, TRANSLATION_PASSPORT_DOC];
-  }, [visibleDocs, extraTranslation]);
+    let docs: ServiceDocument[] = [...visibleDocs];
+
+    // 1. family_record: expand marriage_certificate_copy to N slots for N wives
+    const wivesField = visibleFields.find((f) => isWivesCountField(f.keyName));
+    const wivesCount = wivesField ? parseInt(values[wivesField.keyName] ?? "0", 10) : null;
+    if (wivesCount !== null && wivesCount > 1) {
+      const idx = docs.findIndex((d) => isMarriageCertDoc(d.keyName));
+      if (idx !== -1) {
+        const original = docs[idx];
+        const expanded: ServiceDocument[] = Array.from({ length: wivesCount }, (_, i) => ({
+          ...original,
+          id: `${original.id}__${i + 1}`,
+          keyName: `${original.keyName}__${i + 1}`,
+          labelEn: `${original.labelEn} (${i + 1})`,
+          labelAr: `${original.labelAr} (${i + 1})`,
+          sortOrder: original.sortOrder + i,
+        }));
+        docs = [...docs.slice(0, idx), ...expanded, ...docs.slice(idx + 1)];
+      }
+    }
+
+    // 2. individual_civil_status_record: inject divorce/death cert based on civil_status
+    const civilStatusField = visibleFields.find((f) => isCivilStatusField(f.keyName));
+    if (civilStatusField) {
+      const status = values[civilStatusField.keyName];
+      if (status === "divorced" && !docs.some((d) => d.keyName.toLowerCase().includes("divorce"))) {
+        docs = [...docs, DIVORCE_CERT_DOC];
+      } else if (status === "widowed" && !docs.some((d) => d.keyName.toLowerCase().includes("death"))) {
+        docs = [...docs, DEATH_CERT_DOC];
+      }
+    }
+
+    // 3. Translation: inject passport if not already in docs
+    if (extraTranslation && !docs.some((d) => isPassportDoc(d.keyName))) {
+      docs = [...docs, TRANSLATION_PASSPORT_DOC];
+    }
+
+    return docs;
+  }, [visibleDocs, visibleFields, extraTranslation, values]);
+
+  // Prune files whose doc slot no longer exists (e.g. wives count changed, civil status switched)
+  useEffect(() => {
+    const docKeys = new Set(effectiveDocs.map((d) => d.keyName));
+    setFiles((prev) => {
+      const filtered = Object.fromEntries(Object.entries(prev).filter(([k]) => docKeys.has(k)));
+      return Object.keys(filtered).length === Object.keys(prev).length ? prev : filtered;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectiveDocs]);
 
   // Where this service may be used / delivered (admin console)
   const residenceRule = service?.residenceRule?.length ? service.residenceRule : null;
@@ -380,6 +463,18 @@ export function CheckoutFlow({
           if (d > today) next[`f_${f.keyName}`] = t.errors.futureDate;
         }
       }
+      // family_record: block 0 marriages (contradicts required marriage cert doc)
+      const wivesField = visibleFields.find((f) => isWivesCountField(f.keyName));
+      if (wivesField) {
+        const wivesRaw = values[wivesField.keyName]?.trim() ?? "";
+        const wivesNum = wivesRaw !== "" ? parseInt(wivesRaw, 10) : NaN;
+        if (!isNaN(wivesNum) && wivesNum < 1 && !next[`f_${wivesField.keyName}`]) {
+          next[`f_${wivesField.keyName}`] = locale === "ar"
+            ? "عدد الزيجات يجب أن يكون ١ على الأقل"
+            : "Number of marriages must be at least 1 for this service";
+        }
+      }
+
       // Cross-field: divorce date must not be before marriage date
       const marriageField = visibleFields.find((f) => f.fieldType === "date" && /marriage.*date/i.test(f.keyName));
       const divorceField = visibleFields.find((f) => f.fieldType === "date" && /divorce.*date/i.test(f.keyName));
