@@ -27,14 +27,14 @@ export function StickyCta({ href, label, heroSelector }: { href: string; label: 
   return (
     <div
       aria-hidden={!visible}
-      className={`fixed bottom-0 inset-x-0 z-40 transition-transform duration-300 ease-in-out lg:inset-x-auto lg:bottom-6 lg:end-6 ${
-        visible ? "translate-y-0" : "translate-y-full"
+      className={`fixed inset-x-0 top-16 z-40 transition-transform duration-300 ease-in-out lg:hidden ${
+        visible ? "translate-y-0" : "-translate-y-full"
       }`}
     >
       <a
         href={href}
         tabIndex={visible ? 0 : -1}
-        className="flex items-center justify-center gap-3 bg-turquoise px-6 py-4 text-base font-semibold text-navy lg:rounded-full lg:px-6 lg:py-3 lg:shadow-[0_0.5rem_2rem_rgba(0,0,0,0.18)]"
+        className="flex items-center justify-center gap-3 bg-turquoise px-6 py-3 text-base font-semibold text-navy shadow-[0_4px_16px_rgba(0,0,0,0.12)]"
       >
         {label}
         <ArrowIcon size={20} />
