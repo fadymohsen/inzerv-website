@@ -4,18 +4,17 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dict } from "@/dictionaries/en";
-import { SUPPORT_EMAIL } from "@/lib/config";
 import { fmt } from "@/lib/dictionaries";
 import { otherLocale, type Locale } from "@/lib/i18n";
 import { buttonClass } from "./Button";
-import { ArrowIcon, CloseIcon, MailIcon, MenuIcon, UserIcon } from "./Icons";
+import { ArrowIcon, CloseIcon, MenuIcon, UserIcon } from "./Icons";
 import { Logo } from "./Logo";
 import { Rings } from "./Rings";
 import { useSession } from "./SessionProvider";
 
 const vars = (d: number) => ({ ["--d" as string]: `${d}ms` }) as React.CSSProperties;
 
-export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; footer: Dict["footer"] }) {
+export function Header({ locale, t }: { locale: Locale; t: Dict["nav"]; footer?: Dict["footer"] }) {
   const pathname = usePathname();
   const router = useRouter();
   const { status, user, signOut } = useSession();
@@ -248,33 +247,22 @@ export function Header({ locale, t, footer }: { locale: Locale; t: Dict["nav"]; 
           </nav>
 
           <div className="fade-up relative px-5 pb-8 pt-8" style={vars(420)}>
-            <div className="flex items-center justify-between gap-4">
-              <div role="group" aria-label={t.languageLabel} className="inline-flex rounded-full border border-white/25 p-1 text-sm font-medium">
-                {(["en", "ar"] as Locale[]).map((l) => (
-                  <Link
-                    key={l}
-                    href={swap(l)}
-                    onClick={keepPlace(swap(l))}
-                    hrefLang={l}
-                    lang={l}
-                    aria-current={l === locale ? "true" : undefined}
-                    className={`inline-flex min-h-10 min-w-20 items-center justify-center rounded-full px-4 transition-colors duration-150 ${
-                      l === locale ? "bg-white text-navy" : "text-white/80"
-                    }`}
-                  >
-                    {l === "en" ? "🇬🇧 English" : "🇪🇬 العربية"}
-                  </Link>
-                ))}
-              </div>
-              <a
-                href={`mailto:${SUPPORT_EMAIL}`}
-                dir="ltr"
-                className="inline-flex min-h-11 items-center gap-2 text-sm text-white/80"
-              >
-                <MailIcon size={18} />
-                <span className="sr-only">{footer.contactTitle}:</span>
-                {SUPPORT_EMAIL}
-              </a>
+            <div role="group" aria-label={t.languageLabel} className="flex rounded-full border border-white/25 p-1 text-sm font-medium">
+              {(["en", "ar"] as Locale[]).map((l) => (
+                <Link
+                  key={l}
+                  href={swap(l)}
+                  onClick={keepPlace(swap(l))}
+                  hrefLang={l}
+                  lang={l}
+                  aria-current={l === locale ? "true" : undefined}
+                  className={`flex flex-1 items-center justify-center rounded-full px-4 py-2.5 transition-colors duration-150 ${
+                    l === locale ? "bg-white text-navy font-semibold" : "text-white/80"
+                  }`}
+                >
+                  {l === "en" ? "🇬🇧 English" : "🇪🇬 العربية"}
+                </Link>
+              ))}
             </div>
 
             {status === "authenticated" && user ? (

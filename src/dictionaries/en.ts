@@ -188,6 +188,7 @@ export const en = {
       sub: "Create an account, choose your document, and see the full cost before you pay.",
       button: "Start a request",
     },
+    stickyCta: "Order yours now",
   },
 
   services: {

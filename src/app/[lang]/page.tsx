@@ -11,6 +11,7 @@ import { Rings } from "@/components/Rings";
 import { getCatalog } from "@/lib/catalog";
 import { fmt, getDictionary, money, num } from "@/lib/dictionaries";
 import { pad2, processingTime, serviceName } from "@/lib/format";
+import { StickyCta } from "@/components/StickyCta";
 import { hasLocale } from "@/lib/i18n";
 
 const storyShots: { shot: Shot; panel: string }[] = [
@@ -37,8 +38,9 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
 
   return (
     <>
+      <StickyCta href={`/${lang}/request`} label={t.home.stickyCta} heroSelector="#hero" />
       {/* Hero */}
-      <section className="relative overflow-hidden bg-navy text-white">
+      <section id="hero" className="relative overflow-hidden bg-navy text-white">
         <div className="hero-rings pointer-events-none absolute -end-[16rem] top-[48%] w-[62rem] -translate-y-1/2 sm:-end-[10rem] lg:end-[-4rem] lg:w-[68rem]">
           <Rings className="w-full" />
         </div>
