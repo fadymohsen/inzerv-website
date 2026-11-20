@@ -49,7 +49,7 @@ export const en = {
     address: "8 Green Towers Compound, Smouha, Alexandria, Egypt",
     mobile: "Mobile",
     landline: "Landline",
-    rights: "Inzerv Group for Digital Marketing & Brokerage. All rights reserved.",
+    rights: "Inzerv for Digital Marketing Services and Brokerage. All rights reserved.",
     year: "2026",
     terms: "Terms and Conditions",
     refund: "Cancellation and Refund Policy",
@@ -255,6 +255,7 @@ export const en = {
     title: "Contact us",
     sub: "Questions before you order, or a problem with an order. Write to us and we will reply by email.",
     emailLabel: "Email",
+    phoneLabel: "WhatsApp",
     inAppTitle: "Have an existing order?",
     inAppText:
       "Use the form on this page, select \"Regarding an Existing Order\", and include your order reference number in your message so we can help you.",
@@ -708,7 +709,7 @@ export const en = {
     terms: {
       title: "Terms and Conditions",
       intro:
-        "These terms govern use of the Inzerv website and app and the ordering of services through them. Inzerv refers to the platform operated by Inzerv Group for Digital Marketing and Brokerage. Please read these terms, the Cancellation and Refund Policy and the Privacy Policy before confirming your request. A copy of the terms and details applicable to your request is made available for your reference.",
+        "These terms govern use of the Inzerv website and app and the ordering of services through them. Inzerv refers to the platform operated by Inzerv for Digital Marketing Services and Brokerage. Please read these terms, the Cancellation and Refund Policy and the Privacy Policy before confirming your request. A copy of the terms and details applicable to your request is made available for your reference.",
       sections: [
         {
           h: "1 Our services and Inzerv's responsibility",
@@ -831,7 +832,7 @@ export const en = {
     privacy: {
       title: "Privacy Policy",
       intro:
-        "This policy explains how Inzerv, operated by Inzerv Group for Digital Marketing and Brokerage, handles information about website and app users, document service applicants, document holders and passengers. Inzerv is responsible for the purposes and means of the personal data processing it manages for the platform. Accepting the terms does not constitute unrestricted consent to every use of your information.",
+        "This policy explains how Inzerv, operated by Inzerv for Digital Marketing Services and Brokerage, handles information about website and app users, document service applicants, document holders and passengers. Inzerv is responsible for the purposes and means of the personal data processing it manages for the platform. Accepting the terms does not constitute unrestricted consent to every use of your information.",
       sections: [
         {
           h: "1 Information we need",
