@@ -10,7 +10,7 @@ import { PointerStage } from "@/components/PointerStage";
 import { Rings } from "@/components/Rings";
 import { getCatalog } from "@/lib/catalog";
 import { fmt, getDictionary, money, num } from "@/lib/dictionaries";
-import { firstSentence, pad2, processingTime, serviceDescription, serviceName } from "@/lib/format";
+import { pad2, processingTime, serviceName } from "@/lib/format";
 import { hasLocale } from "@/lib/i18n";
 
 const storyShots: { shot: Shot; panel: string }[] = [
@@ -62,9 +62,6 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               <ButtonLink href={`/${lang}/request`} className="min-h-14 flex-1 px-6 text-base sm:flex-none sm:px-8 sm:text-lg">
                 {t.home.hero.primary}
                 <ArrowIcon size={22} />
-              </ButtonLink>
-              <ButtonLink href="#how-it-works" variant="outline-light" className="min-h-14 flex-1 px-6 text-base sm:flex-none sm:px-8 sm:text-lg">
-                {t.home.hero.secondary}
               </ButtonLink>
             </div>
           </div>
@@ -151,7 +148,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       </section>
 
       {/* Statement */}
-      <section className="layer bg-white">
+      <section className="layer bg-turquoise/10">
         <div className="mx-auto max-w-7xl px-5 pb-16 pt-20 lg:px-8 lg:pb-32 lg:pt-40">
           <p className="max-w-[22ch] text-[clamp(1.75rem,4vw,3.5rem)] font-semibold leading-[1.04] tracking-[-0.035em] text-navy rtl:leading-[1.35]">
             <ScrollWords text={t.home.statement.text} />
@@ -211,40 +208,28 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
             <p className="mt-4 text-lg text-ink-muted">{t.home.services.sub}</p>
           </div>
 
-          <ul className="mt-14 border-t border-navy/15">
-            {services.slice(0, 3).map((s) => (
-              <li
-                key={s.type}
-                className="row-hover reveal grid items-center gap-x-10 gap-y-4 border-b border-navy/15 py-8 md:grid-cols-[1.7fr_1fr_auto_auto]"
-              >
-                <div>
-                  <h3 className="text-[1.75rem] font-semibold leading-tight tracking-[-0.02em]">{serviceName(s, lang)}</h3>
-                  <p className="mt-2 line-clamp-2 max-w-[52ch] leading-relaxed text-ink-muted">
-                    {firstSentence(serviceDescription(s, lang))}
-                  </p>
-                </div>
-                <p className="text-sm text-ink-muted">
-                  <span className="block">{t.home.services.time}</span>
-                  <span className="text-base font-medium text-navy">{processingTime(s, lang)}</span>
-                </p>
-                <p className="tabular text-3xl font-semibold tracking-tight">
-                  {money(s.servicePrice, lang)}
-                  <span className="ms-1.5 text-sm font-normal text-ink-muted">{t.common.perCopy}</span>
-                </p>
-                <ButtonLink href={`/${lang}/checkout?service=${s.type}`} className="min-h-12 text-[0.9375rem]">
-                  {t.common.orderThis}
-                  <ArrowIcon size={18} />
-                </ButtonLink>
+          <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {services.map((s) => (
+              <li key={s.type}>
+                <a
+                  href={`/${lang}/checkout?service=${s.type}`}
+                  className="reveal group flex h-full flex-col justify-between gap-5 rounded-2xl border border-navy/10 bg-white p-6 transition-shadow hover:shadow-md"
+                >
+                  <h3 className="text-lg font-semibold leading-snug tracking-[-0.01em]">{serviceName(s, lang)}</h3>
+                  <div className="flex items-end justify-between gap-3">
+                    <p className="tabular text-2xl font-semibold tracking-tight">
+                      {money(s.servicePrice, lang)}
+                      <span className="ms-1 text-sm font-normal text-ink-muted">{t.common.perCopy}</span>
+                    </p>
+                    <p className="text-right text-sm text-ink-muted">
+                      <span className="block">{t.home.services.time}</span>
+                      <span className="font-medium text-navy">{processingTime(s, lang)}</span>
+                    </p>
+                  </div>
+                </a>
               </li>
             ))}
           </ul>
-
-          <div className="reveal mt-12 flex justify-center">
-            <ButtonLink href="https://www.inzerv.com/en/request" variant="outline" className="min-h-14 px-8 text-base">
-              {t.home.services.all}
-              <ArrowIcon size={20} />
-            </ButtonLink>
-          </div>
         </div>
       </section>
 
@@ -271,8 +256,6 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
       {/* App showcase: pinned, two screens per scroll step */}
       <PinnedGallery
         title={t.home.showcase.title}
-        sub={t.home.showcase.sub}
-        note={t.app.note}
         counterLabel={t.home.showcase.title}
         dotLabels={showcasePairs.map((_, i) =>
           fmt(t.home.showcase.step, { a: num(i * 2 + 1, lang), b: num(i * 2 + 2, lang) }),
@@ -289,16 +272,6 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
                   className={`ph w-[min(clamp(6.5rem,18dvh,16.5rem),34vw)] lg:w-[clamp(9rem,38dvh,24rem)] ${k === 0 ? "-translate-y-[3%]" : "translate-y-[2%] lg:translate-y-[6%]"}`}
                 >
                   <IPhone shot={shot} locale={lang} t={t.app} sizes="24rem" className="drop-shadow-[0_2rem_2.5rem_rgba(0,0,0,0.4)]" />
-                </div>
-              ))}
-            </div>
-          ),
-          info: (
-            <div className="grid grid-cols-2 gap-4 lg:grid-cols-1 lg:gap-5 xl:grid-cols-2">
-              {pair.map((shot) => (
-                <div key={shot}>
-                  <p className="text-lg font-semibold">{t.app.shots[shot].name}</p>
-                  <p className="mt-1 max-w-[26ch] text-[0.9375rem] leading-snug text-white/70">{t.app.shots[shot].caption}</p>
                 </div>
               ))}
             </div>

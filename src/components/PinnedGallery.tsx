@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type Slide = { stage: React.ReactNode; info: React.ReactNode };
+type Slide = { stage: React.ReactNode; info?: React.ReactNode };
 
 /**
  * Pins the section and steps through slides as the page scrolls, two phones per step.
@@ -19,8 +19,8 @@ export function PinnedGallery({
   background,
 }: {
   title: string;
-  sub: string;
-  note: string;
+  sub?: string;
+  note?: string;
   counterLabel: string;
   dotLabels: string[];
   slides: Slide[];
@@ -99,7 +99,7 @@ export function PinnedGallery({
             <h2 className="max-w-[16ch] text-[clamp(1.875rem,3.8vw,3.25rem)] font-semibold leading-[1.02] tracking-[-0.035em] rtl:leading-[1.3]">
               {title}
             </h2>
-            <p className="mt-3 max-w-[40ch] text-base text-white/75 lg:mt-4 lg:text-lg">{sub}</p>
+            {sub && <p className="mt-3 max-w-[40ch] text-base text-white/75 lg:mt-4 lg:text-lg">{sub}</p>}
           </div>
 
           {/* stage */}
@@ -120,20 +120,22 @@ export function PinnedGallery({
             ))}
           </div>
 
-          {/* info + controls */}
+          {/* controls */}
           <div className="lg:col-start-1 lg:row-start-2 lg:self-start lg:pt-6">
-            <div className={pinned ? "relative min-h-[9.5rem] lg:min-h-[11.5rem]" : "flex flex-col gap-10"}>
-              {slides.map((sl, i) => (
-                <div
-                  key={i}
-                  data-state={state(i)}
-                  aria-hidden={pinned && i !== idx ? true : undefined}
-                  className={`slide-info ${pinned ? "absolute inset-x-0 top-0" : "relative"}`}
-                >
-                  {sl.info}
-                </div>
-              ))}
-            </div>
+            {slides.some((sl) => sl.info) && (
+              <div className={pinned ? "relative min-h-[9.5rem] lg:min-h-[11.5rem]" : "flex flex-col gap-10"}>
+                {slides.map((sl, i) => (
+                  <div
+                    key={i}
+                    data-state={state(i)}
+                    aria-hidden={pinned && i !== idx ? true : undefined}
+                    className={`slide-info ${pinned ? "absolute inset-x-0 top-0" : "relative"}`}
+                  >
+                    {sl.info}
+                  </div>
+                ))}
+              </div>
+            )}
 
             {pinned && (
               <div className="mt-5 flex items-center gap-5">
@@ -160,7 +162,7 @@ export function PinnedGallery({
                 </div>
               </div>
             )}
-            <p className="mt-3 text-sm text-white/60">{note}</p>
+            {note && <p className="mt-3 text-sm text-white/60">{note}</p>}
           </div>
         </div>
       </div>
