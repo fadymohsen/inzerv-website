@@ -176,7 +176,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
           </div>
 
           <ul className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((s) => (
+            {services.slice(0, 6).map((s) => (
               <li key={s.type}>
                 <a
                   href={`/${lang}/checkout?service=${s.type}`}
@@ -202,6 +202,13 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </li>
             ))}
           </ul>
+
+          <div className="reveal mt-10 flex justify-center">
+            <ButtonLink href={`/${lang}/services`} variant="outline" className="min-h-14 px-8 text-base">
+              {t.home.services.all}
+              <ArrowIcon size={20} />
+            </ButtonLink>
+          </div>
         </div>
       </section>
 
