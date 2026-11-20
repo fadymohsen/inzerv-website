@@ -22,11 +22,27 @@ import {
 } from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
 import { useProfile } from "@/components/account/useAccount";
-import type { DeliveryDestination, ExtrasConfig, GovService } from "@/lib/types";
+import type { DeliveryDestination, ExtrasConfig, GovService, ServiceDocument } from "@/lib/types";
 import { canOrderMyself, canOrderOther, serviceNotices } from "@/lib/service-rules";
 import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
 import { getRegions, getCities } from "@/lib/governorates";
 import { splitPhone } from "@/lib/phone";
+
+const TRANSLATION_PASSPORT_DOC: ServiceDocument = {
+  id: "__translation_passport__",
+  keyName: "translation_passport",
+  labelEn: "Passport (required for translation)",
+  labelAr: "جواز السفر (مطلوب للترجمة)",
+  isRequired: true,
+  showForAnotherPerson: false,
+  allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
+  maxSizeMb: 10,
+  sortOrder: 9999,
+};
+
+function isPassportDoc(keyName: string) {
+  return keyName.toLowerCase().includes("passport");
+}
 
 const NATIONAL_ID_RE = /^[23]\d{13}$/;
 const NATIONAL_ID_KEYS = ["national_id", "nationalid", "nid"];
@@ -266,6 +282,11 @@ export function CheckoutFlow({
         .sort((a, b) => a.sortOrder - b.sortOrder),
     [service, requestFor],
   );
+  const effectiveDocs = useMemo(() => {
+    if (!extraTranslation) return visibleDocs;
+    if (visibleDocs.some((d) => isPassportDoc(d.keyName))) return visibleDocs;
+    return [...visibleDocs, TRANSLATION_PASSPORT_DOC];
+  }, [visibleDocs, extraTranslation]);
 
   // Where this service may be used / delivered (admin console)
   const residenceRule = service?.residenceRule?.length ? service.residenceRule : null;
@@ -371,7 +392,7 @@ export function CheckoutFlow({
       }
     }
     if (key === "documents") {
-      for (const d of visibleDocs) {
+      for (const d of effectiveDocs) {
         // a document already sent for the order (resumed checkout) does not need picking again
         if (d.isRequired && !files[d.keyName] && !uploaded.current.has(d.keyName)) next[`d_${d.keyName}`] = t.errors.required;
       }
@@ -486,7 +507,7 @@ export function CheckoutFlow({
         setLocked(true);
       }
 
-      const pending = visibleDocs.filter((d) => files[d.keyName] && !uploaded.current.has(d.keyName));
+      const pending = effectiveDocs.filter((d) => files[d.keyName] && !uploaded.current.has(d.keyName));
       for (let i = 0; i < pending.length; i++) {
         setStage("uploading");
         setProgress({ i: i + 1, n: pending.length });
@@ -954,7 +975,7 @@ export function CheckoutFlow({
               </label>
               <label className={`flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraTranslation ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
                 <span className="flex items-center gap-3">
-                  <input type="checkbox" checked={extraTranslation} onChange={(e) => { setExtraTranslation(e.target.checked); if (!e.target.checked) setTranslationLang(""); }} className="size-4 accent-navy" />
+                  <input type="checkbox" checked={extraTranslation} onChange={(e) => { setExtraTranslation(e.target.checked); if (!e.target.checked) { setTranslationLang(""); setFiles((prev) => { const n = { ...prev }; delete n[TRANSLATION_PASSPORT_DOC.keyName]; return n; }); } }} className="size-4 accent-navy" />
                   {t.details.translation}
                 </span>
                 <span dir="ltr" className="text-sm font-semibold text-navy">{extras.translationPrice.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</span>
@@ -994,9 +1015,9 @@ export function CheckoutFlow({
               <p className="mt-3 max-w-[52ch] text-ink-muted">{t.documents.sub}</p>
             </div>
 
-            {visibleDocs.length === 0 && <p className="text-ink-muted">{t.documents.none}</p>}
+            {effectiveDocs.length === 0 && <p className="text-ink-muted">{t.documents.none}</p>}
 
-            {visibleDocs.map((d) => {
+            {effectiveDocs.map((d) => {
               const id = `doc-${d.keyName}`;
               const err = errors[`d_${d.keyName}`] ?? fileErrors[`d_${d.keyName}`];
               const file = files[d.keyName];
@@ -1266,7 +1287,7 @@ export function CheckoutFlow({
                   </dd>
                 </div>
               )}
-              {visibleDocs.filter((d) => files[d.keyName]).map((d) => (
+              {effectiveDocs.filter((d) => files[d.keyName]).map((d) => (
                 <div key={d.id} className="flex flex-wrap justify-between gap-x-6 gap-y-1 px-5 py-3">
                   <dt className="text-sm text-ink-muted">{pick(d.labelEn, d.labelAr)}</dt>
                   <dd dir="ltr" className="flex items-center gap-2 font-medium">
