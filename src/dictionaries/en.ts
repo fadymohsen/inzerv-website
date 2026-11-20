@@ -46,7 +46,7 @@ export const en = {
     explore: "Explore",
     legal: "Legal",
     contactTitle: "Contact",
-    address: "8 Green Towers, Smouha, Alexandria, Egypt",
+    address: "8 Green Towers Compound, Smouha, Alexandria, Egypt",
     mobile: "Mobile",
     landline: "Landline",
     rights: "Inzerv Group for Digital Marketing & Brokerage. All rights reserved.",
