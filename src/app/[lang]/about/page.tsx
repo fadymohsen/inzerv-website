@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/components/Button";
 import { PageHero } from "@/components/PageHero";
-import { ArrowIcon, CarIcon, DocumentIcon, HeartIcon, HomeIcon, TagIcon } from "@/components/Icons";
+import { ArrowIcon, CarIcon, DocumentIcon, GlobeIcon, HeartIcon, HomeIcon, ShieldIcon, ClipboardListIcon } from "@/components/Icons";
+import { Rings } from "@/components/Rings";
 import { getDictionary } from "@/lib/dictionaries";
-import { pad2 } from "@/lib/format";
 import { hasLocale } from "@/lib/i18n";
 
 export async function generateMetadata({ params }: PageProps<"/[lang]/about">): Promise<Metadata> {
@@ -29,7 +29,8 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/about">): 
   };
 }
 
-const roadmapIcons = [DocumentIcon, HomeIcon, CarIcon, HeartIcon, TagIcon];
+const valueIcons = [ShieldIcon, ClipboardListIcon, GlobeIcon];
+const roadmapIcons = [DocumentIcon, HomeIcon, CarIcon, HeartIcon];
 
 export default async function AboutPage({ params }: PageProps<"/[lang]/about">) {
   const { lang } = await params;
@@ -42,69 +43,120 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
     <>
       <PageHero title={t.title} sub={t.lead} shot="track" locale={lang} app={app} />
 
-      <section className="bg-bg-light">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[1fr_1.6fr] lg:gap-20 lg:px-8 lg:py-28">
-          <h2 className="text-[clamp(1.75rem,3vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] rtl:leading-[1.35]">
-            {t.missionTitle}
-          </h2>
-          <div className="flex max-w-[62ch] flex-col gap-6 text-lg leading-relaxed text-ink-muted">
-            {t.mission.map((p) => (
-              <p key={p}>{p}</p>
+      {/* Stats bar */}
+      <section className="bg-navy text-white">
+        <div className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
+          <dl className="grid grid-cols-3 gap-6 lg:gap-12">
+            {t.stats.map((s) => (
+              <div key={s.label} className="flex flex-col gap-1.5">
+                <dt className="tabular text-[clamp(2rem,5vw,3.75rem)] font-semibold leading-none tracking-[-0.04em] text-turquoise">
+                  {s.value}
+                </dt>
+                <dd className="text-xs leading-snug text-white/60 sm:text-sm">{s.label}</dd>
+              </div>
             ))}
-          </div>
+          </dl>
         </div>
       </section>
 
-      <section className="bg-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[1fr_1.6fr] lg:gap-20 lg:px-8 lg:py-28">
-          <h2 className="self-start text-[clamp(1.75rem,3vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] lg:sticky lg:top-28 rtl:leading-[1.35]">
-            {t.valuesTitle}
-          </h2>
-          <ol className="border-t border-line">
-            {t.values.map((v, i) => (
-              <li key={v.title} className="grid gap-3 border-b border-line py-8 sm:grid-cols-[4rem_1fr]">
-                <span className="tabular text-sm font-medium text-ink-muted">{pad2(i + 1, lang)}</span>
-                <div>
-                  <h3 className="text-2xl font-semibold">{v.title}</h3>
-                  <p className="mt-3 max-w-[54ch] leading-relaxed text-ink-muted">{v.text}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className="bg-bg-light">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-20 lg:grid-cols-[1fr_1.6fr] lg:gap-20 lg:px-8 lg:py-28">
-          <div>
-            <h2 className="text-[clamp(1.75rem,3vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] rtl:leading-[1.35]">
-              {t.roadmapTitle}
+      {/* Mission */}
+      <section className="bg-navy text-white">
+        <div className="mx-auto max-w-7xl px-5 pb-20 lg:px-8 lg:pb-28">
+          <div className="border-t border-white/10 pt-16 lg:grid lg:grid-cols-[1fr_1.6fr] lg:gap-20 lg:pt-20">
+            <h2 className="mb-8 max-w-[14ch] text-[clamp(1.75rem,3vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-turquoise lg:mb-0 rtl:leading-[1.35]">
+              {t.missionTitle}
             </h2>
-            <p className="mt-4 max-w-[40ch] text-ink-muted">{t.roadmapSub}</p>
+            <div className="flex max-w-[62ch] flex-col gap-6 text-lg leading-relaxed text-white/80">
+              {t.mission.map((p) => (
+                <p key={p}>{p}</p>
+              ))}
+            </div>
           </div>
-          <ul className="border-t border-line">
+        </div>
+      </section>
+
+      {/* Values */}
+      <section className="bg-bg-light">
+        <div className="mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
+          <div className="mb-12 lg:mb-16">
+            <h2 className="text-[clamp(1.75rem,3vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] rtl:leading-[1.35]">
+              {t.valuesTitle}
+            </h2>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-3">
+            {t.values.map((v, i) => {
+              const Icon = valueIcons[i] ?? ShieldIcon;
+              return (
+                <div
+                  key={v.title}
+                  className="flex flex-col gap-6 rounded-2xl border border-navy/8 bg-white p-7 transition-shadow hover:shadow-md"
+                >
+                  <span className="flex size-12 items-center justify-center rounded-xl bg-navy text-turquoise">
+                    <Icon size={22} />
+                  </span>
+                  <div>
+                    <h3 className="text-xl font-semibold leading-snug">{v.title}</h3>
+                    <p className="mt-3 leading-relaxed text-ink-muted">{v.text}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Roadmap */}
+      <section className="relative overflow-hidden bg-navy text-white">
+        <div aria-hidden className="pointer-events-none absolute -end-[16rem] top-1/2 w-[52rem] -translate-y-1/2 opacity-50">
+          <Rings className="w-full" />
+        </div>
+        <div className="relative mx-auto max-w-7xl px-5 py-16 lg:px-8 lg:py-24">
+          <div className="mb-12 lg:grid lg:grid-cols-[1fr_1.6fr] lg:gap-20 lg:mb-16">
+            <div>
+              <h2 className="text-[clamp(1.75rem,3vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] rtl:leading-[1.35]">
+                {t.roadmapTitle}
+              </h2>
+              <p className="mt-4 max-w-[38ch] text-white/65">{t.roadmapSub}</p>
+            </div>
+          </div>
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {t.roadmap.map((r, i) => {
               const Icon = roadmapIcons[i] ?? DocumentIcon;
               return (
-                <li key={r.name} className="flex items-center gap-5 border-b border-line py-6">
-                  <span
-                    className={`flex size-12 shrink-0 items-center justify-center rounded-btn ${
-                      r.live ? "bg-turquoise text-navy" : "bg-white text-navy"
-                    }`}
-                  >
-                    <Icon size={24} />
-                  </span>
-                  <div className="flex-1">
-                    <p className="font-semibold">{r.name}</p>
-                    <p className="text-sm text-ink-muted">{r.text}</p>
+                <li
+                  key={r.name}
+                  className={`flex flex-col gap-5 rounded-2xl border p-6 ${
+                    r.live
+                      ? "border-turquoise/30 bg-turquoise/10"
+                      : "border-white/10 bg-white/5"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span
+                      className={`flex size-11 items-center justify-center rounded-xl ${
+                        r.live ? "bg-turquoise text-navy" : "bg-white/10 text-white/50"
+                      }`}
+                    >
+                      <Icon size={22} />
+                    </span>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                        r.live
+                          ? "bg-turquoise/20 text-turquoise"
+                          : "border border-white/15 text-white/40"
+                      }`}
+                    >
+                      {r.live ? t.statusLive : t.statusSoon}
+                    </span>
                   </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-medium ${
-                      r.live ? "bg-navy text-white" : "border border-line bg-white text-ink-muted"
-                    }`}
-                  >
-                    {r.live ? t.statusLive : t.statusSoon}
-                  </span>
+                  <div>
+                    <p className={`font-semibold leading-snug ${r.live ? "text-white" : "text-white/60"}`}>
+                      {r.name}
+                    </p>
+                    <p className={`mt-1.5 text-sm leading-relaxed ${r.live ? "text-white/75" : "text-white/40"}`}>
+                      {r.text}
+                    </p>
+                  </div>
                 </li>
               );
             })}
@@ -112,12 +164,16 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
         </div>
       </section>
 
-      <section className="bg-turquoise">
-        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-16 lg:flex-row lg:items-center lg:px-8">
-          <h2 className="text-[clamp(1.75rem,3.2vw,2.5rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-navy rtl:leading-[1.35]">
+      {/* CTA */}
+      <section className="relative overflow-hidden bg-turquoise">
+        <div aria-hidden className="pointer-events-none absolute -start-[14rem] top-1/2 w-[48rem] -translate-y-1/2 opacity-20">
+          <Rings className="w-full" />
+        </div>
+        <div className="relative mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 px-5 py-16 lg:flex-row lg:items-center lg:px-8 lg:py-20">
+          <h2 className="max-w-[18ch] text-[clamp(1.75rem,3.2vw,2.75rem)] font-semibold leading-[1.08] tracking-[-0.025em] text-navy rtl:leading-[1.3]">
             {t.ctaTitle}
           </h2>
-          <ButtonLink href={`/${lang}/request`} variant="navy" className="px-8">
+          <ButtonLink href={`/${lang}/request`} variant="navy" className="group/btn min-h-14 shrink-0 px-8 text-base">
             {t.ctaButton}
             <ArrowIcon size={20} />
           </ButtonLink>
