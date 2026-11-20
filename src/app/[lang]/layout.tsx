@@ -34,14 +34,14 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
   if (!hasLocale(lang)) return {};
   const t = getDictionary(lang);
   return {
-    metadataBase: new URL("https://inzerv.co"),
+    metadataBase: new URL("https://inzerv.com"),
     title: { default: t.meta.title, template: "%s | Inzerv" },
     description: t.meta.description,
     alternates: {
-      canonical: `https://inzerv.co/${lang}`,
+      canonical: `https://inzerv.com/${lang}`,
       languages: {
-        en: "https://inzerv.co/en",
-        ar: "https://inzerv.co/ar",
+        en: "https://inzerv.com/en",
+        ar: "https://inzerv.com/ar",
       },
     },
     openGraph: {
@@ -49,7 +49,7 @@ export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Prom
       siteName: "Inzerv",
       title: t.meta.title,
       description: t.meta.description,
-      url: `https://inzerv.co/${lang}`,
+      url: `https://inzerv.com/${lang}`,
       locale: lang === "ar" ? "ar_EG" : "en_US",
     },
     twitter: {
@@ -80,8 +80,8 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
                 "@context": "https://schema.org",
                 "@type": "Organization",
                 name: "Inzerv",
-                url: "https://inzerv.co",
-                logo: "https://inzerv.co/logo_full_color.jpg",
+                url: "https://inzerv.com",
+                logo: "https://inzerv.com/logo_full_color.jpg",
                 description:
                   "Inzerv handles Egyptian government paperwork on your behalf — birth certificates, family records, marriage documents — and delivers them to you in Egypt or abroad.",
                 areaServed: [
@@ -101,7 +101,7 @@ export default async function RootLayout({ children, params }: LayoutProps<"/[la
                 "@context": "https://schema.org",
                 "@type": "WebSite",
                 name: "Inzerv",
-                url: "https://inzerv.co",
+                url: "https://inzerv.com",
                 inLanguage: ["en", "ar"],
               },
             ]),

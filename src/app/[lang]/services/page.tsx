@@ -19,16 +19,16 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/services">
     title: t.services.metaTitle,
     description: t.meta.pages.services,
     alternates: {
-      canonical: `https://inzerv.co/${lang}/services`,
+      canonical: `https://inzerv.com/${lang}/services`,
       languages: {
-        en: "https://inzerv.co/en/services",
-        ar: "https://inzerv.co/ar/services",
+        en: "https://inzerv.com/en/services",
+        ar: "https://inzerv.com/ar/services",
       },
     },
     openGraph: {
       title: t.services.metaTitle,
       description: t.meta.pages.services,
-      url: `https://inzerv.co/${lang}/services`,
+      url: `https://inzerv.com/${lang}/services`,
     },
   };
 }
@@ -147,8 +147,8 @@ export default async function ServicesPage({ params }: PageProps<"/[lang]/servic
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
             itemListElement: [
-              { "@type": "ListItem", position: 1, name: lang === "ar" ? "الرئيسية" : "Home", item: `https://inzerv.co/${lang}` },
-              { "@type": "ListItem", position: 2, name: t.services.title, item: `https://inzerv.co/${lang}/services` },
+              { "@type": "ListItem", position: 1, name: lang === "ar" ? "الرئيسية" : "Home", item: `https://inzerv.com/${lang}` },
+              { "@type": "ListItem", position: 2, name: t.services.title, item: `https://inzerv.com/${lang}/services` },
             ],
           }),
         }}
@@ -170,9 +170,9 @@ export default async function ServicesPage({ params }: PageProps<"/[lang]/servic
                 name: serviceName(s, lang),
                 description: serviceDescription(s, lang),
                 serviceType: "Government Document Processing",
-                provider: { "@type": "Organization", name: "Inzerv", url: "https://inzerv.co" },
+                provider: { "@type": "Organization", name: "Inzerv", url: "https://inzerv.com" },
                 areaServed: { "@type": "Country", name: "Egypt" },
-                url: `https://inzerv.co/${lang}/checkout?service=${s.type}`,
+                url: `https://inzerv.com/${lang}/checkout?service=${s.type}`,
                 offers: {
                   "@type": "Offer",
                   priceCurrency: "EGP",

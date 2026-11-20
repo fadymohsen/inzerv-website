@@ -12,10 +12,10 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/terms">): 
     title: t.legal.terms.title,
     description: t.meta.pages.terms,
     alternates: {
-      canonical: `https://inzerv.co/${lang}/terms`,
+      canonical: `https://inzerv.com/${lang}/terms`,
       languages: {
-        en: "https://inzerv.co/en/terms",
-        ar: "https://inzerv.co/ar/terms",
+        en: "https://inzerv.com/en/terms",
+        ar: "https://inzerv.com/ar/terms",
       },
     },
   };

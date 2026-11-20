@@ -12,10 +12,10 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/privacy-po
     title: t.legal.privacy.title,
     description: t.meta.pages.privacy,
     alternates: {
-      canonical: `https://inzerv.co/${lang}/privacy-policy`,
+      canonical: `https://inzerv.com/${lang}/privacy-policy`,
       languages: {
-        en: "https://inzerv.co/en/privacy-policy",
-        ar: "https://inzerv.co/ar/privacy-policy",
+        en: "https://inzerv.com/en/privacy-policy",
+        ar: "https://inzerv.com/ar/privacy-policy",
       },
     },
   };

@@ -15,16 +15,16 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/contact">)
     title: t.contact.title,
     description: t.meta.pages.contact,
     alternates: {
-      canonical: `https://inzerv.co/${lang}/contact`,
+      canonical: `https://inzerv.com/${lang}/contact`,
       languages: {
-        en: "https://inzerv.co/en/contact",
-        ar: "https://inzerv.co/ar/contact",
+        en: "https://inzerv.com/en/contact",
+        ar: "https://inzerv.com/ar/contact",
       },
     },
     openGraph: {
       title: t.contact.title,
       description: t.meta.pages.contact,
-      url: `https://inzerv.co/${lang}/contact`,
+      url: `https://inzerv.com/${lang}/contact`,
     },
   };
 }
@@ -43,8 +43,8 @@ export default async function ContactPage({ params }: PageProps<"/[lang]/contact
           "@context": "https://schema.org",
           "@type": "BreadcrumbList",
           itemListElement: [
-            { "@type": "ListItem", position: 1, name: lang === "ar" ? "الرئيسية" : "Home", item: `https://inzerv.co/${lang}` },
-            { "@type": "ListItem", position: 2, name: t.title, item: `https://inzerv.co/${lang}/contact` },
+            { "@type": "ListItem", position: 1, name: lang === "ar" ? "الرئيسية" : "Home", item: `https://inzerv.com/${lang}` },
+            { "@type": "ListItem", position: 2, name: t.title, item: `https://inzerv.com/${lang}/contact` },
           ],
         }),
       }}

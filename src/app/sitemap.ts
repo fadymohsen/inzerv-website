@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { locales, defaultLocale } from "@/lib/i18n";
 
-const base = "https://inzerv.co";
+const base = "https://inzerv.com";
 
 type SitemapPage = {
   path: string;

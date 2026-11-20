@@ -12,10 +12,10 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/refund-pol
     title: t.legal.refund.title,
     description: t.meta.pages.refund,
     alternates: {
-      canonical: `https://inzerv.co/${lang}/refund-policy`,
+      canonical: `https://inzerv.com/${lang}/refund-policy`,
       languages: {
-        en: "https://inzerv.co/en/refund-policy",
-        ar: "https://inzerv.co/ar/refund-policy",
+        en: "https://inzerv.com/en/refund-policy",
+        ar: "https://inzerv.com/ar/refund-policy",
       },
     },
   };

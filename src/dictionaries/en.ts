@@ -763,7 +763,7 @@ export const en = {
           h: "7 Cancellation and complaints",
           p: [
             "The published Cancellation and Refund Policy supplied with the request applies. Voluntary cancellation of document services ends before In Progress; limousine cancellation depends on whether the vehicle has departed to carry out the booking. No term excludes responsibility for errors by Inzerv or its partners or removes a mandatory right to a remedy, refund or compensation.",
-            "Inzerv handles enquiries and complaints through its official channels. Support is available in Arabic and English around the clock through in-app chat, the Contact Us page on the website (inzerv.co/contact) and the published hotline once activated. An automated assistant may respond first, with access to a staff member or a direct call. Do not use chat to send passwords or secret verification codes.",
+            "Inzerv handles enquiries and complaints through its official channels. Support is available in Arabic and English around the clock through in-app chat, the Contact Us page on the website (inzerv.com/contact) and the published hotline once activated. An automated assistant may respond first, with access to a staff member or a direct call. Do not use chat to send passwords or secret verification codes.",
           ],
         },
         {
