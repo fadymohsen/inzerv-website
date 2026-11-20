@@ -14,7 +14,7 @@ import { pad2, processingTime, serviceName } from "@/lib/format";
 import { hasLocale } from "@/lib/i18n";
 
 const storyShots: { shot: Shot; panel: string }[] = [
-  { shot: "details", panel: "bg-[#DDF3F4]" },
+  { shot: "details", panel: "bg-bg-light" },
   { shot: "track", panel: "bg-navy" },
   { shot: "home", panel: "bg-bg-light" },
 ];
@@ -31,10 +31,7 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
   const { lang } = await params;
   if (!hasLocale(lang)) notFound();
   const t = getDictionary(lang);
-  const { services, destinations } = await getCatalog();
-
-  const cheapestDelivery = Math.min(...destinations.map((d) => d.deliveryFee));
-  const first = services[0];
+  const { services } = await getCatalog();
 
   const titleWords = t.home.hero.title.split(" ").length;
 
@@ -111,38 +108,6 @@ export default async function HomePage({ params }: PageProps<"/[lang]">) {
               </div>
             </div>
 
-            {/* callouts built from live data */}
-            <div
-              className="rise absolute start-2 top-[16rem] z-30 hidden sm:start-[-1.5rem] sm:block lg:start-[-1rem] lg:top-[19rem] xl:start-[-3rem]"
-              style={vars({ "--rise-from": "28px", "--rise-delay": "950ms" })}
-            >
-              <div className="hero-par" style={vars({ "--par": "3rem" })}>
-                <div className="depth-c rounded-2xl bg-white p-4 text-navy shadow-[0_1.5rem_2.5rem_-1rem_rgba(0,0,0,0.45)]">
-                  <span className="inline-block rounded-full bg-[#E3F4E8] px-3 py-1 text-sm font-medium text-success">
-                    {t.home.hero.chipStatus}
-                  </span>
-                  <p className="mt-2 max-w-[13ch] text-sm leading-snug text-ink-muted">{t.home.hero.chipStatusSub}</p>
-                </div>
-              </div>
-            </div>
-            {first && (
-              <div
-                className="rise absolute end-2 top-[25rem] z-30 hidden sm:end-[-1rem] sm:block lg:end-[-0.5rem] lg:top-[28rem] xl:end-[-2rem]"
-                style={vars({ "--rise-from": "28px", "--rise-delay": "1100ms" })}
-              >
-                <div className="hero-par" style={vars({ "--par": "2rem" })}>
-                  <div className="depth-a rounded-2xl bg-white p-4 text-navy shadow-[0_1.5rem_2.5rem_-1rem_rgba(0,0,0,0.45)]">
-                    <p className="text-sm text-ink-muted">{t.home.hero.chipPrice}</p>
-                    <p className="tabular mt-1 text-lg font-semibold leading-tight">
-                      {serviceName(first, lang)}
-                      <span className="block text-base font-medium text-ink-muted">
-                        {money(first.servicePrice, lang)} + {money(cheapestDelivery, lang)}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
           </PointerStage>
         </div>
       </section>
