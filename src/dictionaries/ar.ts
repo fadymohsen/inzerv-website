@@ -202,6 +202,8 @@ export const ar: Dict = {
     feeLabel: "رسوم الخدمة",
     requiredDocs: "ستحتاج إلى",
     requiredInfo: "سنسألك عن",
+    showDetails: "التفاصيل",
+    hideDetails: "أقل",
     deliveryTitle: "رسوم التوصيل",
     deliverySub: "رسم واحد لكل طلب بحسب وجهة التوصيل.",
     insideEgypt: "داخل مصر",
@@ -212,7 +214,6 @@ export const ar: Dict = {
       { name: "العقارات", text: "دعم الوساطة للشراء والاستثمار." },
       { name: "الليموزين والنقل", text: "رحلات مجدولة ونقل موثوق." },
       { name: "الرعاية الصحية", text: "الوصول إلى الخدمات الطبية." },
-      { name: "العروض والخصومات", text: "عروض من شركائنا." },
     ],
   },
 

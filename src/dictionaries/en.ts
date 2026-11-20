@@ -203,6 +203,8 @@ export const en = {
     feeLabel: "Service fee",
     requiredDocs: "You will need",
     requiredInfo: "You will be asked for",
+    showDetails: "Details",
+    hideDetails: "Less",
     deliveryTitle: "Delivery fees",
     deliverySub: "One fee per order, based on where the documents are going.",
     insideEgypt: "Inside Egypt",
@@ -211,9 +213,8 @@ export const en = {
     comingSub: "These categories are planned. None of them can be ordered yet.",
     categories: [
       { name: "Real Estate", text: "Brokerage support for buying and investing." },
-      { name: "Limousine and Transportation", text: "Scheduled rides and reliable transport." },
+      { name: "Limousine & Transportation", text: "Scheduled rides and reliable transport." },
       { name: "Healthcare", text: "Access to medical services." },
-      { name: "Offers and Discounts", text: "Deals from partners." },
     ],
   },
 
