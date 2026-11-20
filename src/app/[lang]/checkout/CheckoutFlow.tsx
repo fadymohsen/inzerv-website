@@ -25,7 +25,7 @@ import { useProfile } from "@/components/account/useAccount";
 import type { DeliveryDestination, ExtrasConfig, GovService, ServiceDocument } from "@/lib/types";
 import { canOrderMyself, canOrderOther, serviceNotices } from "@/lib/service-rules";
 import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
-import { getRegions, getCities } from "@/lib/governorates";
+import { getRegions, getRegionsForZone, getCities } from "@/lib/governorates";
 import { splitPhone } from "@/lib/phone";
 
 const TRANSLATION_PASSPORT_DOC: ServiceDocument = {
@@ -1329,12 +1329,12 @@ export function CheckoutFlow({
 
             <div className="grid gap-6 sm:grid-cols-2">
               <Field id="v-gov" label={t.delivery.governorate} error={errors.governorate} required>
-                {destination && getRegions(destination.countryCode).length > 0 ? (
+                {destination && getRegionsForZone(destination.countryCode, destination.zoneNameEn).length > 0 ? (
                   <Select
                     id="v-gov"
                     value={delivery.governorate}
                     placeholder={t.delivery.selectGovernorate}
-                    options={(restrictByRegion ? allowedRegions : getRegions(destination.countryCode)).map((r) => ({
+                    options={(restrictByRegion ? allowedRegions : getRegionsForZone(destination.countryCode, destination.zoneNameEn)).map((r) => ({
                       value: r.en,
                       label: locale === "ar" ? r.ar : r.en,
                     }))}

@@ -321,8 +321,59 @@ const data: Record<string, Region[]> = {
   ],
 };
 
+/** Maps Egypt zone names (from DeliveryDestination.zoneNameEn) to their governorates. */
+const EG_ZONE_MAP: Record<string, string[]> = {
+  // Single-governorate zones
+  Alexandria:       ["Alexandria"],
+  Cairo:            ["Cairo"],
+  Giza:             ["Giza"],
+  Qalyubia:         ["Qalyubia"],
+  Beheira:          ["Beheira"],
+  Dakahlia:         ["Dakahlia"],
+  Sharqia:          ["Sharqia"],
+  Gharbia:          ["Gharbia"],
+  Monufia:          ["Monufia"],
+  "Kafr El Sheikh": ["Kafr El Sheikh"],
+  Damietta:         ["Damietta"],
+  "Port Said":      ["Port Said"],
+  Ismailia:         ["Ismailia"],
+  Suez:             ["Suez"],
+  "North Sinai":    ["North Sinai"],
+  "South Sinai":    ["South Sinai"],
+  "Beni Suef":      ["Beni Suef"],
+  Fayoum:           ["Fayoum"],
+  Minya:            ["Minya"],
+  Assiut:           ["Assiut"],
+  Sohag:            ["Sohag"],
+  Qena:             ["Qena"],
+  Luxor:            ["Luxor"],
+  Aswan:            ["Aswan"],
+  "Red Sea":        ["Red Sea"],
+  "New Valley":     ["New Valley"],
+  Matrouh:          ["Matrouh"],
+  // Multi-governorate zones
+  "Canal Cities":   ["Port Said", "Ismailia", "Suez"],
+  "Greater Cairo":  ["Cairo", "Giza", "Qalyubia"],
+  Delta:            ["Gharbia", "Dakahlia", "Sharqia", "Monufia", "Beheira", "Kafr El Sheikh", "Damietta"],
+  "Upper Egypt":    ["Beni Suef", "Fayoum", "Minya", "Assiut", "Sohag", "Qena", "Luxor", "Aswan"],
+  Sinai:            ["North Sinai", "South Sinai"],
+};
+
 export function getRegions(countryCode: string): Region[] {
   return data[countryCode] ?? [];
+}
+
+/**
+ * Returns the governorate list for a given country filtered to those belonging
+ * to the selected delivery zone. Falls back to all governorates when the zone
+ * name is unknown or the country has no zone map.
+ */
+export function getRegionsForZone(countryCode: string, zoneNameEn: string | null | undefined): Region[] {
+  const all = data[countryCode] ?? [];
+  if (!zoneNameEn || countryCode !== "EG") return all;
+  const allowed = EG_ZONE_MAP[zoneNameEn];
+  if (!allowed) return all;
+  return all.filter((r) => allowed.includes(r.en));
 }
 
 /** Cities for a given governorate (matched by English name). Empty array if none defined. */
