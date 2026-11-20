@@ -23,7 +23,9 @@ export function serviceNotices(s: GovService, locale: Locale, t: Dict["checkout"
   const out: string[] = [];
   if (s.isBlocked) out.push(t.blockedNote);
   if (s.relationshipRule === "first" && canOrderOther(s)) out.push(t.firstDegree);
-  if (s.residenceRule?.length) out.push(fmt(t.residenceOnly, { places: describeGeo(s.residenceRule, locale, t.allCities) }));
+  if (s.residenceRule?.length) {
+    out.push(s.type === "criminal_record" ? t.criminalRecordResidenceNote : fmt(t.residenceOnly, { places: describeGeo(s.residenceRule, locale, t.allCities) }));
+  }
   if (s.deliveryRule?.length) out.push(fmt(t.deliveryOnly, { places: describeGeo(s.deliveryRule, locale, t.allCities) }));
   return out;
 }

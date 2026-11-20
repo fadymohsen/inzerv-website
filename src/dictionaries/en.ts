@@ -506,6 +506,7 @@ export const en = {
       blockedNote: "This service is not taking new orders right now. Please check back soon.",
       firstDegree: "For first-degree relatives only: father, mother, son, daughter, brother, sister.",
       residenceOnly: "Available only if you live in, or the document is registered in: {places}.",
+      criminalRecordResidenceNote: "Criminal record extraction is available in the first phase for residents of Egypt in Cairo, Alexandria and Beheira governorates only.",
       deliveryOnly: "We deliver this service only to: {places}.",
       allCities: "all cities",
       residenceTitle: "Where do you live or is the document registered?",
