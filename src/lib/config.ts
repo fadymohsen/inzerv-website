@@ -3,7 +3,7 @@ export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   "https://inzerv-app-production.up.railway.app/api/v1";
 
-export const SUPPORT_EMAIL = "Hello@inzerv.com";
+export const SUPPORT_EMAIL = "hello@inzerv.com";
 export const SUPPORT_PHONE_MOBILE = "01070608705";
 export const SUPPORT_PHONE_MOBILE_2 = "01270917700";
 export const SUPPORT_PHONE_LANDLINE = "034234388";
