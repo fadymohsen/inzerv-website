@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/about">): 
 }
 
 const valueIcons = [ShieldIcon, ClipboardListIcon, GlobeIcon];
-const roadmapIcons = [DocumentIcon, HomeIcon, CarIcon, HeartIcon];
+const roadmapIcons = [DocumentIcon, CarIcon, HomeIcon, HeartIcon];
 
 export default async function AboutPage({ params }: PageProps<"/[lang]/about">) {
   const { lang } = await params;
@@ -107,11 +107,14 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {t.roadmap.map((r, i) => {
               const Icon = roadmapIcons[i] ?? DocumentIcon;
+              const isLive = r.status === "live";
+              const isSoon = r.status === "soon";
+              const statusLabel = isLive ? t.statusLive : isSoon ? t.statusSoon : t.statusPlanned;
               return (
                 <li
                   key={r.name}
                   className={`flex flex-col gap-5 rounded-2xl border p-6 ${
-                    r.live
+                    isLive
                       ? "border-turquoise/30 bg-turquoise/10"
                       : "border-white/10 bg-white/5"
                   }`}
@@ -119,26 +122,26 @@ export default async function AboutPage({ params }: PageProps<"/[lang]/about">) 
                   <div className="flex items-center justify-between gap-3">
                     <span
                       className={`flex size-11 items-center justify-center rounded-xl ${
-                        r.live ? "bg-turquoise text-navy" : "bg-white/10 text-white/50"
+                        isLive ? "bg-turquoise text-navy" : "bg-white/10 text-white/50"
                       }`}
                     >
                       <Icon size={22} />
                     </span>
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                        r.live
+                        isLive
                           ? "bg-turquoise/20 text-turquoise"
                           : "border border-white/15 text-white/40"
                       }`}
                     >
-                      {r.live ? t.statusLive : t.statusSoon}
+                      {statusLabel}
                     </span>
                   </div>
                   <div>
-                    <p className={`font-semibold leading-snug ${r.live ? "text-white" : "text-white/60"}`}>
+                    <p className={`font-semibold leading-snug ${isLive ? "text-white" : "text-white/60"}`}>
                       {r.name}
                     </p>
-                    <p className={`mt-1.5 text-sm leading-relaxed ${r.live ? "text-white/75" : "text-white/40"}`}>
+                    <p className={`mt-1.5 text-sm leading-relaxed ${isLive ? "text-white/75" : "text-white/40"}`}>
                       {r.text}
                     </p>
                   </div>
