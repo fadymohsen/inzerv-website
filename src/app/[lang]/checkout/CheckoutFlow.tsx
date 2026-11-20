@@ -32,7 +32,7 @@ const TRANSLATION_PASSPORT_DOC: ServiceDocument = {
   id: "__translation_passport__",
   keyName: "translation_passport",
   labelEn: "Passport (required for translation)",
-  labelAr: "جواز السفر (مطلوب للترجمة)",
+  labelAr: "جواز سفر صاحب الوثيقة (مطلوب للترجمة)",
   isRequired: true,
   showForAnotherPerson: false,
   allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
