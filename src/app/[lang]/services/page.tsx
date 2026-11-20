@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { PageHero } from "@/components/PageHero";
 import { CarIcon, DocumentIcon, HeartIcon, HomeIcon } from "@/components/Icons";
 import { Rings } from "@/components/Rings";
-import { ServiceCard } from "@/components/ServiceCard";
+import { ServiceGrid, type CardData } from "@/components/ServiceGrid";
 import { getCatalog } from "@/lib/catalog";
 import { getDictionary, money } from "@/lib/dictionaries";
 import { serviceNotices } from "@/lib/service-rules";
@@ -35,22 +35,6 @@ export async function generateMetadata({ params }: PageProps<"/[lang]/services">
 
 const categoryIcons = [HomeIcon, CarIcon, HeartIcon];
 
-function ListBlock({ title, items }: { title: string; items: string[] }) {
-  if (items.length === 0) return null;
-  return (
-    <div>
-      <h4 className="text-sm font-medium text-ink-muted">{title}</h4>
-      <ul className="mt-3 flex flex-col gap-2">
-        {items.map((item) => (
-          <li key={item} className="flex gap-3 text-[0.9375rem] leading-snug">
-            <span aria-hidden className="mt-2 size-1.5 shrink-0 rounded-full bg-turquoise" />
-            {item}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
 
 function labels(s: GovService, lang: "en" | "ar") {
   const pick = (en: string, ar: string) => (lang === "ar" ? ar : en);
@@ -88,38 +72,31 @@ export default async function ServicesPage({ params }: PageProps<"/[lang]/servic
             </h2>
           </div>
 
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((s) => {
+          <ServiceGrid
+            cards={services.map((s): CardData => {
               const { fields, docs } = labels(s, lang);
-              const notices = serviceNotices(s, lang, t.checkout.rules);
-              return (
-                <li key={s.type} id={s.type}>
-                  <ServiceCard
-                    name={serviceName(s, lang)}
-                    price={money(s.servicePrice, lang)}
-                    perCopyLabel={t.common.perCopy}
-                    timeLabel={t.common.processing}
-                    time={processingTime(s, lang)}
-                    checkoutHref={`/${lang}/checkout?service=${s.type}`}
-                    orderLabel={t.common.orderThis}
-                    isBlocked={!!s.isBlocked}
-                    blockedLabel={t.checkout.rules.blocked}
-                    showLabel={t.services.showDetails}
-                    hideLabel={t.services.hideDetails}
-                  >
-                    <p className="text-sm leading-relaxed text-ink-muted">{serviceDescription(s, lang)}</p>
-                    {notices.length > 0 && (
-                      <ul className="flex flex-col gap-1.5 rounded-btn bg-bg-light px-4 py-3 text-sm leading-relaxed text-navy">
-                        {notices.map((n) => <li key={n}>{n}</li>)}
-                      </ul>
-                    )}
-                    {docs.length > 0 && <ListBlock title={t.services.requiredDocs} items={docs} />}
-                    {fields.length > 0 && <ListBlock title={t.services.requiredInfo} items={fields} />}
-                  </ServiceCard>
-                </li>
-              );
+              return {
+                id: s.type,
+                name: serviceName(s, lang),
+                price: money(s.servicePrice, lang),
+                perCopyLabel: t.common.perCopy,
+                timeLabel: t.common.processing,
+                time: processingTime(s, lang),
+                checkoutHref: `/${lang}/checkout?service=${s.type}`,
+                orderLabel: t.common.orderThis,
+                isBlocked: !!s.isBlocked,
+                blockedLabel: t.checkout.rules.blocked,
+                showLabel: t.services.showDetails,
+                hideLabel: t.services.hideDetails,
+                description: serviceDescription(s, lang),
+                notices: serviceNotices(s, lang, t.checkout.rules),
+                docs,
+                docsLabel: t.services.requiredDocs,
+                fields,
+                fieldsLabel: t.services.requiredInfo,
+              };
             })}
-          </ul>
+          />
         </div>
       </section>
 
