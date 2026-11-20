@@ -257,6 +257,7 @@ export const en = {
     sub: "Questions before you order, or a problem with an order. Write to us and we will reply by email.",
     emailLabel: "Email",
     phoneLabel: "WhatsApp",
+    socialLabel: "Follow us",
     inAppTitle: "Have an existing order?",
     inAppText:
       "Use the form on this page, select \"Regarding an Existing Order\", and include your order reference number in your message so we can help you.",
