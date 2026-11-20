@@ -5,14 +5,14 @@ export const en = {
   meta: {
     title: "Inzerv | Egyptian government documents, delivered",
     description:
-      "Order Egyptian birth, family record and marriage documents online. Inzerv's team in Egypt handles the paperwork and delivers it to you, in Egypt or abroad.",
+      "Order official Egyptian documents online — birth certificates, family records, marriage certificates and more. Transparent pricing, real-time tracking, doorstep delivery in Egypt and 30+ countries.",
     pages: {
       services:
-        "Browse Egyptian government documents — birth certificates, family records and marriage documents. Order online; Inzerv's team in Egypt collects and delivers them to your door.",
+        "Browse all official Egyptian document services — birth certificates, criminal records, marriage certificates and more. See prices upfront, order in minutes, and receive at your door.",
       about:
-        "Inzerv handles Egyptian government paperwork on your behalf, wherever you are. Learn about our mission, values and service roadmap.",
+        "Inzerv is built to remove friction from official Egyptian transactions. 6 services live. 30+ delivery destinations. One platform expanding across government documents, real estate, transportation and healthcare.",
       contact:
-        "Get in touch with the Inzerv team for questions about document requests, existing orders, or payment and refunds.",
+        "Need help with an order or have a question before you start? Reach Inzerv's team by message or phone. We respond during working hours, 9 AM – 9 PM Cairo time.",
       terms:
         "Read Inzerv's Terms and Conditions for government document and limousine services.",
       privacy:
