@@ -603,7 +603,7 @@ export function CheckoutFlow({
         // a document already sent for the order (resumed checkout) does not need picking again
         if (uploaded.current.has(d.keyName)) continue;
         if (d.isRequired) {
-          if (isMultiUploadDoc(d.keyName)) {
+          if (isMultiUploadDoc(d.keyName, d)) {
             if (!(multiFiles[d.keyName]?.length)) next[`d_${d.keyName}`] = t.errors.required;
           } else {
             if (!files[d.keyName]) next[`d_${d.keyName}`] = t.errors.required;
@@ -809,7 +809,28 @@ export function CheckoutFlow({
         return;
       }
       if (err instanceof UploadError) setSubmitError(`${t.errors.uploadFailed} ${detail(err.cause)}`.trim());
-      else if (err instanceof PayError) setSubmitError(`${t.errors.payFailed} ${detail(err.cause)}`.trim());
+      else if (err instanceof PayError) {
+        const cause = err.cause;
+        const isStale = cause instanceof ApiError && /not waiting for payment/i.test(cause.message);
+        if (isStale) {
+          // The saved order is no longer payable (already paid, cancelled, etc.).
+          // Clear the stale draft so the user can submit a fresh order with the same details.
+          created.current = null;
+          uploaded.current = new Set();
+          paid.current = false;
+          payStarted.current = false;
+          setLocked(false);
+          setReturnedFromPay(false);
+          clearCheckoutDraft();
+          setSubmitError(
+            locale === "ar"
+              ? "هذا الطلب لم يعد في انتظار الدفع. بياناتك محفوظة — اضغط «متابعة» لتقديم طلب جديد."
+              : "This order is no longer waiting for payment. Your details are saved — click Continue to place a new order.",
+          );
+        } else {
+          setSubmitError(`${t.errors.payFailed} ${detail(err.cause)}`.trim());
+        }
+      }
       else setSubmitError(errMessage(err));
     }
   }
