@@ -574,6 +574,8 @@ export const ar: Dict = {
       title: "تحب نوصّل مستنداتك فين؟",
       destination: "الدولة",
       select: "اختر الدولة",
+      zone: "شريحة التوصيل",
+      selectZone: "اختر الشريحة",
       recipient: "اسم المستلم",
       recipientPhone: "هاتف المستلم",
       phonePlaceholder: "بدون الصفر الأول — ١٠ أرقام",

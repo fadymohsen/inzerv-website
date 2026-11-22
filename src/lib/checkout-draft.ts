@@ -27,6 +27,7 @@ export type CheckoutDraft = {
   };
   recipientPhoneCountry: string;
   customCity: string;
+  deliveryCountry: string;
   residence: { country: string; city: string };
   method: "card" | "wallet";
   step: number;

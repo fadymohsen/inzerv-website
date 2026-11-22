@@ -221,6 +221,8 @@ export function CheckoutFlow({
       setExtraAuth(false);
       setExtraTranslation(false);
       setTranslationLang("");
+      setDeliveryCountry("");
+      setDelivery({ destinationId: "", recipientName: "", recipientPhone: "", city: "", governorate: "", address: "" });
       setErrors({});
       setStep(0);
     }
@@ -260,6 +262,7 @@ export function CheckoutFlow({
   });
   const [recipientPhoneCountry, setRecipientPhoneCountry] = useState<CountryCode>(DEFAULT_PHONE_COUNTRY);
   const [customCity, setCustomCity] = useState("");
+  const [deliveryCountry, setDeliveryCountry] = useState("");
 
   // review
   const [method, setMethod] = useState<"card" | "wallet">("card");
@@ -291,6 +294,23 @@ export function CheckoutFlow({
   function setGovernorate(governorate: string) {
     setDelivery((d) => ({ ...d, governorate, city: "" }));
     setCustomCity("");
+  }
+
+  function handleDeliveryCountry(code: string) {
+    setDeliveryCountry(code);
+    if (code !== "EG") {
+      // Gulf country: auto-select its single destination
+      const dest = allowedDestinations.find((d) => d.countryCode.toUpperCase() === code);
+      if (dest) setDestination(dest.id);
+      else {
+        setDelivery((d) => ({ ...d, destinationId: "", governorate: "", city: "", address: "" }));
+        setCustomCity("");
+      }
+    } else {
+      // Egypt: clear destination until user picks a zone
+      setDelivery((d) => ({ ...d, destinationId: "", governorate: "", city: "", address: "" }));
+      setCustomCity("");
+    }
   }
 
   const signInUrl = `/${locale}/signin?next=${encodeURIComponent(`${pathname}${search.toString() ? `?${search.toString()}` : ""}`)}`;
@@ -524,6 +544,7 @@ export function CheckoutFlow({
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
     }
     if (key === "delivery") {
+      if (!deliveryCountry) next.deliveryCountry = t.errors.select;
       if (!delivery.destinationId) next.destinationId = t.errors.select;
       if (restrictByCity && !deliveryCities!.some((c) => c.en === delivery.city)) next.city = t.errors.select;
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
@@ -738,6 +759,7 @@ export function CheckoutFlow({
     setReference("");
     setSubmitError("");
     setStage("idle");
+    setDeliveryCountry("");
     setStep(0);
   }
 
@@ -767,6 +789,13 @@ export function CheckoutFlow({
     setDelivery(d.delivery);
     setRecipientPhoneCountry(d.recipientPhoneCountry as CountryCode);
     setCustomCity(d.customCity);
+    // Restore delivery country from draft, or derive from destinationId for legacy drafts
+    if (d.deliveryCountry) {
+      setDeliveryCountry(d.deliveryCountry);
+    } else if (d.delivery?.destinationId) {
+      const foundDest = destinations.find((x) => x.id === d.delivery.destinationId);
+      if (foundDest) setDeliveryCountry(foundDest.countryCode.toUpperCase());
+    }
     setResidence(d.residence);
     setMethod(d.method);
     setFiles(takeFiles(`${userId}:${d.serviceType}`));
@@ -807,6 +836,7 @@ export function CheckoutFlow({
       delivery,
       recipientPhoneCountry,
       customCity,
+      deliveryCountry,
       residence,
       method,
       step,
@@ -1291,20 +1321,38 @@ export function CheckoutFlow({
             {allowedDestinations.length === 0 && (
               <p role="alert" className="rounded-btn border border-error/40 px-4 py-3 text-sm text-error">{t.rules.noDestinations}</p>
             )}
-            <Field id="v-dest" label={t.delivery.destination} error={errors.destinationId} required>
+            <Field id="v-country" label={t.delivery.destination} error={errors.deliveryCountry} required>
               <Select
-                id="v-dest"
-                value={delivery.destinationId}
+                id="v-country"
+                value={deliveryCountry}
                 placeholder={t.delivery.select}
-                options={allowedDestinations.map((d) => ({
-                  value: d.id,
-                  label: `${(locale === "ar" ? d.zoneNameAr : d.zoneNameEn) || countryName(d.countryCode, d.country, locale)}, ${money(d.deliveryFee, locale)}`,
+                options={[...new Map(allowedDestinations.map((d) => [d.countryCode.toUpperCase(), d])).entries()].map(([code, d]) => ({
+                  value: code,
+                  label: countryName(code, d.country, locale),
                 }))}
-                onChange={setDestination}
-                aria-invalid={!!errors.destinationId}
-                aria-describedby={describedBy("v-dest", !!errors.destinationId, false)}
+                onChange={handleDeliveryCountry}
+                aria-invalid={!!errors.deliveryCountry}
+                aria-describedby={describedBy("v-country", !!errors.deliveryCountry, false)}
               />
             </Field>
+            {deliveryCountry === "EG" && (
+              <Field id="v-zone" label={t.delivery.zone} error={errors.destinationId} required>
+                <Select
+                  id="v-zone"
+                  value={delivery.destinationId}
+                  placeholder={t.delivery.selectZone}
+                  options={allowedDestinations
+                    .filter((d) => d.countryCode.toUpperCase() === "EG")
+                    .map((d) => ({
+                      value: d.id,
+                      label: `${(locale === "ar" ? d.zoneNameAr : d.zoneNameEn) || ""} — ${money(d.deliveryFee, locale)}`,
+                    }))}
+                  onChange={setDestination}
+                  aria-invalid={!!errors.destinationId}
+                  aria-describedby={describedBy("v-zone", !!errors.destinationId, false)}
+                />
+              </Field>
+            )}
 
             <div className="flex min-w-0 flex-col gap-6">
               <Field id="v-name" label={t.delivery.recipient} error={errors.recipientName} required>
@@ -1515,7 +1563,8 @@ export function CheckoutFlow({
                 {[
                   { label: t.delivery.recipient, value: delivery.recipientName },
                   { label: t.delivery.recipientPhone, value: delivery.recipientPhone, dir: "ltr" },
-                  { label: t.delivery.destination, value: destination ? ((locale === "ar" ? destination.zoneNameAr : destination.zoneNameEn) || countryName(destination.countryCode, destination.country, locale)) : "" },
+                  { label: t.delivery.destination, value: destination ? countryName(destination.countryCode, destination.country, locale) : "" },
+                  ...(destination && destination.countryCode.toUpperCase() === "EG" ? [{ label: t.delivery.zone, value: (locale === "ar" ? destination.zoneNameAr : destination.zoneNameEn) || "" }] : []),
                   { label: t.delivery.governorate, value: delivery.governorate },
                   { label: t.delivery.city, value: delivery.city === "__other__" ? customCity : delivery.city },
                   { label: t.delivery.address, value: delivery.address },

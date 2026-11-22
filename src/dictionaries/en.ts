@@ -575,6 +575,8 @@ export const en = {
       title: "Where would you like your documents delivered?",
       destination: "Country",
       select: "Select a country",
+      zone: "Delivery Zone",
+      selectZone: "Select zone",
       recipient: "Recipient name",
       recipientPhone: "Recipient phone",
       phonePlaceholder: "Without leading zero — 10 digits",
