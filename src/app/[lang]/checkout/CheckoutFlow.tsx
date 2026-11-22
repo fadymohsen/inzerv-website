@@ -270,7 +270,7 @@ export function CheckoutFlow({
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState({ i: 0, n: 0 });
   const [submitError, setSubmitError] = useState("");
-  const created = useRef<{ id: string; ref: string } | null>(null);
+  const created = useRef<{ id: string; ref: string; total: number } | null>(null);
   const uploaded = useRef(new Set<string>());
   const paid = useRef(false);
   const payStarted = useRef(false);
@@ -666,6 +666,9 @@ export function CheckoutFlow({
         setLocked(true);
       }
 
+      // Cache ref value so TypeScript knows it's non-null for the rest of this function
+      const c = created.current!;
+
       // Build flat list of {docKeyName, uploadKey, file} for all docs
       type UploadItem = { docKeyName: string; uploadKey: string; file: File };
       const allPending: UploadItem[] = [];
@@ -684,7 +687,7 @@ export function CheckoutFlow({
         setStage("uploading");
         setProgress({ i: i + 1, n: allPending.length });
         try {
-          await orders.upload(created.current.id, allPending[i].uploadKey, allPending[i].file);
+          await orders.upload(c.id, allPending[i].uploadKey, allPending[i].file);
         } catch (err) {
           if (err instanceof ApiError && err.status === 401) throw err;
           throw new UploadError(err);
@@ -696,7 +699,7 @@ export function CheckoutFlow({
       if (!paid.current) {
         setStage("paying");
         try {
-          const payment = await orders.pay(created.current.id, method, locale, created.current.total);
+          const payment = await orders.pay(c.id, method, locale, c.total);
           if (payment.status === "pending") {
             // real gateway: the customer pays on the hosted page and returns to /checkout/result
             if (!payment.checkoutUrl || !isSafePaymentUrl(payment.checkoutUrl)) throw new Error("No payment page");
@@ -715,7 +718,7 @@ export function CheckoutFlow({
         paid.current = true;
       }
 
-      setReference(created.current.ref);
+      setReference(c.ref);
       setStage("done");
     } catch (err) {
       setStage("idle");
@@ -787,7 +790,7 @@ export function CheckoutFlow({
     setMethod(d.method);
     setFiles(takeFiles(`${userId}:${d.serviceType}`));
     if (d.created) {
-      created.current = d.created;
+      created.current = { ...d.created, total: d.created.total ?? 0 };
       uploaded.current = new Set(d.uploaded);
       paid.current = d.paid;
       payStarted.current = !!d.payStarted;
