@@ -274,6 +274,8 @@ export function CheckoutFlow({
   const paid = useRef(false);
   const payStarted = useRef(false);
   const [locked, setLocked] = useState(false);
+  // true only after the customer came back from the payment gateway to an unpaid order
+  const [returnedFromPay, setReturnedFromPay] = useState(false);
   const [reference, setReference] = useState("");
 
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -797,6 +799,7 @@ export function CheckoutFlow({
       // navigate back to delivery — do NOT redirect away; all data and files are preserved here.
       if (d.payStarted && !d.paid) {
         payStarted.current = false; // clear so saveDraft won't re-trigger this
+        setReturnedFromPay(true);
         setStep(STEPS.indexOf("review"));
         return;
       }
@@ -811,7 +814,10 @@ export function CheckoutFlow({
   useEffect(() => {
     function onPageShow(e: PageTransitionEvent) {
       if (!e.persisted) return;
-      setStage((s) => (s === "redirecting" || s === "paying" ? "idle" : s));
+      setStage((s) => {
+        if (s === "redirecting") setReturnedFromPay(true);
+        return s === "redirecting" || s === "paying" ? "idle" : s;
+      });
     }
     window.addEventListener("pageshow", onPageShow);
     return () => window.removeEventListener("pageshow", onPageShow);
@@ -1646,13 +1652,13 @@ export function CheckoutFlow({
 
         {/* Nav */}
         <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-6">
-          {step > (locked ? STEPS.indexOf("documents") : 0) && !(locked && current === "review") && (
+          {step > (locked ? STEPS.indexOf("documents") : 0) && !(returnedFromPay && current === "review") && (
             <button type="button" onClick={goBack} disabled={working} className={buttonClass("outline")}>
               <BackIcon size={18} />
               {t.back}
             </button>
           )}
-          {current === "review" && locked ? (
+          {current === "review" && returnedFromPay ? (
             <div className="flex w-full flex-col gap-3">
               <p className="text-sm text-ink-muted">{t.review.lockedNote}</p>
               <button type="button" onClick={placeOrder} disabled={working || !!service?.isBlocked} className={buttonClass("primary", "w-full sm:w-auto sm:self-start")}>
