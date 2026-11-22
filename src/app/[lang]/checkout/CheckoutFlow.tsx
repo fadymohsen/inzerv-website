@@ -806,6 +806,17 @@ export function CheckoutFlow({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, userId]);
 
+  // Back from the hosted payment page: the browser may restore this page from its back/forward cache
+  // with the "redirecting" state frozen in, leaving the pay button stuck on "...". Reset it.
+  useEffect(() => {
+    function onPageShow(e: PageTransitionEvent) {
+      if (!e.persisted) return;
+      setStage((s) => (s === "redirecting" || s === "paying" ? "idle" : s));
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   useEffect(() => {
     if (!restored.current || !userId || !serviceType) return;
     if (stage === "done") {
@@ -1375,12 +1386,12 @@ export function CheckoutFlow({
 
             <div className="grid gap-6 sm:grid-cols-2">
               <Field id="v-gov" label={t.delivery.governorate} error={errors.governorate} required>
-                {destination && getRegionsForZone(destination.countryCode, destination.zoneNameEn).length > 0 ? (
+                {destination && getRegionsForZone(destination.countryCode, destination.zoneNameEn, destination.governorates).length > 0 ? (
                   <Select
                     id="v-gov"
                     value={delivery.governorate}
                     placeholder={t.delivery.selectGovernorate}
-                    options={(restrictByRegion ? allowedRegions : getRegionsForZone(destination.countryCode, destination.zoneNameEn)).map((r) => ({
+                    options={(restrictByRegion ? allowedRegions : getRegionsForZone(destination.countryCode, destination.zoneNameEn, destination.governorates)).map((r) => ({
                       value: r.en,
                       label: locale === "ar" ? r.ar : r.en,
                     }))}
@@ -1635,13 +1646,28 @@ export function CheckoutFlow({
 
         {/* Nav */}
         <div className="mt-10 flex flex-wrap items-center gap-3 border-t border-line pt-6">
-          {step > (locked ? STEPS.indexOf("documents") : 0) && (
+          {step > (locked ? STEPS.indexOf("documents") : 0) && !(locked && current === "review") && (
             <button type="button" onClick={goBack} disabled={working} className={buttonClass("outline")}>
               <BackIcon size={18} />
               {t.back}
             </button>
           )}
-          {current === "review" ? (
+          {current === "review" && locked ? (
+            <div className="flex w-full flex-col gap-3">
+              <p className="text-sm text-ink-muted">{t.review.lockedNote}</p>
+              <button type="button" onClick={placeOrder} disabled={working || !!service?.isBlocked} className={buttonClass("primary", "w-full sm:w-auto sm:self-start")}>
+                {working ? "…" : fmt(t.review.proceedPay, { amount: money(total, locale) })}
+              </button>
+              <div className="flex flex-wrap gap-3">
+                <Link href={`/${locale}`} className={buttonClass("outline")}>
+                  {t.review.home}
+                </Link>
+                <Link href={`/${locale}/contact`} className={buttonClass("outline")}>
+                  {t.review.editOrder}
+                </Link>
+              </div>
+            </div>
+          ) : current === "review" ? (
             <button type="button" onClick={placeOrder} disabled={working || !!service?.isBlocked} className={buttonClass("primary", "grow sm:grow-0")}>
               {working ? "…" : fmt(t.review.place, { amount: money(total, locale) })}
             </button>

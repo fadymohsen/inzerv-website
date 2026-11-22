@@ -425,8 +425,18 @@ export function getRegions(countryCode: string): Region[] {
  * to the selected delivery zone. Falls back to all governorates when the zone
  * name is unknown or the country has no zone map.
  */
-export function getRegionsForZone(countryCode: string, zoneNameEn: string | null | undefined): Region[] {
+export function getRegionsForZone(
+  countryCode: string,
+  zoneNameEn: string | null | undefined,
+  zoneGovernorates?: { en: string; ar: string }[] | null,
+): Region[] {
   const all = data[countryCode] ?? [];
+  // The admin panel stores the governorate list on the zone itself: that list wins.
+  if (zoneGovernorates?.length) {
+    const norm = (v: string) => v.trim().toLowerCase();
+    const matched = all.filter((r) => zoneGovernorates.some((g) => norm(g.en) === norm(r.en) || norm(g.ar) === norm(r.ar)));
+    if (matched.length) return matched;
+  }
   if (!zoneNameEn || countryCode !== "EG") return all;
   const allowed = EG_ZONE_MAP[zoneNameEn];
   if (!allowed) return all;

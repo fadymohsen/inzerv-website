@@ -23,8 +23,10 @@ async function handle(req: Request, ctx: { params: Promise<{ path: string[] }> }
   const token = await getToken();
   if (!token) return json({ message: "Unauthorized" }, 401);
 
+  // The backend exposes cancel as PATCH; the browser calls it with POST through this proxy.
+  const isCancel = /^requests\/[0-9a-f-]{36}\/cancel$/i.test(joined);
   const res = await backend(`/${joined}`, {
-    method,
+    method: isCancel ? "PATCH" : method,
     token,
     body: method === "POST" ? await readJson(req) : undefined,
   });

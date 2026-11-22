@@ -61,6 +61,8 @@ export type DeliveryDestination = {
   deliveryFee: number;
   zoneNameEn?: string | null;
   zoneNameAr?: string | null;
+  /** Governorates the admin assigned to this zone (Egypt). */
+  governorates?: { en: string; ar: string }[] | null;
 };
 
 export type ExtrasConfig = {
