@@ -265,7 +265,6 @@ export function CheckoutFlow({
   const [deliveryCountry, setDeliveryCountry] = useState("");
 
   // review
-  const [method, setMethod] = useState<"card" | "wallet">("card");
   const [agree, setAgree] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState({ i: 0, n: 0 });
@@ -699,7 +698,7 @@ export function CheckoutFlow({
       if (!paid.current) {
         setStage("paying");
         try {
-          const payment = await orders.pay(c.id, method, locale, c.total);
+          const payment = await orders.pay(c.id, "card", locale);
           if (payment.status === "pending") {
             // real gateway: the customer pays on the hosted page and returns to /checkout/result
             if (!payment.checkoutUrl || !isSafePaymentUrl(payment.checkoutUrl)) throw new Error("No payment page");
@@ -787,7 +786,6 @@ export function CheckoutFlow({
       if (foundDest) setDeliveryCountry(foundDest.countryCode.toUpperCase());
     }
     setResidence(d.residence);
-    setMethod(d.method);
     setFiles(takeFiles(`${userId}:${d.serviceType}`));
     if (d.created) {
       created.current = { ...d.created, total: d.created.total ?? 0 };
@@ -831,7 +829,7 @@ export function CheckoutFlow({
       customCity,
       deliveryCountry,
       residence,
-      method,
+      method: "card",
       step,
       created: created.current,
       uploaded: [...uploaded.current],
@@ -1582,29 +1580,6 @@ export function CheckoutFlow({
               </section>
             )}
 
-            <fieldset>
-              <legend className="mb-2 text-sm font-medium">{t.review.method}</legend>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {(["card", "wallet"] as const).map((m) => (
-                  <label
-                    key={m}
-                    className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-btn border px-4 transition-colors duration-150 ${
-                      method === m ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="method"
-                      checked={method === m}
-                      onChange={() => setMethod(m)}
-                      className="size-4 accent-navy"
-                    />
-                    {m === "card" ? t.review.card : t.review.wallet}
-                  </label>
-                ))}
-              </div>
-              <p className="mt-3 text-sm text-ink-muted">{t.review.paymentNote}</p>
-            </fieldset>
 
             {(() => {
               const notice = locale === "ar" ? service?.paymentNoticeAr : service?.paymentNoticeEn;

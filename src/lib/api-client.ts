@@ -127,8 +127,8 @@ export const orders = {
   }) => post<{ id: string; referenceNumber: string; totalAmount: number | string }>("/api/backend/requests", body),
 
   /** With a real gateway this returns a pending payment and the hosted page to send the customer to. */
-  pay: (requestId: string, paymentMethod: "card" | "wallet", lang: "en" | "ar", amount?: number) =>
-    post<PaymentView>("/api/backend/payments", { requestId, paymentMethod, lang, ...(amount != null ? { amount } : {}) }),
+  pay: (requestId: string, paymentMethod: "card" | "wallet", lang: "en" | "ar") =>
+    post<PaymentView>("/api/backend/payments", { requestId, paymentMethod, lang }),
 
   cancel: (requestId: string) => post<{ ok: true }>(`/api/backend/requests/${requestId}/cancel`, {}),
 
