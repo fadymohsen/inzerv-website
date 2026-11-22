@@ -21,7 +21,6 @@ import {
   type CountryCode,
 } from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
-import { useProfile } from "@/components/account/useAccount";
 import type { DeliveryDestination, ExtrasConfig, GovService, ServiceDocument } from "@/lib/types";
 import { canOrderMyself, canOrderOther, serviceNotices } from "@/lib/service-rules";
 import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
@@ -38,6 +37,34 @@ const TRANSLATION_PASSPORT_DOC: ServiceDocument = {
   allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
   maxSizeMb: 10,
   sortOrder: 9999,
+};
+
+/** Marriage / Divorce + translation: husband's passport */
+const TRANSLATION_PASSPORT_HUSBAND_DOC: ServiceDocument = {
+  id: "__translation_passport_husband__",
+  keyName: "translation_passport_husband",
+  labelEn: "Copy of the husband's passport - required for translation.",
+  labelAr: "صورة جواز سفر الزوج - مطلوبة للترجمة.",
+  isRequired: true,
+  showForAnotherPerson: false,
+  allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
+  maxSizeMb: 10,
+  sortOrder: 9999,
+};
+
+/** Marriage / Divorce + translation: wife's passport */
+const TRANSLATION_PASSPORT_WIFE_DOC: ServiceDocument = {
+  id: "__translation_passport_wife__",
+  keyName: "translation_passport_wife",
+  labelEn: "Copy of the wife's passport - required for translation.",
+  labelAr: "صورة جواز سفر الزوجة - مطلوبة للترجمة.",
+  hintEn: "To ensure both parties' names in the translation match their passports.",
+  hintAr: "لضمان كتابة اسمَي الطرفين في الترجمة مطابقَين لجوازَي السفر.",
+  isRequired: true,
+  showForAnotherPerson: false,
+  allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
+  maxSizeMb: 10,
+  sortOrder: 10000,
 };
 
 const DIVORCE_CERT_DOC: ServiceDocument = {
@@ -68,6 +95,60 @@ function isPassportDoc(keyName: string) {
   return keyName.toLowerCase().includes("passport");
 }
 
+function isIdentityDoc(keyName: string) {
+  const k = keyName.toLowerCase();
+  return /identity|id_card|national_id|nid|proof_of_id|id_proof|huwiya/.test(k) && !k.includes("passport");
+}
+
+function isRelationshipDoc(keyName: string) {
+  const k = keyName.toLowerCase();
+  return /relationship|applicant_doc|proof_of_rel|guardian|legal_auth|kinship|relative/.test(k);
+}
+
+/**
+ * Override backend-provided document labels for specific service types / flows.
+ * Items 2, 3, 4 from Batch-2 review notes.
+ */
+function patchDoc(
+  d: ServiceDocument,
+  serviceType: string,
+  requestFor: "myself" | "another_person",
+): ServiceDocument {
+  const k = d.keyName.toLowerCase();
+
+  // Item 4: Criminal Record (Egypt domestic) — ID upload label
+  if (serviceType === "criminal_record" && isIdentityDoc(k)) {
+    return {
+      ...d,
+      labelEn: "Copy of the criminal record holder's national ID card",
+      labelAr: "صورة بطاقة الرقم القومي لصاحب الفيش",
+    };
+  }
+
+  // Item 2: Birth Certificate for another person — first field (document holder ID)
+  if (serviceType === "birth_certificate" && requestFor === "another_person" && isIdentityDoc(k)) {
+    return {
+      ...d,
+      labelEn: "Copy of the document holder's national ID card or birth certificate",
+      labelAr: "صورة بطاقة الرقم القومي أو شهادة الميلاد لصاحب الوثيقة",
+    };
+  }
+
+  // Items 2 & 3: "for another person" — relationship/applicant doc standardization (all services)
+  if (requestFor === "another_person" && isRelationshipDoc(k)) {
+    return {
+      ...d,
+      labelEn: "Applicant documents and proof of relationship to the document holder",
+      labelAr: "مستندات مقدم الطلب وإثبات صلة القرابة بصاحب الوثيقة",
+      hintEn: "Upload a copy of your national ID card and add the documents needed to prove your relationship. You do not need to upload the same document more than once.",
+      hintAr: "ارفع صورة بطاقتك، وأضف المستندات اللازمة لإثبات صلة القرابة. لا تحتاج إلى رفع المستند نفسه أكثر من مرة.",
+      allowMultiple: true,
+    };
+  }
+
+  return d;
+}
+
 function isWivesCountField(keyName: string) {
   const k = keyName.toLowerCase();
   return k === "number_of_wives" || k === "marriages_count" || k === "num_marriages" || k === "number_of_marriages";
@@ -82,8 +163,9 @@ function isCivilStatusField(keyName: string) {
   return keyName.toLowerCase() === "civil_status";
 }
 
-/** Docs that accept multiple files (one per child / per event). */
-function isMultiUploadDoc(keyName: string) {
+/** Docs that accept multiple files (one per child / per event, or relationship-proof docs). */
+function isMultiUploadDoc(keyName: string, doc?: ServiceDocument) {
+  if (doc?.allowMultiple) return true;
   const k = keyName.toLowerCase();
   return k === "children_birth_certificates" || k === "death_certificates" || k === "divorce_certificate";
 }
@@ -345,8 +427,9 @@ export function CheckoutFlow({
     () =>
       (service?.requiredDocuments ?? [])
         .filter((d) => requestFor === "another_person" || !d.showForAnotherPerson)
-        .sort((a, b) => a.sortOrder - b.sortOrder),
-    [service, requestFor],
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((d) => patchDoc(d, serviceType, requestFor)),
+    [service, serviceType, requestFor],
   );
   const effectiveDocs = useMemo(() => {
     let docs: ServiceDocument[] = [...visibleDocs];
@@ -381,13 +464,17 @@ export function CheckoutFlow({
       }
     }
 
-    // 3. Translation: inject passport if not already in docs
+    // 3. Translation: inject passport docs (two for marriage/divorce, one for all others)
     if (extraTranslation && !docs.some((d) => isPassportDoc(d.keyName))) {
-      docs = [...docs, TRANSLATION_PASSPORT_DOC];
+      if (serviceType === "marriage_certificate" || serviceType === "divorce_certificate") {
+        docs = [...docs, TRANSLATION_PASSPORT_HUSBAND_DOC, TRANSLATION_PASSPORT_WIFE_DOC];
+      } else {
+        docs = [...docs, TRANSLATION_PASSPORT_DOC];
+      }
     }
 
     return docs;
-  }, [visibleDocs, visibleFields, extraTranslation, values]);
+  }, [visibleDocs, visibleFields, extraTranslation, values, serviceType]);
 
   // Prune files whose doc slot no longer exists (e.g. wives count changed, civil status switched)
   useEffect(() => {
@@ -422,12 +509,6 @@ export function CheckoutFlow({
       : [];
   const restrictByRegion = allowedRegions.length > 0;
   const restrictByCity = !!deliveryCities && !restrictByRegion;
-
-  // Load full profile for auto-fill (phone, delivery)
-  const { profile } = useProfile(status === "authenticated");
-  const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
-  const profilePhone = profile ? splitPhone(profile.phone, DEFAULT_PHONE_COUNTRY) : null;
-
 
   // If any select field option carries a price override, use it as the unit price
   const unitPrice = (() => {
@@ -1173,7 +1254,7 @@ export function CheckoutFlow({
               </label>
               <label className={`flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-btn border px-4 transition-colors duration-150 ${extraTranslation ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"}`}>
                 <span className="flex items-center gap-3">
-                  <input type="checkbox" checked={extraTranslation} onChange={(e) => { setExtraTranslation(e.target.checked); if (!e.target.checked) { setTranslationLang(""); setFiles((prev) => { const n = { ...prev }; delete n[TRANSLATION_PASSPORT_DOC.keyName]; return n; }); } }} className="size-4 accent-navy" />
+                  <input type="checkbox" checked={extraTranslation} onChange={(e) => { setExtraTranslation(e.target.checked); if (!e.target.checked) { setTranslationLang(""); setFiles((prev) => { const n = { ...prev }; delete n[TRANSLATION_PASSPORT_DOC.keyName]; delete n[TRANSLATION_PASSPORT_HUSBAND_DOC.keyName]; delete n[TRANSLATION_PASSPORT_WIFE_DOC.keyName]; return n; }); } }} className="size-4 accent-navy" />
                   {t.details.translation}
                 </span>
                 <span dir="ltr" className="text-sm font-semibold text-navy">{extras.translationPrice.toLocaleString("en-EG")} {locale === "ar" ? "ج.م" : "EGP"}</span>
@@ -1219,7 +1300,7 @@ export function CheckoutFlow({
               const id = `doc-${d.keyName}`;
               const err = errors[`d_${d.keyName}`] ?? fileErrors[`d_${d.keyName}`];
               const limit = d.maxSizeMb ?? 10;
-              const multi = isMultiUploadDoc(d.keyName);
+              const multi = isMultiUploadDoc(d.keyName, d);
               const multiList = multiFiles[d.keyName] ?? [];
               const singleFile = files[d.keyName];
               return (
@@ -1230,6 +1311,9 @@ export function CheckoutFlow({
                       <span aria-hidden="true" className="ms-1 text-error">*</span>
                     )}
                   </p>
+                  {(d.hintEn || d.hintAr) && (
+                    <p className="mt-1 text-sm text-ink-muted">{pick(d.hintEn ?? "", d.hintAr ?? "")}</p>
+                  )}
                   <p className="mt-1 text-sm text-ink-muted">
                     {fmt(t.documents.allowed, { n: digits(String(limit), locale) })}
                   </p>

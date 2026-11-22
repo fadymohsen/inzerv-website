@@ -39,6 +39,7 @@ export const en = {
     hello: "Hi, {name}",
     createAccount: "Create account",
     account: "My account",
+    myOrders: "My Orders",
   },
 
   footer: {
@@ -575,8 +576,8 @@ export const en = {
       title: "Where would you like your documents delivered?",
       destination: "Country",
       select: "Select a country",
-      zone: "Delivery Zone",
-      selectZone: "Select zone",
+      zone: "Delivery Area",
+      selectZone: "Select a delivery area within Egypt",
       recipient: "Recipient name",
       recipientPhone: "Recipient phone",
       phonePlaceholder: "Without leading zero — 10 digits",

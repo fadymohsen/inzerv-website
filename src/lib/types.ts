@@ -20,6 +20,11 @@ export type ServiceDocument = {
   allowedTypes: string[] | null;
   maxSizeMb: number | null;
   sortOrder: number;
+  /** Frontend-only: hint text shown below the upload label. */
+  hintEn?: string;
+  hintAr?: string;
+  /** Frontend-only: allow picking multiple files for this document slot. */
+  allowMultiple?: boolean;
 };
 
 export type GeoRule = { code: string; cities: { en: string; ar: string }[] | null }[];

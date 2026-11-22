@@ -38,6 +38,7 @@ export const ar: Dict = {
     hello: "أهلًا، {name}",
     createAccount: "إنشاء حساب",
     account: "حسابي",
+    myOrders: "طلباتي",
   },
 
   footer: {
@@ -575,7 +576,7 @@ export const ar: Dict = {
       destination: "الدولة",
       select: "اختر الدولة",
       zone: "منطقة التوصيل",
-      selectZone: "اختر المنطقة",
+      selectZone: "اختر منطقة التوصيل داخل مصر",
       recipient: "اسم المستلم",
       recipientPhone: "هاتف المستلم",
       phonePlaceholder: "بدون الصفر الأول — ١٠ أرقام",

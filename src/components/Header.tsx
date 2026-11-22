@@ -82,6 +82,7 @@ export function Header({ locale, t }: { locale: Locale; t: Dict["nav"]; footer?:
 
   const links = [
     { href: `/${locale}/services`, label: t.services },
+    ...(status === "authenticated" ? [{ href: `/${locale}/account/requests`, label: t.myOrders }] : []),
     { href: `/${locale}/about`, label: t.about },
     { href: `/${locale}/contact`, label: t.contact },
   ];
