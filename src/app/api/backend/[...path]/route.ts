@@ -5,6 +5,7 @@ const ALLOWED: { method: string; pattern: RegExp }[] = [
   { method: "POST", pattern: /^requests$/ },
   { method: "GET", pattern: /^requests$/ },
   { method: "GET", pattern: /^requests\/[0-9a-f-]{36}$/i },
+  { method: "POST", pattern: /^requests\/[0-9a-f-]{36}\/cancel$/i },
   { method: "POST", pattern: /^payments$/ },
   { method: "GET", pattern: /^payments\/request\/[0-9a-f-]{36}$/i },
 ];

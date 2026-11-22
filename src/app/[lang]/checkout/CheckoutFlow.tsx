@@ -31,8 +31,8 @@ import { splitPhone } from "@/lib/phone";
 const TRANSLATION_PASSPORT_DOC: ServiceDocument = {
   id: "__translation_passport__",
   keyName: "translation_passport",
-  labelEn: "Passport (required for translation)",
-  labelAr: "جواز سفر صاحب الوثيقة (مطلوب للترجمة)",
+  labelEn: "A copy of the document holder's passport is required for translation.",
+  labelAr: "صورة جواز سفر صاحب الوثيقة (مطلوب للترجمة)",
   isRequired: true,
   showForAnotherPerson: false,
   allowedTypes: ["image/jpeg", "image/png", "application/pdf"],
@@ -427,19 +427,6 @@ export function CheckoutFlow({
   const fullName = user ? `${user.firstName} ${user.lastName}`.trim() : "";
   const profilePhone = profile ? splitPhone(profile.phone, DEFAULT_PHONE_COUNTRY) : null;
 
-  // Auto-fill delivery recipient from profile
-  useEffect(() => {
-    if (requestFor !== "myself") return;
-    setDelivery((d) => {
-      const updates: Partial<typeof d> = {};
-      if (!d.recipientName && fullName) updates.recipientName = fullName;
-      if (!d.recipientPhone && profilePhone) updates.recipientPhone = profilePhone.national;
-      return Object.keys(updates).length ? { ...d, ...updates } : d;
-    });
-    if (profilePhone) {
-      setRecipientPhoneCountry((prev) => prev === DEFAULT_PHONE_COUNTRY ? profilePhone.country : prev);
-    }
-  }, [requestFor, fullName, profilePhone?.national, profilePhone?.country]);
 
   // If any select field option carries a price override, use it as the unit price
   const unitPrice = (() => {
@@ -675,7 +662,7 @@ export function CheckoutFlow({
           deliveryAddress: delivery.address.trim(),
           deliveryGovernorate: delivery.governorate.trim() || undefined,
         });
-        created.current = { id: res.id, ref: res.referenceNumber };
+        created.current = { id: res.id, ref: res.referenceNumber, total };
         setLocked(true);
       }
 
@@ -709,7 +696,7 @@ export function CheckoutFlow({
       if (!paid.current) {
         setStage("paying");
         try {
-          const payment = await orders.pay(created.current.id, method, locale);
+          const payment = await orders.pay(created.current.id, method, locale, created.current.total);
           if (payment.status === "pending") {
             // real gateway: the customer pays on the hosted page and returns to /checkout/result
             if (!payment.checkoutUrl || !isSafePaymentUrl(payment.checkoutUrl)) throw new Error("No payment page");
@@ -805,9 +792,12 @@ export function CheckoutFlow({
       paid.current = d.paid;
       payStarted.current = !!d.payStarted;
       setLocked(true);
-      // Came back (browser Back) from the payment page: show the same order awaiting payment.
+      // Came back from the payment page: restore the review step so the customer can re-pay or
+      // navigate back to delivery — do NOT redirect away; all data and files are preserved here.
       if (d.payStarted && !d.paid) {
-        router.replace(`/${locale}/checkout/result?ref=${encodeURIComponent(d.created.ref)}&rid=${d.created.id}&outcome=back`);
+        payStarted.current = false; // clear so saveDraft won't re-trigger this
+        setStep(STEPS.indexOf("review"));
+        return;
       }
     }
     setStep(Math.min(Math.max(d.step, d.created ? STEPS.indexOf("documents") : 0), STEPS.length - 1));

@@ -31,7 +31,7 @@ export type CheckoutDraft = {
   residence: { country: string; city: string };
   method: "card" | "wallet";
   step: number;
-  created: { id: string; ref: string } | null;
+  created: { id: string; ref: string; total: number } | null;
   uploaded: string[];
   paid: boolean;
   /** The customer was sent to the payment page for this order. */

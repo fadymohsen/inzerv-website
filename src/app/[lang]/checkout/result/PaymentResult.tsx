@@ -8,7 +8,7 @@ import { CheckIcon } from "@/components/Icons";
 import { useSession } from "@/components/SessionProvider";
 import type { Dict } from "@/dictionaries/en";
 import { ApiError, isSafePaymentUrl, orders, payments, type PaymentView } from "@/lib/api-client";
-import { clearCheckoutDraft } from "@/lib/checkout-draft";
+import { clearCheckoutDraft, loadDraft } from "@/lib/checkout-draft";
 import type { Locale } from "@/lib/i18n";
 
 const POLL_MS = 3000;
@@ -72,7 +72,9 @@ export function PaymentResult({ locale, t }: { locale: Locale; t: Dict["checkout
   async function retryPayment() {
     setBusy(true);
     try {
-      const p = await orders.pay(rid, "card", locale);
+      const draft = loadDraft();
+      const amount = draft?.created?.total;
+      const p = await orders.pay(rid, "card", locale, amount);
       if (p.status === "pending" && p.checkoutUrl && isSafePaymentUrl(p.checkoutUrl)) {
         window.location.assign(p.checkoutUrl);
         return;
