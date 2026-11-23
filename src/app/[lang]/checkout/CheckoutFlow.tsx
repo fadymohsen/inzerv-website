@@ -17,6 +17,7 @@ import {
   DEFAULT_PHONE_COUNTRY,
   isPhoneLengthValid,
   normalizePhoneCountry,
+  phoneCountryOptions,
   toE164,
   type CountryCode,
 } from "@/lib/phone";
@@ -348,6 +349,7 @@ export function CheckoutFlow({
 
   // review
   const [agree, setAgree] = useState(false);
+  const [ackNotice, setAckNotice] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState({ i: 0, n: 0 });
   const [submitError, setSubmitError] = useState("");
@@ -493,6 +495,9 @@ export function CheckoutFlow({
   // Where this service may be used / delivered (admin console)
   const residenceRule = service?.residenceRule?.length ? service.residenceRule : null;
   const residenceEntry = residenceRule?.find((r) => r.code === residence.country);
+  // Criminal record from abroad: any country of residence, country only.
+  const openResidence = service?.type === "criminal_record_abroad";
+  const allCountries = useMemo(() => phoneCountryOptions(locale), [locale]);
   const deliveryRule = service?.deliveryRule?.length ? service.deliveryRule : null;
   const allowedDestinations = deliveryRule
     ? destinations.filter((d) => deliveryRule.some((r) => r.code.toUpperCase() === d.countryCode.toUpperCase()))
@@ -501,6 +506,9 @@ export function CheckoutFlow({
     ? (deliveryRule.find((r) => r.code.toUpperCase() === destination.countryCode.toUpperCase())?.cities ?? null)
     : null;
   const notices = service ? serviceNotices(service, locale, t.rules) : [];
+  const paymentNotice = (locale === "ar" ? service?.paymentNoticeAr : service?.paymentNoticeEn)?.trim() || "";
+  // Anything the customer must read before paying needs an explicit acknowledgement.
+  const hasPaymentNotice = !!paymentNotice || service?.type === "criminal_record_abroad";
   // A country with a governorate list (Egypt) is restricted by governorate; any other by city.
   const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
   const allowedRegions =
@@ -551,7 +559,9 @@ export function CheckoutFlow({
       if (!service) next.service = t.errors.select;
       if (!Number.isInteger(copies) || copies < 1 || copies > 19) next.copies = t.errors.required;
       if (extraTranslation && !translationLang) next.translationLang = t.errors.select;
-      if (residenceRule) {
+      if (openResidence) {
+        if (!residence.country) next.residenceCountry = t.errors.select;
+      } else if (residenceRule) {
         if (!residenceEntry) next.residenceCountry = t.errors.select;
         else if (residenceEntry.cities === null) {
           if (!residence.city.trim()) next.residenceCity = t.errors.required;
@@ -632,6 +642,7 @@ export function CheckoutFlow({
       else if (delivery.address.trim().length < 5) next.address = t.errors.addressShort;
     }
     if (key === "review" && !agree) next.agree = t.errors.agree;
+    if (key === "review" && hasPaymentNotice && !ackNotice) next.ackNotice = t.errors.ackNotice;
     return fail(next);
   }
 
@@ -720,9 +731,11 @@ export function CheckoutFlow({
         const res = await orders.create({
           serviceId: service.id,
           requestFor,
-          ...(residenceRule && residenceEntry
-            ? { residenceCountry: residenceEntry.code, residenceCity: residence.city.trim() }
-            : {}),
+          ...(openResidence && residence.country
+            ? { residenceCountry: residence.country }
+            : residenceRule && residenceEntry
+              ? { residenceCountry: residenceEntry.code, residenceCity: residence.city.trim() }
+              : {}),
           fieldValues: [
             ...visibleFields
               .filter((f) => values[f.keyName]?.trim())
@@ -1189,7 +1202,25 @@ export function CheckoutFlow({
               </div>
             )}
 
-            {residenceRule && (
+            {openResidence && (
+              <fieldset className="flex flex-col gap-5 border-t border-line pt-7">
+                <legend className="mb-1 text-lg font-semibold">{t.rules.currentResidenceTitle}</legend>
+                <p className="-mt-2 text-sm text-ink-muted">{t.rules.currentResidenceSub}</p>
+                <Field id="r-country" label={t.rules.residenceCountry} error={errors.residenceCountry} required>
+                  <Select
+                    id="r-country"
+                    value={residence.country}
+                    placeholder={t.rules.chooseCountry}
+                    options={allCountries.map((c) => ({ value: c.code, label: c.name }))}
+                    onChange={(v) => setResidence({ country: v, city: "" })}
+                    aria-invalid={!!errors.residenceCountry}
+                    aria-describedby={describedBy("r-country", !!errors.residenceCountry, false)}
+                  />
+                </Field>
+              </fieldset>
+            )}
+
+            {residenceRule && !openResidence && (
               <fieldset className="flex flex-col gap-5 border-t border-line pt-7">
                 <legend className="mb-1 text-lg font-semibold">{t.rules.residenceTitle}</legend>
                 <p className="-mt-2 text-sm text-ink-muted">{t.rules.residenceSub}</p>
@@ -1421,6 +1452,12 @@ export function CheckoutFlow({
                 </div>
               );
             })}
+
+            {service && t.rules.docNotices[service.type] && (
+              <p className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink">
+                {t.rules.docNotices[service.type]}
+              </p>
+            )}
           </div>
         )}
 
@@ -1588,7 +1625,7 @@ export function CheckoutFlow({
               </Field>
             </div>
 
-            <Field id="v-address" label={t.delivery.address} error={errors.address} required>
+            <Field id="v-address" label={t.delivery.address} hint={t.delivery.addressHint} error={errors.address} required>
               <input
                 id="v-address"
                 autoComplete="street-address"
@@ -1703,14 +1740,35 @@ export function CheckoutFlow({
             )}
 
 
-            {(() => {
-              const notice = locale === "ar" ? service?.paymentNoticeAr : service?.paymentNoticeEn;
-              return notice ? (
-                <div className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink">
-                  {notice}
-                </div>
-              ) : null;
-            })()}
+            {paymentNotice && (
+              <div className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink">
+                {paymentNotice}
+              </div>
+            )}
+
+            {hasPaymentNotice && (
+              <div>
+                <label className="flex cursor-pointer items-start gap-3 rounded-card border border-line bg-bg-light px-5 py-4">
+                  <input
+                    type="checkbox"
+                    checked={ackNotice}
+                    onChange={(e) => {
+                      setAckNotice(e.target.checked);
+                      setErrors({});
+                    }}
+                    aria-invalid={!!errors.ackNotice}
+                    aria-describedby={errors.ackNotice ? "ack-err" : undefined}
+                    className="mt-1 size-5 shrink-0 accent-navy"
+                  />
+                  <span className="font-medium leading-relaxed">{t.review.ackNotice}</span>
+                </label>
+                {errors.ackNotice && (
+                  <p id="ack-err" role="alert" className="mt-2 text-sm text-error">
+                    {errors.ackNotice}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div>
               <label className="flex cursor-pointer items-start gap-3">
