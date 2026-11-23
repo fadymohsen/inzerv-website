@@ -111,7 +111,7 @@ export function applyDocRules(
     case "passport": {
       const cat = values.holder_category ?? "";
       const minor = cat === "under_15" || cat === "student_below_id_age";
-      const student = cat === "student_below_id_age" || cat === "male_18_student";
+      const student = cat === "student_below_id_age" || cat === "male_18_student" || cat === "female_18_student";
       const maleAdult = cat === "male_18_student" || cat === "male_18_not_student";
       const gender = values.holder_gender ?? "";
       if (cat) {

@@ -1028,7 +1028,15 @@ export function CheckoutFlow({
               id={id}
               value={values[f.keyName] ?? ""}
               placeholder={t.details.choose}
-              options={(f.options ?? [])
+              options={[
+                ...(f.options ?? []),
+                ...(serviceType === "passport" && f.keyName === "holder_category"
+                  ? [
+                      { value: "female_18_student", labelEn: "Female, 18 or over, student", labelAr: "أنثى، 18 سنة فأكثر، طالبة" },
+                      { value: "female_18_not_student", labelEn: "Female, 18 or over, not a student", labelAr: "أنثى، 18 سنة فأكثر، غير طالبة" },
+                    ]
+                  : []),
+              ]
                 .filter((o) => (!isRelationshipField(f.keyName) ? true : requestFor === "myself" ? MYSELF_RELATIONSHIPS.has(o.value) : !PARTY_ONLY.has(o.value)))
                 .map((o) => ({
                   value: o.value,
