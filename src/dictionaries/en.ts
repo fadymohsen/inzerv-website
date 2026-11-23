@@ -515,6 +515,7 @@ export const en = {
       residenceSub: "This service is only available in some places. Choose yours.",
       currentResidenceTitle: "Your current country of residence",
       currentResidenceSub: "Choose the country where you live now, not the country where the record will be used or delivered.",
+      docNoticeAck: "I have read and understood the notice above, and I agree to it.",
       docNotices: {
         overseas_birth_registration: "To complete your request, send the birth certificate issued abroad by post to Inzerv's address, or have a relative hand-deliver it at the company's office.",
         overseas_death_registration: "To complete your request, send the death certificate issued abroad by post to Inzerv's address, or have a relative hand-deliver it at the company's office.",
@@ -675,6 +676,7 @@ export const en = {
       phoneExists: "This phone number is already linked to an Inzerv account. Use the Sign in tab.",
       session: "Your session expired. Sign in again.",
       agree: "Please confirm to continue.",
+      ackDocNotice: "Please accept the notice above to continue.",
       ackNotice: "Please accept the notice above to continue to payment.",
       select: "Please choose an option.",
       uploadFailed: "One of the files could not be uploaded. Your request is saved; try again.",

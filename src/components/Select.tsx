@@ -44,7 +44,13 @@ export function Select({
 
   const filtered =
     searchable && query.trim()
-      ? options.filter((o) => o.label.toLowerCase().includes(query.trim().toLowerCase()))
+      ? (() => {
+          const q = query.trim().toLowerCase();
+          const label = (o: SelectOption) => o.label.replace(/^[^\p{L}]+/u, "").toLowerCase();
+          const starts = options.filter((o) => label(o).startsWith(q));
+          const rest = options.filter((o) => !starts.includes(o) && o.label.toLowerCase().includes(q));
+          return [...starts, ...rest];
+        })()
       : options;
 
   useEffect(() => {

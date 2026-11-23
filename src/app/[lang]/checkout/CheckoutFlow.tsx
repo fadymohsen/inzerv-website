@@ -25,6 +25,7 @@ import { useSession } from "@/components/SessionProvider";
 import type { DeliveryDestination, ExtrasConfig, GovService, ServiceDocument } from "@/lib/types";
 import { canOrderMyself, canOrderOther, isCriminalAbroad, serviceNotices } from "@/lib/service-rules";
 import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
+import { nationalityOptions } from "@/lib/nationalities";
 import { applyDocRules, isCountryField, isNationalityField } from "@/lib/doc-rules";
 import { getRegions, getRegionsForZone, getCities } from "@/lib/governorates";
 import { splitPhone } from "@/lib/phone";
@@ -352,6 +353,7 @@ export function CheckoutFlow({
   // review
   const [agree, setAgree] = useState(false);
   const [ackNotice, setAckNotice] = useState(false);
+  const [ackDocNotice, setAckDocNotice] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [progress, setProgress] = useState({ i: 0, n: 0 });
   const [submitError, setSubmitError] = useState("");
@@ -510,6 +512,12 @@ export function CheckoutFlow({
   const notices = service ? serviceNotices(service, locale, t.rules) : [];
   const paymentNotice = (locale === "ar" ? service?.paymentNoticeAr : service?.paymentNoticeEn)?.trim() || "";
   // Anything the customer must read before paying needs an explicit acknowledgement.
+  // Notice under the foreign (issued abroad) document upload, with its own confirmation.
+  const docNoticeText = service ? t.rules.docNotices[service.type] : undefined;
+  const docNoticeKey = useMemo(
+    () => (docNoticeText ? effectiveDocs.find((d) => /^foreign_(birth|death|marriage|divorce)/i.test(d.keyName))?.keyName ?? effectiveDocs[0]?.keyName : undefined),
+    [docNoticeText, effectiveDocs],
+  );
   const hasPaymentNotice = !!paymentNotice || isCriminalAbroad(service);
   // A country with a governorate list (Egypt) is restricted by governorate; any other by city.
   const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
@@ -623,6 +631,7 @@ export function CheckoutFlow({
         }
       }
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
+      if (docNoticeText && !ackDocNotice) next.ackDocNotice = t.errors.ackDocNotice;
     }
     if (key === "delivery") {
       if (!deliveryCountry) next.deliveryCountry = t.errors.select;
@@ -1006,7 +1015,9 @@ export function CheckoutFlow({
             id={id}
             value={values[f.keyName] ?? ""}
             placeholder={t.details.choose}
-            options={allCountries.map((c) => ({ value: c.name, label: `${c.flag} ${c.name}` }))}
+            options={isNationalityField(f.keyName) ? nationalityOptions(locale) : allCountries.map((c) => ({ value: c.name, label: `${c.flag} ${c.name}` }))}
+            searchable
+            searchPlaceholder={searchCountryLabel}
             onChange={set}
             aria-invalid={!!err}
             aria-describedby={describedBy(id, !!err, false)}
@@ -1461,15 +1472,35 @@ export function CheckoutFlow({
                   {err && (
                     <p id={`${id}-err`} role="alert" className="mt-3 text-sm text-error">{err}</p>
                   )}
+
+                  {docNoticeText && d.keyName === docNoticeKey && (
+                    <div className="mt-4 rounded-card border border-warning/50 bg-warning/5 px-5 py-4">
+                      <p className="text-sm leading-relaxed text-ink">{docNoticeText}</p>
+                      <label className="mt-3 flex cursor-pointer items-start gap-3">
+                        <input
+                          type="checkbox"
+                          checked={ackDocNotice}
+                          onChange={(e) => {
+                            setAckDocNotice(e.target.checked);
+                            setErrors((prev) => {
+                              const n = { ...prev };
+                              delete n.ackDocNotice;
+                              return n;
+                            });
+                          }}
+                          aria-invalid={!!errors.ackDocNotice}
+                          className="mt-0.5 size-5 shrink-0 accent-navy"
+                        />
+                        <span className="text-sm font-medium leading-relaxed">{t.rules.docNoticeAck}</span>
+                      </label>
+                      {errors.ackDocNotice && (
+                        <p role="alert" className="mt-2 text-sm text-error">{errors.ackDocNotice}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}
-
-            {service && t.rules.docNotices[service.type] && (
-              <p className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink">
-                {t.rules.docNotices[service.type]}
-              </p>
-            )}
           </div>
         )}
 
