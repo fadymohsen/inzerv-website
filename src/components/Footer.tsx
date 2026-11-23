@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { Dict } from "@/dictionaries/en";
 import { SUPPORT_EMAIL, SUPPORT_PHONE_LANDLINE, SUPPORT_PHONE_MOBILE, SUPPORT_PHONE_MOBILE_2 } from "@/lib/config";
 import type { Locale } from "@/lib/i18n";
@@ -18,6 +21,17 @@ const WaIcon = () => (
 );
 
 export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; nav: Dict["nav"] }) {
+  const pathname = usePathname();
+
+  function handleFooterLink(href: string) {
+    return (e: React.MouseEvent) => {
+      if (pathname === href) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    };
+  }
+
   const explore = [
     { href: `/${locale}/services`, label: nav.services },
     { href: `/${locale}/about`, label: nav.about },
@@ -47,7 +61,7 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
           <ul className="flex flex-col">
             {explore.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className={link}>
+                <Link href={l.href} onClick={handleFooterLink(l.href)} className={link}>
                   {l.label}
                 </Link>
               </li>
@@ -60,7 +74,7 @@ export function Footer({ locale, t, nav }: { locale: Locale; t: Dict["footer"]; 
           <ul className="flex flex-col">
             {legal.map((l) => (
               <li key={l.href}>
-                <Link href={l.href} className={link}>
+                <Link href={l.href} onClick={handleFooterLink(l.href)} className={link}>
                   {l.label}
                 </Link>
               </li>
