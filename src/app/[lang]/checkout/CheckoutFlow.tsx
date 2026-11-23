@@ -23,8 +23,9 @@ import {
 } from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
 import type { DeliveryDestination, ExtrasConfig, GovService, ServiceDocument } from "@/lib/types";
-import { canOrderMyself, canOrderOther, serviceNotices } from "@/lib/service-rules";
+import { canOrderMyself, canOrderOther, isCriminalAbroad, serviceNotices } from "@/lib/service-rules";
 import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
+import { applyDocRules, isCountryField, isNationalityField } from "@/lib/doc-rules";
 import { getRegions, getRegionsForZone, getCities } from "@/lib/governorates";
 import { splitPhone } from "@/lib/phone";
 
@@ -165,10 +166,9 @@ function isCivilStatusField(keyName: string) {
 }
 
 /** Docs that accept multiple files (one per child / per event, or relationship-proof docs). */
-function isMultiUploadDoc(keyName: string, doc?: ServiceDocument) {
-  if (doc?.allowMultiple) return true;
-  const k = keyName.toLowerCase();
-  return k === "children_birth_certificates" || k === "death_certificates" || k === "divorce_certificate";
+function isMultiUploadDoc(_keyName: string, _doc?: ServiceDocument) {
+  // Every upload slot takes several files (e.g. both sides of an ID card).
+  return true;
 }
 
 const NATIONAL_ID_RE = /^[23]\d{13}$/;
@@ -236,6 +236,8 @@ function isWifeField(key: string) {
 function minNamesFor(serviceType: string, fieldKey: string): number {
   // overseas_foreign_marriage: foreign name = 2, Egyptian name = 4
   if (serviceType === "overseas_foreign_marriage" && isForeignNameField(fieldKey)) return 2;
+  // overseas birth: the mother may be foreign, so two names are enough
+  if (serviceType === "overseas_birth_registration" && fieldKey.toLowerCase().includes("mother")) return 2;
   // divorce_certificate: other party (wife/spouse/other) = 3
   if (serviceType === "divorce_certificate" && isOtherPartyField(fieldKey)) return 3;
   // Default: 4 names
@@ -434,7 +436,7 @@ export function CheckoutFlow({
     [service, serviceType, requestFor],
   );
   const effectiveDocs = useMemo(() => {
-    let docs: ServiceDocument[] = [...visibleDocs];
+    let docs: ServiceDocument[] = applyDocRules(visibleDocs, serviceType, requestFor, values);
 
     // 1. family_record: expand marriage_certificate_copy to N slots for N wives
     const wivesField = visibleFields.find((f) => isWivesCountField(f.keyName));
@@ -476,7 +478,7 @@ export function CheckoutFlow({
     }
 
     return docs;
-  }, [visibleDocs, visibleFields, extraTranslation, values, serviceType]);
+  }, [visibleDocs, visibleFields, extraTranslation, values, serviceType, requestFor]);
 
   // Prune files whose doc slot no longer exists (e.g. wives count changed, civil status switched)
   useEffect(() => {
@@ -496,7 +498,7 @@ export function CheckoutFlow({
   const residenceRule = service?.residenceRule?.length ? service.residenceRule : null;
   const residenceEntry = residenceRule?.find((r) => r.code === residence.country);
   // Criminal record from abroad: any country of residence, country only.
-  const openResidence = service?.type === "criminal_record_abroad";
+  const openResidence = isCriminalAbroad(service);
   const allCountries = useMemo(() => phoneCountryOptions(locale), [locale]);
   const deliveryRule = service?.deliveryRule?.length ? service.deliveryRule : null;
   const allowedDestinations = deliveryRule
@@ -508,7 +510,7 @@ export function CheckoutFlow({
   const notices = service ? serviceNotices(service, locale, t.rules) : [];
   const paymentNotice = (locale === "ar" ? service?.paymentNoticeAr : service?.paymentNoticeEn)?.trim() || "";
   // Anything the customer must read before paying needs an explicit acknowledgement.
-  const hasPaymentNotice = !!paymentNotice || service?.type === "criminal_record_abroad";
+  const hasPaymentNotice = !!paymentNotice || isCriminalAbroad(service);
   // A country with a governorate list (Egypt) is restricted by governorate; any other by city.
   const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
   const allowedRegions =
@@ -998,6 +1000,16 @@ export function CheckoutFlow({
             onChange={set}
             invalid={!!err}
             describedBy={describedBy(id, !!err, false)}
+          />
+        ) : (isCountryField(f.keyName) || isNationalityField(f.keyName)) && f.fieldType !== "select" ? (
+          <Select
+            id={id}
+            value={values[f.keyName] ?? ""}
+            placeholder={t.details.choose}
+            options={allCountries.map((c) => ({ value: c.name, label: `${c.flag} ${c.name}` }))}
+            onChange={set}
+            aria-invalid={!!err}
+            aria-describedby={describedBy(id, !!err, false)}
           />
         ) : f.fieldType === "select" ? (
           <>
@@ -1727,7 +1739,7 @@ export function CheckoutFlow({
               </dl>
             </div>
 
-            {service.type === "criminal_record_abroad" && (
+            {isCriminalAbroad(service) && (
               <section aria-labelledby="fp-title" className="rounded-card border border-line bg-bg-light px-5 py-4">
                 <h3 id="fp-title" className="font-semibold">{t.review.fingerprintTitle}</h3>
                 <p className="mt-2 text-sm leading-relaxed">{t.review.fingerprintText}</p>

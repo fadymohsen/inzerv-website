@@ -23,9 +23,20 @@ export function serviceNotices(s: GovService, locale: Locale, t: Dict["checkout"
   const out: string[] = [];
   if (s.isBlocked) out.push(t.blockedNote);
   if (s.relationshipRule === "first" && canOrderOther(s)) out.push(t.firstDegree);
-  if (s.residenceRule?.length) {
+  if (s.residenceRule?.length && !isCriminalAbroad(s)) {
     out.push(s.type === "criminal_record" ? t.criminalRecordResidenceNote : fmt(t.residenceOnly, { places: describeGeo(s.residenceRule, locale, t.allCities) }));
   }
   if (s.deliveryRule?.length) out.push(fmt(t.deliveryOnly, { places: describeGeo(s.deliveryRule, locale, t.allCities) }));
   return out;
+}
+
+/** The "criminal record from abroad" service: matched by slug, or by name since admins can create their own slugs. */
+export function isCriminalAbroad(s?: Pick<GovService, "type" | "nameAr" | "nameEn"> | null): boolean {
+  if (!s) return false;
+  const type = (s.type ?? "").toLowerCase();
+  if (type === "criminal_record_abroad") return true;
+  if (/criminal/.test(type) && /(abroad|overseas|foreign|outside)/.test(type)) return true;
+  const ar = s.nameAr ?? "";
+  const en = (s.nameEn ?? "").toLowerCase();
+  return (/الجنائية/.test(ar) && /(بالخارج|من الخارج|خارج مصر)/.test(ar)) || (/criminal/.test(en) && /(abroad|overseas|outside egypt)/.test(en));
 }

@@ -73,25 +73,22 @@ export function ServiceGrid({ cards }: { cards: CardData[] }) {
   return (
     <>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {cards.map((card) => {
+        {cards.map((card, index) => {
           const isOpen = openId === card.id;
           return (
             <li key={card.id} id={card.id}>
-              <article className="flex flex-col overflow-hidden rounded-2xl border border-navy/10 bg-white transition-shadow hover:shadow-md">
+              <article className="flex h-full flex-col overflow-hidden rounded-2xl border-2 border-navy/20 bg-white transition-[box-shadow,border-color] hover:border-turquoise hover:shadow-md">
                 {/* Always-visible header */}
                 <div className="flex flex-col gap-4 p-5 sm:p-6">
-                  {/* Name + order arrow */}
-                  <div className="flex items-start justify-between gap-3">
-                    <h3 className="text-lg font-semibold leading-snug tracking-[-0.01em]">{card.name}</h3>
-                    {!card.isBlocked && (
-                      <a
-                        href={card.checkoutHref}
-                        aria-label={card.orderLabel}
-                        className="group/btn flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-turquoise/20 text-turquoise transition-colors hover:bg-turquoise hover:text-white"
-                      >
-                        <ArrowIcon size={16} />
-                      </a>
-                    )}
+                  {/* Number + name */}
+                  <div className="flex items-start gap-3">
+                    <span
+                      aria-hidden
+                      className="tabular flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-semibold text-white"
+                    >
+                      {index + 1}
+                    </span>
+                    <h3 className="pt-1 text-lg font-semibold leading-snug tracking-[-0.01em]">{card.name}</h3>
                   </div>
 
                   {/* Price + time */}
@@ -122,6 +119,21 @@ export function ServiceGrid({ cards }: { cards: CardData[] }) {
                     {/* Desktop: static label — opens modal */}
                     <span className="hidden lg:inline">{card.showLabel} ↗</span>
                   </button>
+
+                  {/* Primary action */}
+                  {card.isBlocked ? (
+                    <p className="inline-flex min-h-12 items-center justify-center rounded-btn border border-line px-5 text-sm font-medium text-ink-muted">
+                      {card.blockedLabel}
+                    </p>
+                  ) : (
+                    <a
+                      href={card.checkoutHref}
+                      className="group/btn inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-btn bg-navy px-6 text-base font-semibold text-white transition-opacity hover:opacity-90"
+                    >
+                      {card.orderLabel}
+                      <ArrowIcon size={18} />
+                    </a>
+                  )}
                 </div>
 
                 {/* Mobile / small tablet inline accordion */}
