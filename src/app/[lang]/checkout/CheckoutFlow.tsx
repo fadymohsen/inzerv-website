@@ -1875,7 +1875,10 @@ export function CheckoutFlow({
 
             {paymentNotice && (
               <div className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink">
-                {paymentNotice}
+                <div className="flex gap-3">
+                  <span aria-hidden="true" className="shrink-0 text-base">⚠️</span>
+                  <span>{paymentNotice}</span>
+                </div>
                 {hasPaymentNotice && ackBox}
               </div>
             )}
