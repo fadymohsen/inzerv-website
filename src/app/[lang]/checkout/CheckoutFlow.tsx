@@ -461,23 +461,11 @@ export function CheckoutFlow({
   const effectiveDocs = useMemo(() => {
     let docs: ServiceDocument[] = applyDocRules(visibleDocs, serviceType, requestFor, values);
 
-    // 1. family_record: expand marriage_certificate_copy to N slots for N wives
+    // 1. family_record: when number_of_wives > 1, allow multiple uploads on a single slot
     const wivesField = visibleFields.find((f) => isWivesCountField(f.keyName));
     const wivesCount = wivesField ? parseInt(values[wivesField.keyName] ?? "0", 10) : null;
     if (wivesCount !== null && wivesCount > 1) {
-      const idx = docs.findIndex((d) => isMarriageCertDoc(d.keyName));
-      if (idx !== -1) {
-        const original = docs[idx];
-        const expanded: ServiceDocument[] = Array.from({ length: wivesCount }, (_, i) => ({
-          ...original,
-          id: `${original.id}__${i + 1}`,
-          keyName: `${original.keyName}__${i + 1}`,
-          labelEn: `${original.labelEn} (${i + 1})`,
-          labelAr: `${original.labelAr} (${i + 1})`,
-          sortOrder: original.sortOrder + i,
-        }));
-        docs = [...docs.slice(0, idx), ...expanded, ...docs.slice(idx + 1)];
-      }
+      docs = docs.map((d) => (isMarriageCertDoc(d.keyName) ? { ...d, allowMultiple: true } : d));
     }
 
     // 1b. family_record: show how many children the birth certificates should cover
