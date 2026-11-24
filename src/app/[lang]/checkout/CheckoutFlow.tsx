@@ -22,7 +22,7 @@ import {
   type CountryCode,
 } from "@/lib/phone";
 import { useSession } from "@/components/SessionProvider";
-import type { DeliveryDestination, ExtrasConfig, GovService, ServiceDocument } from "@/lib/types";
+import type { DeliveryDestination, ExtrasConfig, GovService, ServiceDocument, ServiceField } from "@/lib/types";
 import { canOrderMyself, canOrderOther, isCriminalAbroad, serviceNotices } from "@/lib/service-rules";
 import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
 import { nationalityOptions } from "@/lib/nationalities";
@@ -424,7 +424,28 @@ export function CheckoutFlow({
         // Ordering for someone else: the relationship question sits right under the choice.
         // Ordering for yourself: only the marriage certificate asks for your role.
         .filter((f) => !isRelationshipField(f.keyName) || requestFor === "another_person" || serviceType === "marriage_certificate")
-        .sort((a, b) => a.sortOrder - b.sortOrder),
+        .sort((a, b) => a.sortOrder - b.sortOrder)
+        .map((f) =>
+          serviceType === "family_record" && isWivesCountField(f.keyName)
+            ? { ...f, labelEn: "Number of marriage certificates", labelAr: "عدد وثائق (قسائم) الزواج" }
+            : f,
+        )
+        .flatMap((f, _i, all) => {
+          // Family record also asks how many children, so the right number of birth certificates is uploaded.
+          if (serviceType !== "family_record" || !isWivesCountField(f.keyName) || all.some((x) => x.keyName === "children_count")) return [f];
+          const children: ServiceField = {
+            id: "__children_count__",
+            keyName: "children_count",
+            labelEn: "Number of Children",
+            labelAr: "عدد الأبناء",
+            fieldType: "number",
+            isRequired: true,
+            showForAnotherPerson: false,
+            options: null,
+            sortOrder: f.sortOrder + 0.5,
+          };
+          return [f, children];
+        }),
     [service, serviceType, requestFor],
   );
   const relationshipField = visibleFields.find((f) => isRelationshipField(f.keyName));
@@ -457,6 +478,16 @@ export function CheckoutFlow({
         }));
         docs = [...docs.slice(0, idx), ...expanded, ...docs.slice(idx + 1)];
       }
+    }
+
+    // 1b. family_record: show how many children the birth certificates should cover
+    const childrenCount = parseInt(values.children_count ?? "0", 10);
+    if (serviceType === "family_record" && childrenCount > 0) {
+      docs = docs.map((d) =>
+        d.keyName.toLowerCase() === "children_birth_certificates"
+          ? { ...d, labelEn: `${d.labelEn} (${childrenCount})`, labelAr: `${d.labelAr} (${childrenCount})` }
+          : d,
+      );
     }
 
     // 2. individual_civil_status_record: inject divorce/death cert based on civil_status
@@ -518,7 +549,8 @@ export function CheckoutFlow({
     () => (docNoticeText ? effectiveDocs.find((d) => /^foreign_(birth|death|marriage|divorce)/i.test(d.keyName))?.keyName ?? effectiveDocs[0]?.keyName : undefined),
     [docNoticeText, effectiveDocs],
   );
-  const hasPaymentNotice = !!paymentNotice || isCriminalAbroad(service);
+  // One confirmation per service: services with a document notice already ask for it on the documents step.
+  const hasPaymentNotice = !docNoticeText && (!!paymentNotice || isCriminalAbroad(service));
   // A country with a governorate list (Egypt) is restricted by governorate; any other by city.
   const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
   const allowedRegions =
@@ -579,7 +611,8 @@ export function CheckoutFlow({
       }
       for (const f of visibleFields) {
         const val = values[f.keyName]?.trim() ?? "";
-        if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
+        if (f.keyName === "children_count" && val && !/^\d{1,2}$/.test(val)) next[`f_${f.keyName}`] = t.errors.numericHint;
+        else if (f.isRequired && !val) next[`f_${f.keyName}`] = t.errors.required;
         else if (f.fieldType === "select" && isOtherOption(val) && !(otherText[f.keyName]?.trim())) next[`f_${f.keyName}`] = t.errors.required;
         else if (isNationalIdField(f.keyName) && val && !isValidNationalId(val))
           next[`f_${f.keyName}`] = t.errors.nationalId;
@@ -1078,6 +1111,30 @@ export function CheckoutFlow({
     );
   }
 
+  const ackBox = (
+    <div className="mt-4 border-t border-warning/40 pt-4">
+      <label className="flex cursor-pointer items-start gap-3">
+        <input
+          type="checkbox"
+          checked={ackNotice}
+          onChange={(e) => {
+            setAckNotice(e.target.checked);
+            setErrors({});
+          }}
+          aria-invalid={!!errors.ackNotice}
+          aria-describedby={errors.ackNotice ? "ack-err" : undefined}
+          className="mt-1 size-5 shrink-0 accent-navy"
+        />
+        <span className="font-medium leading-relaxed">{t.review.ackNotice}</span>
+      </label>
+      {errors.ackNotice && (
+        <p id="ack-err" role="alert" className="mt-2 text-sm text-error">
+          {errors.ackNotice}
+        </p>
+      )}
+    </div>
+  );
+
   /* ---------- render ---------- */
 
   if (status !== "authenticated" || !user) {
@@ -1377,6 +1434,12 @@ export function CheckoutFlow({
               <p className="mt-3 max-w-[52ch] text-ink-muted">{t.documents.sub}</p>
             </div>
 
+            {serviceType === "family_record" && (
+              <p className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink">
+                {t.documents.familyNote}
+              </p>
+            )}
+
             {effectiveDocs.length === 0 && <p className="text-ink-muted">{t.documents.none}</p>}
 
             {effectiveDocs.map((d) => {
@@ -1400,6 +1463,7 @@ export function CheckoutFlow({
                   <p className="mt-1 text-sm text-ink-muted">
                     {fmt(t.documents.allowed, { n: digits(String(limit), locale) })}
                   </p>
+                  {multi && <p className="mt-1 text-sm font-medium text-navy">{t.documents.multiNote}</p>}
 
                   {multi ? (
                     <>
@@ -1787,6 +1851,7 @@ export function CheckoutFlow({
                   {t.review.fingerprintAddressValue}
                 </p>
                 <p className="mt-3 text-sm text-ink-muted">{t.review.fingerprintNote}</p>
+                {hasPaymentNotice && !paymentNotice && ackBox}
               </section>
             )}
 
@@ -1794,31 +1859,12 @@ export function CheckoutFlow({
             {paymentNotice && (
               <div className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink">
                 {paymentNotice}
+                {hasPaymentNotice && ackBox}
               </div>
             )}
 
-            {hasPaymentNotice && (
-              <div>
-                <label className="flex cursor-pointer items-start gap-3 rounded-card border border-line bg-bg-light px-5 py-4">
-                  <input
-                    type="checkbox"
-                    checked={ackNotice}
-                    onChange={(e) => {
-                      setAckNotice(e.target.checked);
-                      setErrors({});
-                    }}
-                    aria-invalid={!!errors.ackNotice}
-                    aria-describedby={errors.ackNotice ? "ack-err" : undefined}
-                    className="mt-1 size-5 shrink-0 accent-navy"
-                  />
-                  <span className="font-medium leading-relaxed">{t.review.ackNotice}</span>
-                </label>
-                {errors.ackNotice && (
-                  <p id="ack-err" role="alert" className="mt-2 text-sm text-error">
-                    {errors.ackNotice}
-                  </p>
-                )}
-              </div>
+            {hasPaymentNotice && !paymentNotice && !isCriminalAbroad(service) && (
+              <div className="rounded-card border border-line bg-bg-light px-5 py-4">{ackBox}</div>
             )}
 
             <div>

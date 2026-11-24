@@ -572,6 +572,8 @@ export const en = {
       selectLanguage: "Select language",
     },
     documents: {
+      multiNote: "You can upload more than one file in this slot: choose a file, then add the next one.",
+      familyNote: "For the family record, upload all the children's birth certificates and all the marriage certificates. You can add more than one file in the same slot (choose a file again and again). The numbers of children and marriage certificates you entered tell us what to expect.",
       title: "Upload the documents we need",
       sub: "Upload a clear image of the entire document, without cropping or glare. Accepted formats: JPG, PNG and PDF, up to 10 MB per file.",
       uploaded: "File uploaded successfully. We will review it and let you know if anything needs correcting or completing.",
