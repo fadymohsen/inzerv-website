@@ -468,14 +468,16 @@ export function CheckoutFlow({
       docs = docs.map((d) => (isMarriageCertDoc(d.keyName) ? { ...d, allowMultiple: true } : d));
     }
 
-    // 1b. family_record: show how many children the birth certificates should cover
-    const childrenCount = parseInt(values.children_count ?? "0", 10);
-    if (serviceType === "family_record" && childrenCount > 0) {
-      docs = docs.map((d) =>
-        d.keyName.toLowerCase() === "children_birth_certificates"
-          ? { ...d, labelEn: `${d.labelEn} (${childrenCount})`, labelAr: `${d.labelAr} (${childrenCount})` }
-          : d,
-      );
+    // 1b. family_record: hide children birth certificates when count is 0; allow multiple when > 1
+    const childrenCount = parseInt(values.children_count ?? "", 10);
+    if (serviceType === "family_record" && !isNaN(childrenCount)) {
+      if (childrenCount === 0) {
+        docs = docs.filter((d) => d.keyName.toLowerCase() !== "children_birth_certificates");
+      } else if (childrenCount > 1) {
+        docs = docs.map((d) =>
+          d.keyName.toLowerCase() === "children_birth_certificates" ? { ...d, allowMultiple: true } : d,
+        );
+      }
     }
 
     // 2. individual_civil_status_record: inject divorce/death cert based on civil_status
