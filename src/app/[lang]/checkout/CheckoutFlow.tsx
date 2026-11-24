@@ -119,6 +119,16 @@ function patchDoc(
 ): ServiceDocument {
   const k = d.keyName.toLowerCase();
 
+  // copy_of_criminal_record_certificate: relationship doc is for the in-Egypt relative who follows up
+  if (serviceType === "copy_of_criminal_record_certificate" && isRelationshipDoc(k)) {
+    return {
+      ...d,
+      labelEn: "Proof of relationship between the document holder and the person who will follow up inside Egypt",
+      labelAr: "مستندات إثبات صلة القرابة بين صاحب الوثيقة والشخص الذي سيتولى متابعة الطلب داخل مصر.",
+      allowMultiple: true,
+    };
+  }
+
   // Item 4: Criminal Record (Egypt domestic) — ID upload label
   if (serviceType === "criminal_record" && isIdentityDoc(k)) {
     return {
