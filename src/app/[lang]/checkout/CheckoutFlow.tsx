@@ -423,7 +423,8 @@ export function CheckoutFlow({
         .filter((f) => requestFor === "another_person" || !f.showForAnotherPerson || isRelationshipField(f.keyName))
         // Ordering for someone else: the relationship question sits right under the choice.
         // Ordering for yourself: only the marriage certificate asks for your role.
-        .filter((f) => !isRelationshipField(f.keyName) || requestFor === "another_person" || serviceType === "marriage_certificate")
+        // copy_of_criminal_record_certificate always shows the in-Egypt relative fields regardless of requestFor.
+        .filter((f) => !isRelationshipField(f.keyName) || requestFor === "another_person" || serviceType === "marriage_certificate" || serviceType === "copy_of_criminal_record_certificate")
         .sort((a, b) => a.sortOrder - b.sortOrder)
         .map((f) =>
           serviceType === "family_record" && isWivesCountField(f.keyName)
@@ -448,8 +449,9 @@ export function CheckoutFlow({
         }),
     [service, serviceType, requestFor],
   );
-  const relationshipField = visibleFields.find((f) => isRelationshipField(f.keyName));
-  const otherFields = visibleFields.filter((f) => !isRelationshipField(f.keyName));
+  // For criminal record, the relationship field belongs inside the "relative" group rendered with otherFields.
+  const relationshipField = serviceType === "copy_of_criminal_record_certificate" ? undefined : visibleFields.find((f) => isRelationshipField(f.keyName));
+  const otherFields = serviceType === "copy_of_criminal_record_certificate" ? visibleFields : visibleFields.filter((f) => !isRelationshipField(f.keyName));
   const visibleDocs = useMemo(
     () =>
       (service?.requiredDocuments ?? [])
@@ -1227,6 +1229,12 @@ export function CheckoutFlow({
               {t.steps.details}
             </h2>
 
+            {serviceType === "copy_of_criminal_record_certificate" && (
+              <p className="rounded-card border border-warning/50 bg-warning/5 px-5 py-4 text-sm leading-relaxed text-ink" dir="rtl">
+                يُرجى إضافة بيانات قريب صاحب الصحيفة الموجود فعليًا داخل مصر، والذي سيتولى متابعة الإجراءات بالتنسيق مع فريق إنزيرف
+              </p>
+            )}
+
             {canOrderMyself(service) && canOrderOther(service) && <fieldset>
               <legend className="mb-2 text-sm font-medium">{t.details.requestFor}</legend>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -1405,7 +1413,26 @@ export function CheckoutFlow({
               )}
             </fieldset>}
 
-            {otherFields.length > 0 && (
+            {otherFields.length > 0 && serviceType === "copy_of_criminal_record_certificate" ? (() => {
+              const holderFields = otherFields.filter((f) => !isRelationshipField(f.keyName) && f.keyName !== "full_name" && !isPhoneField(f.keyName));
+              const relativeFields = otherFields.filter((f) => isRelationshipField(f.keyName) || f.keyName === "full_name" || isPhoneField(f.keyName));
+              return (
+                <>
+                  {holderFields.length > 0 && (
+                    <fieldset className="flex flex-col gap-6 border-t border-line pt-7">
+                      <legend className="mb-1 text-lg font-semibold">{t.details.holder}</legend>
+                      {holderFields.map((f) => renderField(f))}
+                    </fieldset>
+                  )}
+                  {relativeFields.length > 0 && (
+                    <fieldset className="flex flex-col gap-6 border-t border-line pt-7">
+                      <legend className="mb-1 text-lg font-semibold" dir="rtl">بيانات القريب الذي سيتولى متابعة الإجراءات</legend>
+                      {relativeFields.map((f) => renderField(f))}
+                    </fieldset>
+                  )}
+                </>
+              );
+            })() : otherFields.length > 0 && (
               <fieldset className="flex flex-col gap-6 border-t border-line pt-7">
                 <legend className="mb-1 text-lg font-semibold">{t.details.holder}</legend>
                 {otherFields.map((f) => renderField(f))}
