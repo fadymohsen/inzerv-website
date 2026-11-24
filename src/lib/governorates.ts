@@ -659,6 +659,24 @@ export function getRegionsForZone(
   return all.filter((r) => allowed.includes(r.en));
 }
 
+/**
+ * Governorates that belong to a delivery zone, with no fallback: empty when the zone does not
+ * say which governorates it covers. Used to work out the zone from the chosen governorate.
+ */
+export function strictZoneRegions(
+  countryCode: string,
+  zoneNameEn: string | null | undefined,
+  zoneGovernorates?: { en: string; ar: string }[] | null,
+): Region[] {
+  const all = data[countryCode] ?? [];
+  const norm = (v: string) => v.trim().toLowerCase();
+  if (zoneGovernorates?.length) {
+    return all.filter((r) => zoneGovernorates.some((g) => norm(g.en) === norm(r.en) || norm(g.ar) === norm(r.ar)));
+  }
+  const allowed = countryCode === "EG" && zoneNameEn ? EG_ZONE_MAP[zoneNameEn] : undefined;
+  return allowed ? all.filter((r) => allowed.includes(r.en)) : [];
+}
+
 /** Cities for a given governorate (matched by English name). Empty array if none defined. */
 export function getCities(countryCode: string, governorateEn: string): City[] {
   const region = data[countryCode]?.find((r) => r.en === governorateEn);

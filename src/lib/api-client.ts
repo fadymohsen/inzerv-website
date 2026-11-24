@@ -115,11 +115,12 @@ export const orders = {
     requestFor: "myself" | "another_person";
     fieldValues: { fieldKey: string; value: string }[];
     numberOfCopies: number;
-    deliveryDestinationId: string;
-    recipientName: string;
-    recipientPhone: string;
-    deliveryCity: string;
-    deliveryAddress: string;
+    /** Omit all delivery fields when the customer chose not to have the document delivered. */
+    deliveryDestinationId?: string;
+    recipientName?: string;
+    recipientPhone?: string;
+    deliveryCity?: string;
+    deliveryAddress?: string;
     deliveryGovernorate?: string;
     deliveryPostalCode?: string;
     residenceCountry?: string;

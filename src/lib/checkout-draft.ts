@@ -28,6 +28,7 @@ export type CheckoutDraft = {
   recipientPhoneCountry: string;
   customCity: string;
   deliveryCountry: string;
+  deliveryChoice?: "" | "yes" | "no";
   residence: { country: string; city: string };
   method: "card" | "wallet";
   step: number;
