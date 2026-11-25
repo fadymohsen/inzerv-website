@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { buttonClass } from "@/components/Button";
 import { Field, describedBy, inputClass } from "@/components/forms";
+import { CheckIcon } from "@/components/Icons";
 import { PhoneField } from "@/components/PhoneField";
 import { useSession } from "@/components/SessionProvider";
 import type { Dict } from "@/dictionaries/en";
@@ -15,7 +16,6 @@ import { safeNext } from "@/lib/safe-next";
 import { PasswordInput } from "./PasswordInput";
 
 const emailRe = /^\S+@\S+\.\S+$/;
-const passwordRe = /^(?=.*[A-Z])(?=.*\d).{8,128}$/;
 
 export function SignUpForm({
   locale,
@@ -48,7 +48,11 @@ export function SignUpForm({
   });
   const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_PHONE_COUNTRY);
   const [consent, setConsent] = useState(false);
+  const [ageOk, setAgeOk] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const pwChecks = [f.password.length >= 8, /[A-Z]/.test(f.password), /\d/.test(f.password), /[^A-Za-z0-9]/.test(f.password)];
+  const pwStrong = pwChecks.every(Boolean);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
@@ -65,8 +69,9 @@ export function SignUpForm({
     if (!emailRe.test(f.email.trim())) found.email = t.errors.email;
     if (!f.phone.trim()) found.phone = t.errors.required;
     else if (!isPhoneLengthValid(f.phone, phoneCountry)) found.phone = t.errors.phoneInvalid;
-    if (!passwordRe.test(f.password)) found.password = t.errors.password;
+    if (!pwStrong) found.password = t.errors.password;
     if (f.confirm !== f.password) found.confirm = t.errors.match;
+    if (!ageOk) found.age = t.signup.ageRequired;
     if (!consent) found.consent = t.errors.consent;
     setErrors(found);
     setError("");
@@ -163,44 +168,54 @@ export function SignUpForm({
         />
       </Field>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Field id="su-phone" label={t.signup.phone} error={errors.phone} required>
-          <PhoneField
-            id="su-phone"
-            locale={locale}
-            countryLabel={phoneCountryLabel}
-            searchPlaceholder={searchCountryLabel}
-            country={phoneCountry}
-            onCountryChange={setPhoneCountry}
-            value={f.phone}
-            onChange={set("phone")}
-            invalid={!!errors.phone}
-            describedBy={describedBy("su-phone", !!errors.phone, false)}
-          />
-        </Field>
-        <Field id="su-country" label={t.signup.country}>
-          <input
-            id="su-country"
-            autoComplete="country-name"
-            value={f.country}
-            onChange={(e) => set("country")(e.target.value)}
-            className={inputClass}
-          />
-        </Field>
-      </div>
+      <Field id="su-phone" label={t.signup.phone} error={errors.phone} required>
+        <PhoneField
+          id="su-phone"
+          locale={locale}
+          countryLabel={phoneCountryLabel}
+          searchPlaceholder={searchCountryLabel}
+          country={phoneCountry}
+          onCountryChange={setPhoneCountry}
+          value={f.phone}
+          onChange={set("phone")}
+          invalid={!!errors.phone}
+          describedBy={describedBy("su-phone", !!errors.phone, false)}
+        />
+      </Field>
 
-      <Field id="su-password" label={t.password} error={errors.password} hint={t.signup.hint} required>
+      <Field id="su-country" label={t.signup.country}>
+        <input
+          id="su-country"
+          autoComplete="country-name"
+          value={f.country}
+          onChange={(e) => set("country")(e.target.value)}
+          className={inputClass}
+        />
+      </Field>
+
+      <Field id="su-password" label={t.password} error={errors.password} required>
         <PasswordInput
           id="su-password"
           value={f.password}
           onChange={set("password")}
           autoComplete="new-password"
           invalid={!!errors.password}
-          describedBy={describedBy("su-password", !!errors.password, true)}
+          describedBy={describedBy("su-password", !!errors.password, false)}
           showLabel={t.show}
           hideLabel={t.hide}
         />
       </Field>
+
+      <ul className="-mt-2 flex flex-col gap-2 text-sm" aria-label={t.password}>
+        {t.signup.rules.map((r, i) => (
+          <li key={r} className={`flex items-center gap-2 ${pwChecks[i] ? "text-navy" : "text-ink-muted"}`}>
+            <span className={`flex size-5 items-center justify-center rounded-full ${pwChecks[i] ? "bg-turquoise text-navy" : "border border-line"}`}>
+              {pwChecks[i] && <CheckIcon size={12} />}
+            </span>
+            {r}
+          </li>
+        ))}
+      </ul>
 
       <Field id="su-confirm" label={t.signup.confirm} error={errors.confirm} required>
         <PasswordInput
@@ -214,6 +229,25 @@ export function SignUpForm({
           hideLabel={t.hide}
         />
       </Field>
+
+      <div>
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={ageOk}
+            onChange={(e) => setAgeOk(e.target.checked)}
+            aria-invalid={!!errors.age}
+            aria-describedby={errors.age ? "su-age-err" : undefined}
+            className="mt-1 size-5 shrink-0 accent-navy"
+          />
+          <span className="leading-relaxed">{t.signup.ageConfirm}</span>
+        </label>
+        {errors.age && (
+          <p id="su-age-err" role="alert" className="mt-2 text-sm text-error">
+            {errors.age}
+          </p>
+        )}
+      </div>
 
       <div>
         <label className="flex cursor-pointer items-start gap-3">
