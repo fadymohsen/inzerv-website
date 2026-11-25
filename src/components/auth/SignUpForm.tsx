@@ -123,7 +123,7 @@ export function SignUpForm({
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-6">
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <Field id="su-first" label={t.signup.firstName} error={errors.firstName} required>
           <input
             id="su-first"
@@ -163,7 +163,7 @@ export function SignUpForm({
         />
       </Field>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <Field id="su-phone" label={t.signup.phone} error={errors.phone} required>
           <PhoneField
             id="su-phone"

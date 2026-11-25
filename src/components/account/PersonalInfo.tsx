@@ -185,7 +185,7 @@ function Inner({ locale, t }: { locale: Locale; t: Dict }) {
               )}
 
               <form onSubmit={save} noValidate className="mt-8 flex flex-col gap-6">
-                <div className="grid gap-6 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <Field id="pi-first" label={i.first} error={errors.firstName}>
                     {draft ? (
                       <input id="pi-first" value={draft.firstName} onChange={(e) => set("firstName")(e.target.value)} autoComplete="given-name" aria-invalid={!!errors.firstName} aria-describedby={describedBy("pi-first", !!errors.firstName, false)} className={inputClass} />

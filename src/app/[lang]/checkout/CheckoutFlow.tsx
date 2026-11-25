@@ -1375,7 +1375,7 @@ export function CheckoutFlow({
               <fieldset className="flex flex-col gap-5 border-t border-line pt-7">
                 <legend className="mb-1 text-lg font-semibold">{t.rules.residenceTitle}</legend>
                 <p className="-mt-2 text-sm text-ink-muted">{t.rules.residenceSub}</p>
-                <div className="grid gap-6 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <Field id="r-country" label={t.rules.residenceCountry} error={errors.residenceCountry} required>
                     <Select
                       id="r-country"
@@ -1780,7 +1780,7 @@ export function CheckoutFlow({
               </Field>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <Field id="v-gov" label={t.delivery.governorate} error={errors.governorate} required>
                 {zoneDerivable || (destination && getRegionsForZone(destination.countryCode, destination.zoneNameEn, destination.governorates).length > 0) ? (
                   <Select
