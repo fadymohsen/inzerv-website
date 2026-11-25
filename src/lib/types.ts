@@ -52,6 +52,11 @@ export type GovService = {
   deliveryRule?: GeoRule | null;
   paymentNoticeEn?: string | null;
   paymentNoticeAr?: string | null;
+  /** The customer may skip delivery and collect another way (set in the admin console). */
+  deliveryOptional?: boolean;
+  /** How the document is collected when delivery is skipped; shown before payment. */
+  pickupNoteEn?: string | null;
+  pickupNoteAr?: string | null;
   /** null/undefined = unlimited copies. 1 = hide copies selector, lock to 1. */
   maxCopies?: number | null;
   fields: ServiceField[];

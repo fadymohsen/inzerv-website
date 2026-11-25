@@ -27,7 +27,7 @@ import { canOrderMyself, canOrderOther, isCriminalAbroad, serviceNotices } from 
 import { clearCheckoutDraft, holdFiles, loadDraft, saveDraft, takeFiles } from "@/lib/checkout-draft";
 import { nationalityOptions } from "@/lib/nationalities";
 import { applyDocRules, isCountryField, isNationalityField } from "@/lib/doc-rules";
-import { getRegions, getRegionsForZone, getCities } from "@/lib/governorates";
+import { getRegions, getRegionsForZone, getCities, strictZoneRegions } from "@/lib/governorates";
 import { splitPhone } from "@/lib/phone";
 
 const TRANSLATION_PASSPORT_DOC: ServiceDocument = {
@@ -302,6 +302,9 @@ export function CheckoutFlow({
     services.find((s) => s.type === initialType)?.type ?? services[0]?.type ?? "",
   );
 
+  // Only asked when the service lets the customer skip delivery.
+  const [deliveryChoice, setDeliveryChoice] = useState<"" | "yes" | "no">("");
+
   // Sync with URL when user returns from /request with a different service
   useEffect(() => {
     const fromUrl = search.get("service");
@@ -318,6 +321,7 @@ export function CheckoutFlow({
       setExtraTranslation(false);
       setTranslationLang("");
       setDeliveryCountry("");
+      setDeliveryChoice("");
       setDelivery({ destinationId: "", recipientName: "", recipientPhone: "", city: "", governorate: "", address: "" });
       setErrors({});
       setStep(0);
@@ -391,7 +395,13 @@ export function CheckoutFlow({
   }
 
   function setGovernorate(governorate: string) {
-    setDelivery((d) => ({ ...d, governorate, city: "" }));
+    // In Egypt the delivery zone (and its fee) follows from the governorate, so it is not asked twice.
+    const zone = zoneDerivable ? zoneFor(governorate) : undefined;
+    if (zone && !delivery.destinationId) {
+      const normalized = normalizePhoneCountry(zone.countryCode);
+      if (normalized) setRecipientPhoneCountry(normalized);
+    }
+    setDelivery((d) => ({ ...d, governorate, city: "", ...(zoneDerivable ? { destinationId: zone?.id ?? "" } : {}) }));
     setCustomCity("");
   }
 
@@ -447,8 +457,8 @@ export function CheckoutFlow({
           const children: ServiceField = {
             id: "__children_count__",
             keyName: "children_count",
-            labelEn: "Number of Children",
-            labelAr: "عدد الأبناء",
+            labelEn: "Number of children of the family record holder",
+            labelAr: "عدد أبناء صاحب القيد العائلي",
             fieldType: "number",
             isRequired: true,
             showForAnotherPerson: false,
@@ -539,9 +549,24 @@ export function CheckoutFlow({
   const allowedDestinations = deliveryRule
     ? destinations.filter((d) => deliveryRule.some((r) => r.code.toUpperCase() === d.countryCode.toUpperCase()))
     : destinations;
-  const deliveryCities = deliveryRule && destination
-    ? (deliveryRule.find((r) => r.code.toUpperCase() === destination.countryCode.toUpperCase())?.cities ?? null)
+  // A service that only delivers inside Egypt never asks for the country.
+  const egyptOnly = allowedDestinations.length > 0 && allowedDestinations.every((d) => d.countryCode.toUpperCase() === "EG");
+  const countryCode = (egyptOnly ? "EG" : deliveryCountry).toUpperCase();
+  const deliveryCities = deliveryRule && countryCode
+    ? (deliveryRule.find((r) => r.code.toUpperCase() === countryCode)?.cities ?? null)
     : null;
+  // Egypt: the zone follows from the governorate chosen (the admin console assigns governorates to zones).
+  const egDests = allowedDestinations.filter((d) => d.countryCode.toUpperCase() === "EG");
+  const zoneFor = (gov: string) => egDests.find((d) => strictZoneRegions("EG", d.zoneNameEn, d.governorates).some((r) => r.en === gov));
+  const zonedRegions = (() => {
+    const seen = new Set<string>();
+    return egDests.flatMap((d) => strictZoneRegions("EG", d.zoneNameEn, d.governorates)).filter((r) => !seen.has(r.en) && !!seen.add(r.en));
+  })();
+  const zoneDerivable = countryCode === "EG" && zonedRegions.length > 0;
+  // Delivery can be switched off for services that offer another way to receive the document.
+  const deliveryOptional = !!service?.deliveryOptional;
+  const wantsDelivery = !deliveryOptional || deliveryChoice === "yes";
+  const pickupNote = ((locale === "ar" ? service?.pickupNoteAr : service?.pickupNoteEn) ?? "").trim();
   const notices = service ? serviceNotices(service, locale, t.rules) : [];
   const paymentNotice = (locale === "ar" ? service?.paymentNoticeAr : service?.paymentNoticeEn)?.trim() || "";
   // Anything the customer must read before paying needs an explicit acknowledgement.
@@ -555,11 +580,14 @@ export function CheckoutFlow({
   const hasPaymentNotice = !docNoticeText && (!!paymentNotice || isCriminalAbroad(service));
   // A country with a governorate list (Egypt) is restricted by governorate; any other by city.
   const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
-  const allowedRegions =
-    deliveryCities && destination
-      ? getRegions(destination.countryCode).filter((r) => deliveryCities.some((c) => sameName(c.en, r.en) || sameName(c.ar, r.ar)))
+  const allowedRegionsRaw =
+    deliveryCities && countryCode
+      ? getRegions(countryCode).filter((r) => deliveryCities.some((c) => sameName(c.en, r.en) || sameName(c.ar, r.ar)))
       : [];
-  const restrictByRegion = allowedRegions.length > 0;
+  const restrictByRegion = allowedRegionsRaw.length > 0;
+  const allowedRegions = zoneDerivable ? allowedRegionsRaw.filter((r) => zonedRegions.some((z) => z.en === r.en)) : allowedRegionsRaw;
+  const egGovOptions = restrictByRegion ? allowedRegions : zonedRegions;
+  const cityCountry = destination?.countryCode ?? countryCode;
   const restrictByCity = !!deliveryCities && !restrictByRegion;
 
   // If any select field option carries a price override, use it as the unit price
@@ -575,7 +603,7 @@ export function CheckoutFlow({
     return service.servicePrice ?? 0;
   })();
   const serviceFee = unitPrice * copies;
-  const deliveryFee = destination?.deliveryFee ?? 0;
+  const deliveryFee = wantsDelivery ? (destination?.deliveryFee ?? 0) : 0;
   const authFee = extraAuth ? extras.authPrice : 0;
   const translationFee = extraTranslation && translationLang ? extras.translationPrice : 0;
   const extrasFee = authFee + translationFee;
@@ -665,12 +693,21 @@ export function CheckoutFlow({
           }
         }
       }
+      if (serviceType === "family_record") {
+        const kids = parseInt(values.children_count ?? "", 10);
+        const kidsDoc = effectiveDocs.find((d) => d.keyName.toLowerCase() === "children_birth_certificates");
+        if (kidsDoc && kids > 0 && !uploaded.current.has(kidsDoc.keyName) && !next[`d_${kidsDoc.keyName}`]) {
+          const have = multiFiles[kidsDoc.keyName]?.length ?? 0;
+          if (have < kids) next[`d_${kidsDoc.keyName}`] = fmt(t.errors.childrenFiles, { n: digits(String(kids), locale), m: digits(String(have), locale) });
+        }
+      }
       if (Object.keys(fileErrors).length) Object.assign(next, fileErrors);
       if (docNoticeText && !ackDocNotice) next.ackDocNotice = t.errors.ackDocNotice;
     }
-    if (key === "delivery") {
-      if (!deliveryCountry) next.deliveryCountry = t.errors.select;
-      if (!delivery.destinationId) next.destinationId = t.errors.select;
+    if (key === "delivery" && deliveryOptional && !deliveryChoice) next.deliveryChoice = t.errors.select;
+    if (key === "delivery" && wantsDelivery) {
+      if (!countryCode) next.deliveryCountry = t.errors.select;
+      if (!delivery.destinationId) next[zoneDerivable ? "governorate" : "destinationId"] = t.errors.select;
       if (restrictByCity && !deliveryCities!.some((c) => c.en === delivery.city)) next.city = t.errors.select;
       if (!delivery.recipientName.trim()) next.recipientName = t.errors.required;
       else if (!isValidFullName(delivery.recipientName, 2)) next.recipientName = t.errors.fullName;
@@ -684,6 +721,7 @@ export function CheckoutFlow({
       } else if (!delivery.city.trim()) next.city = t.errors.required;
       else if (delivery.city.trim().length < 2) next.city = t.details.cityMin;
       if (!delivery.governorate.trim()) next.governorate = t.errors.select;
+      else if (restrictByRegion && !egGovOptions.some((r) => r.en === delivery.governorate)) next.governorate = t.errors.select;
       if (!delivery.address.trim()) next.address = t.errors.required;
       else if (delivery.address.trim().length < 5) next.address = t.errors.addressShort;
     }
@@ -796,12 +834,16 @@ export function CheckoutFlow({
             ...(extraTranslation && translationLang ? [{ fieldKey: "extra_translation", value: translationLang }] : []),
           ],
           numberOfCopies: copies,
-          deliveryDestinationId: delivery.destinationId,
-          recipientName: delivery.recipientName.trim(),
-          recipientPhone: toE164(delivery.recipientPhone, recipientPhoneCountry) ?? delivery.recipientPhone.trim(),
-          deliveryCity: (delivery.city === "__other__" ? customCity : delivery.city).trim(),
-          deliveryAddress: delivery.address.trim(),
-          deliveryGovernorate: delivery.governorate.trim() || undefined,
+          ...(wantsDelivery
+            ? {
+                deliveryDestinationId: delivery.destinationId,
+                recipientName: delivery.recipientName.trim(),
+                recipientPhone: toE164(delivery.recipientPhone, recipientPhoneCountry) ?? delivery.recipientPhone.trim(),
+                deliveryCity: (delivery.city === "__other__" ? customCity : delivery.city).trim(),
+                deliveryAddress: delivery.address.trim(),
+                deliveryGovernorate: delivery.governorate.trim() || undefined,
+              }
+            : {}),
         });
         created.current = { id: res.id, ref: res.referenceNumber, total };
         setLocked(true);
@@ -912,6 +954,7 @@ export function CheckoutFlow({
     setSubmitError("");
     setStage("idle");
     setDeliveryCountry("");
+    setDeliveryChoice("");
     setStep(0);
   }
 
@@ -941,6 +984,7 @@ export function CheckoutFlow({
     setDelivery(d.delivery);
     setRecipientPhoneCountry(d.recipientPhoneCountry as CountryCode);
     setCustomCity(d.customCity);
+    setDeliveryChoice(d.deliveryChoice ?? "");
     // Restore delivery country from draft, or derive from destinationId for legacy drafts
     if (d.deliveryCountry) {
       setDeliveryCountry(d.deliveryCountry);
@@ -1006,6 +1050,7 @@ export function CheckoutFlow({
       recipientPhoneCountry,
       customCity,
       deliveryCountry,
+      deliveryChoice,
       residence,
       method: "card",
       step,
@@ -1044,6 +1089,16 @@ export function CheckoutFlow({
             onChange={set}
             invalid={!!err}
             describedBy={describedBy(id, !!err, false)}
+          />
+        ) : f.keyName === "children_count" ? (
+          <Select
+            id={id}
+            value={values[f.keyName] ?? ""}
+            placeholder={t.details.choose}
+            options={Array.from({ length: 21 }, (_, n) => ({ value: String(n), label: digits(String(n), locale) }))}
+            onChange={set}
+            aria-invalid={!!err}
+            aria-describedby={describedBy(id, !!err, false)}
           />
         ) : (isCountryField(f.keyName) || isNationalityField(f.keyName)) && f.fieldType !== "select" ? (
           <Select
@@ -1320,7 +1375,7 @@ export function CheckoutFlow({
               <fieldset className="flex flex-col gap-5 border-t border-line pt-7">
                 <legend className="mb-1 text-lg font-semibold">{t.rules.residenceTitle}</legend>
                 <p className="-mt-2 text-sm text-ink-muted">{t.rules.residenceSub}</p>
-                <div className="grid gap-6 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                   <Field id="r-country" label={t.rules.residenceCountry} error={errors.residenceCountry} required>
                     <Select
                       id="r-country"
@@ -1610,24 +1665,75 @@ export function CheckoutFlow({
               {t.delivery.title}
             </h2>
 
-            {allowedDestinations.length === 0 && (
+            {deliveryOptional && (
+              <fieldset>
+                <legend className="mb-2 text-sm font-medium">{t.delivery.wantTitle}</legend>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {(["yes", "no"] as const).map((v) => (
+                    <label
+                      key={v}
+                      className={`flex min-h-12 cursor-pointer items-center gap-3 rounded-btn border px-4 py-2 transition-colors duration-150 ${
+                        deliveryChoice === v ? "border-navy bg-bg-light" : "border-line hover:border-navy/40"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="deliveryChoice"
+                        checked={deliveryChoice === v}
+                        onChange={() => {
+                          setDeliveryChoice(v);
+                          setErrors({});
+                        }}
+                        className="size-4 shrink-0 accent-navy"
+                      />
+                      {v === "yes" ? t.delivery.wantYes : t.delivery.wantNo}
+                    </label>
+                  ))}
+                </div>
+                {errors.deliveryChoice && (
+                  <p role="alert" className="mt-2 text-sm text-error">{errors.deliveryChoice}</p>
+                )}
+              </fieldset>
+            )}
+
+            {deliveryOptional && deliveryChoice === "no" && (
+              <div className="rounded-card border border-line bg-bg-light px-5 py-4 text-sm leading-relaxed">
+                <p>{t.delivery.skipped}</p>
+                {pickupNote && (
+                  <>
+                    <p className="mt-3 font-semibold">{t.delivery.pickupTitle}</p>
+                    <p className="mt-1 whitespace-pre-line">{pickupNote}</p>
+                  </>
+                )}
+              </div>
+            )}
+
+            {wantsDelivery && allowedDestinations.length === 0 && (
               <p role="alert" className="rounded-btn border border-error/40 px-4 py-3 text-sm text-error">{t.rules.noDestinations}</p>
             )}
-            <Field id="v-country" label={t.delivery.destination} error={errors.deliveryCountry} required>
-              <Select
-                id="v-country"
-                value={deliveryCountry}
-                placeholder={t.delivery.select}
-                options={[...new Map(allowedDestinations.map((d) => [d.countryCode.toUpperCase(), d])).entries()].map(([code, d]) => ({
-                  value: code,
-                  label: countryName(code, d.country, locale),
-                }))}
-                onChange={handleDeliveryCountry}
-                aria-invalid={!!errors.deliveryCountry}
-                aria-describedby={describedBy("v-country", !!errors.deliveryCountry, false)}
-              />
-            </Field>
-            {deliveryCountry === "EG" && (
+            {wantsDelivery && (<>
+            {egyptOnly ? (
+              <div>
+                <p className="mb-2 text-sm font-medium">{t.delivery.destination}</p>
+                <p className="flex min-h-12 items-center rounded-btn border border-line bg-bg-light px-4">{countryName("EG", "Egypt", locale)}</p>
+              </div>
+            ) : (
+              <Field id="v-country" label={t.delivery.destination} error={errors.deliveryCountry} required>
+                <Select
+                  id="v-country"
+                  value={deliveryCountry}
+                  placeholder={t.delivery.select}
+                  options={[...new Map(allowedDestinations.map((d) => [d.countryCode.toUpperCase(), d])).entries()].map(([code, d]) => ({
+                    value: code,
+                    label: countryName(code, d.country, locale),
+                  }))}
+                  onChange={handleDeliveryCountry}
+                  aria-invalid={!!errors.deliveryCountry}
+                  aria-describedby={describedBy("v-country", !!errors.deliveryCountry, false)}
+                />
+              </Field>
+            )}
+            {countryCode === "EG" && !zoneDerivable && (
               <Field id="v-zone" label={t.delivery.zone} error={errors.destinationId} required>
                 <Select
                   id="v-zone"
@@ -1674,14 +1780,14 @@ export function CheckoutFlow({
               </Field>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <Field id="v-gov" label={t.delivery.governorate} error={errors.governorate} required>
-                {destination && getRegionsForZone(destination.countryCode, destination.zoneNameEn, destination.governorates).length > 0 ? (
+                {zoneDerivable || (destination && getRegionsForZone(destination.countryCode, destination.zoneNameEn, destination.governorates).length > 0) ? (
                   <Select
                     id="v-gov"
                     value={delivery.governorate}
                     placeholder={t.delivery.selectGovernorate}
-                    options={(restrictByRegion ? allowedRegions : getRegionsForZone(destination.countryCode, destination.zoneNameEn, destination.governorates)).map((r) => ({
+                    options={(zoneDerivable ? egGovOptions : restrictByRegion ? allowedRegions : getRegionsForZone(destination!.countryCode, destination!.zoneNameEn, destination!.governorates)).map((r) => ({
                       value: r.en,
                       label: locale === "ar" ? r.ar : r.en,
                     }))}
@@ -1716,18 +1822,19 @@ export function CheckoutFlow({
                     />
                     <p className="mt-2 text-sm text-ink-muted">{t.rules.deliveryCityRestricted}</p>
                   </>
-                ) : destination && delivery.governorate && getCities(destination.countryCode, delivery.governorate).length > 0 ? (
+                ) : cityCountry && delivery.governorate && getCities(cityCountry, delivery.governorate).length > 0 ? (
                   <>
                     <Select
                       id="v-city"
                       value={delivery.city === "__other__" ? "__other__" : delivery.city}
                       placeholder={t.delivery.selectCity}
                       options={[
-                        ...getCities(destination.countryCode, delivery.governorate).map((c) => ({
+                        ...getCities(cityCountry, delivery.governorate).map((c) => ({
                           value: c.en,
                           label: locale === "ar" ? c.ar : c.en,
                         })),
-                        { value: "__other__", label: t.delivery.otherCity },
+                        // A service limited to approved areas offers no free-text city.
+                        ...(restrictByRegion ? [] : [{ value: "__other__", label: t.delivery.otherCity }]),
                       ]}
                       onChange={(v) => {
                         if (v === "__other__") {
@@ -1778,6 +1885,7 @@ export function CheckoutFlow({
                 className={inputClass}
               />
             </Field>
+            </>)}
 
           </div>
         )}
@@ -1849,7 +1957,16 @@ export function CheckoutFlow({
             </dl>
 
             {/* Delivery summary */}
-            <div className="rounded-card border border-line">
+            {!wantsDelivery && (
+              <div className="rounded-card border border-line">
+                <p className="px-5 py-3 text-sm font-semibold">{t.delivery.pickupTitle}</p>
+                <div className="border-t border-line px-5 py-3 text-sm leading-relaxed">
+                  <p className="font-medium">{t.delivery.noneChosen}</p>
+                  {pickupNote && <p className="mt-2 whitespace-pre-line text-ink-muted">{pickupNote}</p>}
+                </div>
+              </div>
+            )}
+            {wantsDelivery && <div className="rounded-card border border-line">
               <p className="px-5 py-3 text-sm font-semibold">{t.delivery.title.replace(/\?$/, "")}</p>
               <dl className="divide-y divide-line border-t border-line">
                 {[
@@ -1867,7 +1984,7 @@ export function CheckoutFlow({
                   </div>
                 ))}
               </dl>
-            </div>
+            </div>}
 
             {isCriminalAbroad(service) && (
               <section aria-labelledby="fp-title" className="rounded-card border border-line bg-bg-light px-5 py-4">
@@ -1989,7 +2106,7 @@ export function CheckoutFlow({
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-ink-muted">{t.review.deliveryFee}</dt>
-                <dd className="tabular font-medium">{destination ? money(deliveryFee, locale) : "-"}</dd>
+                <dd className="tabular font-medium">{!wantsDelivery ? money(0, locale) : destination ? money(deliveryFee, locale) : "-"}</dd>
               </div>
               {extraAuth && (
                 <div className="flex justify-between gap-4">
