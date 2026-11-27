@@ -337,6 +337,15 @@ export const en = {
       haveAccount: "Already have an account?",
       signIn: "Sign in",
     },
+    setPassword: {
+      title: "Create your password",
+      sub: "Welcome to Inzerv. Choose a password, then sign in with your email to follow your order.",
+      button: "Create password",
+      doneTitle: "Your password is ready",
+      doneText: "You can now sign in with your email and the password you just chose to track your order.",
+      badLink: "This link is no longer valid. Use “Forgot password” on the sign-in page to set a password.",
+      noToken: "This page needs the link from your welcome email.",
+    },
     forgot: {
       title: "Reset your password",
       sendSub: "Enter your email and we will send you a 6-digit code.",

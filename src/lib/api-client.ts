@@ -62,6 +62,9 @@ export const auth = {
   verifyOtp: (email: string, otp: string) => post<{ resetToken: string }>("/api/auth/verify-otp", { email, otp }),
   resetPassword: (resetToken: string, newPassword: string) =>
     post<{ ok: true }>("/api/auth/reset-password", { resetToken, newPassword }),
+  /** The "create your password" link from the welcome email. */
+  setPassword: (token: string, newPassword: string) =>
+    post<{ ok: true }>("/api/auth/set-password", { token, newPassword }),
 };
 
 export type UserRequest = {
